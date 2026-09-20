@@ -2,99 +2,94 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '../../src/backend/supabase/client'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
   const router = useRouter()
   const supabase = createClient()
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleLogin(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault()
     setError('')
+    setLoading(true)
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
+    setLoading(false)
+
     if (error) {
-      setError(error.message)
+      setError('Email atau password tidak valid.')
       return
     }
 
-    router.push('/')
+    router.push('/admin')
     router.refresh()
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#fafafa] px-4 py-8">
-      <div className="w-full max-w-95">
+    <main className="flex min-h-screen items-center justify-center bg-white px-4 py-8">
+      <div className="w-full max-w-sm">
+        <div className="overflow-hidden rounded-2xl border border-gray-200/90 bg-white/45 shadow-[0_12px_40px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl">
+          <div className="px-5 pb-5 pt-6">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-teal-600">
+              SIKEMA
+            </p>
 
-        {/* ======================================================
-            LOGIN CARD
-        ====================================================== */}
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
-
-          {/* Header */}
-          <div className="px-5 pb-5 pt-6 sm:px-6 sm:pt-7">
-
-            {/* Logo */}
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#0d7f78] text-[12px] font-semibold text-white">
-              MM
-            </div>
-
-            <h1 className="text-[20px] font-semibold leading-6 text-gray-900">
+            <h1 className="mt-1 text-lg font-semibold tracking-tight text-gray-900">
               Login Admin
             </h1>
 
-            <p className="mt-1 text-[11px] leading-4 text-gray-400">
-              Masuk untuk mengelola data mudamudi
+            <p className="mt-1 text-[10px] leading-4 text-gray-400">
+              Masuk untuk mengelola kegiatan, Muda Mudi,
+              dan presensi.
             </p>
           </div>
 
-          {/* Divider */}
-          <div className="border-t border-gray-100" />
+          <div className="border-t border-gray-200/70" />
 
-          {/* Form */}
           <form
             onSubmit={handleLogin}
-            className="space-y-4 px-5 py-5 sm:px-6"
+            className="space-y-3.5 bg-white/10 px-5 py-5"
           >
-
-            {/* Error */}
             {error && (
-              <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
+              <div className="flex items-start gap-2 rounded-lg border border-red-100 bg-red-50/80 px-3 py-2.5">
                 <svg
-                  xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
-                  className="mt-0.5 h-4 w-4 shrink-0 text-red-500"
+                  strokeWidth="1.7"
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500"
+                  aria-hidden="true"
                 >
                   <circle cx="12" cy="12" r="9" />
                   <path
+                    d="M12 8v4M12 16h.01"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M12 8v4M12 16h.01"
                   />
                 </svg>
 
-                <p className="text-[11px] leading-4 text-red-600">
+                <p className="text-[10px] leading-4 text-red-600">
                   {error}
                 </p>
               </div>
             )}
 
-            {/* Email */}
             <div>
               <label
                 htmlFor="email"
-                className="mb-1.5 block text-[11px] font-medium text-gray-600"
+                className="mb-1.5 block text-[10px] font-medium text-gray-600"
               >
                 Email
               </label>
@@ -102,12 +97,12 @@ export default function LoginPage() {
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
                   <svg
-                    xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1.7"
-                    className="h-4 w-4 text-gray-400"
+                    className="h-3.5 w-3.5 text-gray-400"
+                    aria-hidden="true"
                   >
                     <rect
                       x="3"
@@ -117,9 +112,9 @@ export default function LoginPage() {
                       rx="2"
                     />
                     <path
+                      d="m3 7 9 6 9-6"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="m3 7 9 6 9-6"
                     />
                   </svg>
                 </div>
@@ -129,164 +124,161 @@ export default function LoginPage() {
                   type="email"
                   placeholder="Masukkan email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-[12px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-[#0d7f78] focus:ring-2 focus:ring-[#0d7f78]/10"
+                  onChange={(event) =>
+                    setEmail(event.target.value)
+                  }
+                  autoComplete="email"
+                  className="h-9 w-full rounded-lg border border-white/80 bg-white/50 pl-9 pr-3 text-[11px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-teal-300 focus:bg-white/70 focus:ring-2 focus:ring-teal-500/10"
                   required
                 />
               </div>
             </div>
 
-            {/* Password */}
             <div>
-            <label
+              <label
                 htmlFor="password"
-                className="mb-1.5 block text-[11px] font-medium text-gray-600"
-            >
+                className="mb-1.5 block text-[10px] font-medium text-gray-600"
+              >
                 Password
-            </label>
+              </label>
 
-            <div className="relative">
-                {/* Lock Icon */}
+              <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
+                  <svg
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1.7"
-                    className="h-4 w-4 text-gray-400"
-                >
+                    className="h-3.5 w-3.5 text-gray-400"
+                    aria-hidden="true"
+                  >
                     <rect
-                    x="4"
-                    y="10"
-                    width="16"
-                    height="11"
-                    rx="2"
+                      x="4"
+                      y="10"
+                      width="16"
+                      height="11"
+                      rx="2"
                     />
                     <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M8 10V7a4 4 0 0 1 8 0v3"
+                      d="M8 10V7a4 4 0 0 1 8 0v3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
-                </svg>
+                  </svg>
                 </div>
 
-                {/* Password Input */}
                 <input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Masukkan password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-10 text-[12px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-[#0d7f78] focus:ring-2 focus:ring-[#0d7f78]/10"
-                required
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Masukkan password"
+                  value={password}
+                  onChange={(event) =>
+                    setPassword(event.target.value)
+                  }
+                  autoComplete="current-password"
+                  className="h-9 w-full rounded-lg border border-gray-200/80 bg-white/60 pl-9 pr-9 text-[11px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-teal-300 focus:bg-white/80 focus:ring-2 focus:ring-teal-500/10"
+                  required
                 />
 
-                {/* Eye Button */}
                 <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-3 flex items-center text-gray-400 transition hover:text-gray-600"
-                aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                  type="button"
+                  onClick={() =>
+                    setShowPassword((value) => !value)
+                  }
+                  className="absolute inset-y-0 right-2.5 flex items-center text-gray-400 transition hover:text-gray-600"
+                  aria-label={
+                    showPassword
+                      ? 'Sembunyikan password'
+                      : 'Tampilkan password'
+                  }
                 >
-                {showPassword ? (
-                    // Eye Off
+                  {showPassword ? (
                     <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      className="h-3.5 w-3.5"
+                      aria-hidden="true"
                     >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                      <path
                         d="M3 3l18 18"
-                    />
-                    <path
                         strokeLinecap="round"
-                        strokeLinejoin="round"
+                      />
+                      <path
                         d="M10.6 10.6a2 2 0 0 0 2.8 2.8"
-                    />
-                    <path
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M9.9 5.1A10.7 10.7 0 0 1 12 5c5 0 8.5 4.5 9.5 7a15.8 15.8 0 0 1 3.1 4.3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M9.9 5.1A10.7 10.7 0 0 1 12 5c5 0 8.5 4.5 9.5 7a15.8 15.8 0 0 1-3.1 4.3"
-                    />
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                      />
+                      <path
                         d="M6.2 6.2C4.5 7.5 3.3 9.3 2.5 12c1 2.5 4.5 7 9.5 7 1 0 2-.2 2.9-.5"
-                    />
-                    </svg>
-                ) : (
-                    // Eye
-                    <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    className="h-4 w-4"
-                    >
-                    <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z"
-                    />
-                    <circle cx="12" cy="12" r="2.5" />
+                      />
                     </svg>
-                )}
+                  ) : (
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      className="h-3.5 w-3.5"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="12" cy="12" r="2.5" />
+                    </svg>
+                  )}
                 </button>
-            </div>
+              </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
-              className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#171717] text-[12px] font-medium text-white transition hover:bg-gray-800 active:scale-[0.99]"
+              disabled={loading}
+              className="mt-1 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-teal-600 text-[11px] font-medium text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <svg
-                xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="1.8"
-                className="h-4 w-4"
+                strokeWidth="1.7"
+                className="h-3.5 w-3.5"
+                aria-hidden="true"
               >
                 <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
                   d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"
-                />
-                <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="m10 17 5-5-5-5"
                 />
                 <path
+                  d="m10 17 5-5-5-5M15 12H3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M15 12H3"
                 />
               </svg>
 
-              Login
+              {loading ? 'Memproses...' : 'Login'}
             </button>
           </form>
 
-          {/* Footer */}
-          <div className="border-t border-gray-100 bg-gray-50/50 px-5 py-3.5 text-center sm:px-6">
-            <p className="text-[10px] text-gray-400">
-              Data Mudamudi 2026 · Desa Pandak
+          <div className="border-t border-gray-200/70 bg-white/30 px-5 py-3">
+            <p className="text-center text-[9px] text-gray-400">
+              Sistem Informasi Kegiatan dan Muda Mudi
             </p>
           </div>
         </div>
 
-        {/* Small branding */}
-        <p className="mt-4 text-center text-[10px] text-gray-400">
-          Sistem Informasi Data Mudamudi
+        <p className="mt-3 text-center text-[9px] text-gray-400">
+          SIKEMA
         </p>
       </div>
     </main>
