@@ -8,7 +8,12 @@ import {
   KELOMPOK_BY_DESA,
   JENIS_KELAMIN_OPTIONS,
 } from "./constants";
-import { parseImportExcel, type ImportRow } from "./importExcel";
+import {
+  parseImportExcel,
+  type ImportRow,
+  type ImportWarning,
+} from "./importExcel";
+import { createAdminClient } from "../supabase/admin";
 
 type ActionResult = {
   success?: boolean;
@@ -23,6 +28,7 @@ export type ImportPreviewResult = {
     rowNumber: number;
     message: string;
   }>;
+  warnings: ImportWarning[];
 };
 
 function isValidDesa(desa: string): boolean {
@@ -159,27 +165,34 @@ function normalizeForCompare(nama: string): string {
 }
 
 function mapImportRow(row: ImportRow) {
-  const tanggalLahir = row.tanggal_lahir;
-
-  const umur = calculateAge(tanggalLahir);
-
-  const kelas = calculatekelas(umur);
-
   return {
     nama: toTitleCase(row.nama.trim()),
+
     desa: row.desa.trim(),
+
     kelompok: row.kelompok.trim(),
+
     jenis_kelamin: row.jenis_kelamin.trim(),
-    tempat_lahir: row.tempat_lahir.trim() || null,
-    tanggal_lahir: tanggalLahir,
-    umur,
-    no_hp: row.no_hp.trim() || null,
-    pekerjaan: row.pekerjaan.trim() || null,
-    kelas,
-    nama_ayah: row.nama_ayah.trim() || null,
-    nama_ibu: row.nama_ibu.trim() || null,
-    no_hp_ortu: row.no_hp_ortu.trim() || null,
-    alamat: row.alamat.trim() || null,
+
+    tempat_lahir: row.tempat_lahir?.trim() || null,
+
+    tanggal_lahir: row.tanggal_lahir || null,
+
+    umur: row.umur !== null ? row.umur : null,
+
+    no_hp: row.no_hp?.trim() || null,
+
+    pekerjaan: row.pekerjaan?.trim() || null,
+
+    kelas: row.kelas?.trim() || null,
+
+    nama_ayah: row.nama_ayah?.trim() || null,
+
+    nama_ibu: row.nama_ibu?.trim() || null,
+
+    no_hp_ortu: row.no_hp_ortu?.trim() || null,
+
+    alamat: row.alamat?.trim() || null,
   };
 }
 
@@ -434,7 +447,7 @@ export async function getMudamudi() {
 ========================================================= */
 
 export async function searchMudamudiNames(query: string) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const keyword = query.trim();
 
@@ -455,6 +468,8 @@ export async function searchMudamudiNames(query: string) {
     .limit(5);
 
   if (error) {
+    console.error("searchMudamudiNames:", error);
+
     return {
       data: [],
       error: "Gagal mencari nama Muda-Mudi",
@@ -482,6 +497,7 @@ export async function previewImportMudamudi(
       error: "File Excel belum dipilih",
       data: [],
       errors: [],
+      warnings: [],
     };
   }
 
@@ -491,6 +507,7 @@ export async function previewImportMudamudi(
       error: "Format file harus .xlsx",
       data: [],
       errors: [],
+      warnings: [],
     };
   }
 
@@ -501,6 +518,7 @@ export async function previewImportMudamudi(
       success: true,
       data: result.data,
       errors: result.errors,
+      warnings: result.warnings,
     };
   } catch (error) {
     console.error("previewImportMudamudi error:", error);
@@ -511,6 +529,7 @@ export async function previewImportMudamudi(
         error instanceof Error ? error.message : "Gagal membaca file Excel",
       data: [],
       errors: [],
+      warnings: [],
     };
   }
 }
@@ -523,6 +542,7 @@ export async function importMudamudi(formData: FormData): Promise<
   ActionResult & {
     imported?: number;
     skipped?: number;
+    warnings?: ImportWarning[];
   }
 > {
   const supabase = await createClient();
@@ -544,29 +564,39 @@ export async function importMudamudi(formData: FormData): Promise<
   try {
     const result = await parseImportExcel(file);
 
-    if (result.errors.length > 0) {
-      return {
-        error:
-          "Masih terdapat data yang tidak valid. Periksa kembali file Excel.",
-      };
-    }
+    /*
+     * Errors tetap menggagalkan baris tertentu.
+     * Tetapi tidak menggagalkan seluruh import.
+     *
+     * result.data hanya berisi baris yang valid pada
+     * 4 kolom wajib.
+     */
 
     if (result.data.length === 0) {
+      if (result.errors.length > 0) {
+        return {
+          error:
+            "Tidak ada data yang dapat diimpor. Semua baris memiliki masalah pada kolom wajib.",
+          imported: 0,
+          skipped: result.errors.length,
+          warnings: result.warnings,
+        };
+      }
+
       return {
         error: "Tidak ada data yang dapat diimpor.",
+        imported: 0,
+        skipped: 0,
+        warnings: result.warnings,
       };
     }
 
+    /*
+     * Jangan menghitung ulang umur atau kelas.
+     * Data dari XLSX yang sudah divalidasi digunakan
+     * apa adanya.
+     */
     const rows = result.data.map(mapImportRow);
-
-    const invalidRows = rows.filter((row) => !row.kelas || row.umur === null);
-
-    if (invalidRows.length > 0) {
-      return {
-        error:
-          "Terdapat data dengan usia atau tanggal lahir yang tidak dapat menentukan kelas.",
-      };
-    }
 
     const { data: existingData, error: existingError } = await supabase
       .from("mudamudi")
@@ -581,13 +611,21 @@ export async function importMudamudi(formData: FormData): Promise<
     const existingKeys = new Set<string>();
 
     for (const item of existingData ?? []) {
-      const key = `${normalizeForCompare(item.nama)}|${item.kelas.toLowerCase()}|${item.kelompok.toLowerCase()}`;
+      const key = [
+        normalizeForCompare(item.nama),
+        item.kelas?.toLowerCase() ?? "",
+        item.kelompok?.toLowerCase() ?? "",
+      ].join("|");
 
       existingKeys.add(key);
     }
 
     const rowsToInsert = rows.filter((row) => {
-      const key = `${normalizeForCompare(row.nama)}|${row.kelas.toLowerCase()}|${row.kelompok.toLowerCase()}`;
+      const key = [
+        normalizeForCompare(row.nama),
+        row.kelas?.toLowerCase() ?? "",
+        row.kelompok?.toLowerCase() ?? "",
+      ].join("|");
 
       if (existingKeys.has(key)) {
         return false;
@@ -598,17 +636,22 @@ export async function importMudamudi(formData: FormData): Promise<
       return true;
     });
 
-    const skipped = rows.length - rowsToInsert.length;
+    const duplicateCount = rows.length - rowsToInsert.length;
+
+    const skipped = result.errors.length + duplicateCount;
 
     if (rowsToInsert.length === 0) {
       return {
-        error: "Semua data dalam file sudah terdaftar.",
+        error:
+          "Semua data dalam file sudah terdaftar atau tidak memenuhi kolom wajib.",
         imported: 0,
         skipped,
+        warnings: result.warnings,
       };
     }
 
     const batchSize = 100;
+
     let imported = 0;
 
     for (let index = 0; index < rowsToInsert.length; index += batchSize) {
@@ -625,7 +668,11 @@ export async function importMudamudi(formData: FormData): Promise<
               ? "Import gagal karena terdapat data duplikat."
               : error.message,
           imported,
-          skipped: rows.length - imported,
+          skipped:
+            result.errors.length +
+            duplicateCount +
+            (rowsToInsert.length - imported - batch.length),
+          warnings: result.warnings,
         };
       }
 
@@ -638,6 +685,7 @@ export async function importMudamudi(formData: FormData): Promise<
       success: true,
       imported,
       skipped,
+      warnings: result.warnings,
     };
   } catch (error) {
     console.error("importMudamudi error:", error);

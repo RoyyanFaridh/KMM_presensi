@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import type {
   PresensiStatus,
   RekapitulasiKegiatan,
@@ -18,6 +16,14 @@ type Props = {
   mudaMudi: RekapitulasiMudaMudi[];
   kegiatan: RekapitulasiKegiatan[];
   kehadiran: RekapitulasiKehadiran[];
+
+  currentPage: number;
+  totalPages: number;
+  itemsPerPage: number;
+  totalItems: number;
+
+  onItemsPerPageChange: (value: number) => void;
+  onGoToPage: (page: number) => void;
 };
 
 const PER_PAGE_OPTIONS = [10, 25, 50, 100];
@@ -61,39 +67,18 @@ export default function RekapitulasiTable({
   mudaMudi,
   kegiatan,
   kehadiran,
+  currentPage,
+  totalPages,
+  itemsPerPage,
+  totalItems,
+  onItemsPerPageChange,
+  onGoToPage,
 }: Props) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const displayStart =
+    totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
 
-  const totalPages = Math.ceil(mudaMudi.length / itemsPerPage);
-
-  useEffect(() => {
-    if (totalPages === 0) {
-      setCurrentPage(1);
-      return;
-    }
-
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [mudaMudi]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [itemsPerPage]);
-
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-
-  const paginatedMudaMudi = mudaMudi.slice(startIndex, endIndex);
-
-  const displayStart = mudaMudi.length === 0 ? 0 : startIndex + 1;
-
-  const displayEnd = Math.min(startIndex + itemsPerPage, mudaMudi.length);
+  const displayEnd =
+    totalItems === 0 ? 0 : Math.min(currentPage * itemsPerPage, totalItems);
 
   /*
    * Map status berdasarkan kombinasi:
@@ -111,8 +96,8 @@ export default function RekapitulasiTable({
 
   /*
    * Menghitung total Hadir, Terlambat, Izin,
-   * Sakit, dan Alpa berdasarkan seluruh kegiatan
-   * yang sedang ditampilkan pada filter.
+   * Sakit, dan Alpa berdasarkan kegiatan
+   * yang sedang ditampilkan.
    */
   function getStatusTotals(mudamudiId: number) {
     const totals: Record<PresensiStatus, number> = {
@@ -137,7 +122,7 @@ export default function RekapitulasiTable({
       return;
     }
 
-    setCurrentPage(page);
+    onGoToPage(page);
 
     window.scrollTo({
       top: 0,
@@ -209,12 +194,9 @@ export default function RekapitulasiTable({
           Menampilkan{" "}
           <span className="font-medium text-gray-600">
             {displayStart}
-            {mudaMudi.length > 0 && displayEnd !== displayStart
-              ? `–${displayEnd}`
-              : ""}
+            {displayEnd !== displayStart ? `–${displayEnd}` : ""}
           </span>{" "}
-          dari{" "}
-          <span className="font-medium text-gray-600">{mudaMudi.length}</span>{" "}
+          dari <span className="font-medium text-gray-600">{totalItems}</span>{" "}
           Muda-Mudi
         </p>
       </div>
@@ -310,7 +292,7 @@ export default function RekapitulasiTable({
           </thead>
 
           <tbody>
-            {paginatedMudaMudi.map((item) => {
+            {mudaMudi.map((item) => {
               const totals = getStatusTotals(item.id);
 
               return (
@@ -380,6 +362,10 @@ export default function RekapitulasiTable({
         </table>
       </div>
 
+      {/* =========================================================
+          MOBILE
+          Nama + total H/T/I/S/A
+          ========================================================= */}
       <div className="min-h-0 overflow-auto px-3 lg:hidden">
         <table className="w-full text-xs">
           <thead className="sticky top-0 z-20">
@@ -426,7 +412,7 @@ export default function RekapitulasiTable({
           </thead>
 
           <tbody>
-            {paginatedMudaMudi.map((item) => {
+            {mudaMudi.map((item) => {
               const totals = getStatusTotals(item.id);
 
               return (
@@ -483,7 +469,7 @@ export default function RekapitulasiTable({
           totalPages={totalPages}
           itemsPerPage={itemsPerPage}
           perPageOptions={PER_PAGE_OPTIONS}
-          onItemsPerPageChange={setItemsPerPage}
+          onItemsPerPageChange={onItemsPerPageChange}
           onGoToPage={goToPage}
         />
       </div>

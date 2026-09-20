@@ -15,48 +15,32 @@ import {
   getPresensiTerbaru as getPresensiTerbaruDashboard,
 } from "./dashboard";
 
-import {
-  getMonitoringPresensi as getMonitoringPresensiAdmin,
-} from "./monitoring";
+import { getMonitoringPresensi as getMonitoringPresensiAdmin } from "./monitoring";
 
-import {
-  getRekapitulasiPresensi as getRekapitulasiPresensiAdmin,
-} from "./rekapitulasi";
+import { getRekapitulasiPresensi as getRekapitulasiPresensiAdmin } from "./rekapitulasi";
 
-import {
-  createManualPresensi as createManualPresensiAdmin,
-} from "./manual";
+import { createManualPresensi as createManualPresensiAdmin } from "./manual";
 
-import {
-  updatePresensiStatus as updatePresensiStatusAdmin,
-} from "./update";
+import { updatePresensiStatus as updatePresensiStatusAdmin } from "./update";
 
 import { PresensiStatus } from "./types";
 
-export async function getKegiatanById(
-  kegiatanId: number,
-) {
+export async function getKegiatanById(kegiatanId: number) {
   return getKegiatanByIdPublic(kegiatanId);
 }
 
-export async function getDeviceStatus(
-  deviceToken: string | null,
-) {
+export async function getDeviceStatus(deviceToken: string | null) {
   return getDeviceStatusPublic(deviceToken);
 }
 
-export async function verifyIdentity(
-  identity: {
-    nama: string;
-    tanggalLahir: string;
-  },
-) {
+export async function verifyIdentity(identity: {
+  nama: string;
+  tanggalLahir: string;
+}) {
   return verifyIdentityPublic(identity);
 }
 
-export async function registerDevice(
-  mudamudiId: number,
-) {
+export async function registerDevice(mudamudiId: number) {
   return registerDevicePublic(mudamudiId);
 }
 
@@ -64,10 +48,7 @@ export async function changeDeviceAccount(
   deviceToken: string,
   mudamudiId: number,
 ) {
-  return changeDeviceAccountPublic(
-    deviceToken,
-    mudamudiId,
-  );
+  return changeDeviceAccountPublic(deviceToken, mudamudiId);
 }
 
 export async function submitPresensi(
@@ -78,11 +59,7 @@ export async function submitPresensi(
     tanggalLahir: string;
   },
 ) {
-  return submitPresensiPublic(
-    deviceToken,
-    kegiatanId,
-    identity,
-  );
+  return submitPresensiPublic(deviceToken, kegiatanId, identity);
 }
 
 export async function getPresensiSummary() {
@@ -97,35 +74,37 @@ export async function getPresensiTerbaru() {
   return getPresensiTerbaruDashboard();
 }
 
-export async function getMonitoringPresensi(
-  kegiatanId: number,
-) {
+export async function getMonitoringPresensi(kegiatanId: number) {
   return getMonitoringPresensiAdmin(kegiatanId);
 }
 
-export async function getRekapitulasiPresensi() {
-  return getRekapitulasiPresensiAdmin();
+export async function getRekapitulasiPresensi(input: {
+  page: number;
+  itemsPerPage: number;
+  search?: string;
+  bulan?: string;
+  kegiatanId?: number;
+  desa?: string;
+  kelompok?: string;
+}) {
+  return getRekapitulasiPresensiAdmin(input);
 }
 
-export async function createManualPresensi(
-  input: {
-    kegiatanId: number;
-    mudamudiId: number;
-    status: PresensiStatus;
-    keterangan?: string | null;
-  },
-) {
+export async function createManualPresensi(input: {
+  kegiatanId: number;
+  mudamudiId: number;
+  status: PresensiStatus;
+  keterangan?: string | null;
+}) {
   return createManualPresensiAdmin(input);
 }
 
-export async function updatePresensiStatus(
-  input: {
-    presensiId: number | null;
-    kegiatanId: number;
-    mudamudiId: number;
-    status: PresensiStatus;
-    keterangan?: string | null;
-  },
-) {
+export async function updatePresensiStatus(input: {
+  presensiId: number | null;
+  kegiatanId: number;
+  mudamudiId: number;
+  status: PresensiStatus;
+  keterangan?: string | null;
+}) {
   return updatePresensiStatusAdmin(input);
 }

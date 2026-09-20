@@ -9,17 +9,16 @@ import ModalWrapper from "./ModalWrapper";
 import { UploadIcon } from "./icons";
 
 type PreviewRow = {
-  rowNumber: number;
   desa: string;
   kelompok: string;
   nama: string;
   jenis_kelamin: string;
   tempat_lahir: string | null;
-  tanggal_lahir: string;
+  tanggal_lahir: string | null;
   umur: number | null;
   no_hp: string | null;
   pekerjaan: string | null;
-  kelas: string;
+  kelas: string | null;
   nama_ayah: string | null;
   nama_ibu: string | null;
   no_hp_ortu: string | null;
@@ -27,6 +26,11 @@ type PreviewRow = {
 };
 
 type ImportError = {
+  rowNumber: number;
+  message: string;
+};
+
+type ImportWarning = {
   rowNumber: number;
   message: string;
 };
@@ -42,6 +46,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [previewData, setPreviewData] = useState<PreviewRow[]>([]);
   const [errors, setErrors] = useState<ImportError[]>([]);
+  const [warnings, setWarnings] = useState<ImportWarning[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState<"upload" | "preview">("upload");
@@ -50,6 +55,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
     setFile(null);
     setPreviewData([]);
     setErrors([]);
+    setWarnings([]);
     setStep("upload");
     setError("");
 
@@ -64,6 +70,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
     setError("");
     setPreviewData([]);
     setErrors([]);
+    setWarnings([]);
 
     if (!selectedFile) {
       setFile(null);
@@ -94,6 +101,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
 
     try {
       const formData = new FormData();
+
       formData.append("file", file);
 
       const result = await previewImportMudamudi(formData);
@@ -104,7 +112,10 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
       }
 
       setPreviewData(result.data as PreviewRow[]);
+
       setErrors(result.errors ?? []);
+
+      setWarnings(result.warnings ?? []);
 
       if (result.data.length === 0 && result.errors.length === 0) {
         setError("Tidak ada data yang ditemukan di file.");
@@ -120,12 +131,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
   }
 
   async function handleImport() {
-    if (!file) {
-      return;
-    }
-
-    if (errors.length > 0) {
-      setError("Perbaiki data yang bermasalah sebelum melakukan import.");
+    if (!file || previewData.length === 0) {
       return;
     }
 
@@ -134,6 +140,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
 
     try {
       const formData = new FormData();
+
       formData.append("file", file);
 
       const result = await importMudamudi(formData);
@@ -209,6 +216,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                 className="mt-0.5 h-4 w-4 shrink-0 text-red-500"
               >
                 <circle cx="12" cy="12" r="9" />
+
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -241,11 +249,13 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                       strokeLinejoin="round"
                       d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z"
                     />
+
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       d="M14 2v6h6"
                     />
+
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -277,9 +287,14 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                 </p>
 
                 <p className="mt-1 text-[10px] leading-4 text-gray-500">
-                  Desa, Kelompok, Nama Lengkap, Jenis Kelamin, Tempat, Tanggal
-                  Lahir , Umur, No HP, Pekerjaan, Kelas, Nama Ayah, Nama Ibu, No
-                  HP orangtua, Alamat
+                  <span className="font-medium text-gray-700">Wajib:</span>{" "}
+                  Desa, Kelompok, Nama Lengkap, Jenis Kelamin.
+                </p>
+
+                <p className="mt-1 text-[10px] leading-4 text-gray-500">
+                  <span className="font-medium text-gray-700">Opsional:</span>{" "}
+                  Tempat, Tanggal Lahir, Umur, No HP, Pekerjaan, Kelas, Nama
+                  Ayah, Nama Ibu, No HP Orangtua, Alamat.
                 </p>
 
                 <p className="mt-2 text-[9px] leading-4 text-gray-400">
@@ -292,7 +307,8 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
 
           {step === "preview" && (
             <>
-              <div className="grid grid-cols-2 gap-2">
+              {/* SUMMARY */}
+              <div className="grid grid-cols-3 gap-2">
                 <div className="rounded-lg border border-teal-100 bg-teal-50 px-3 py-2.5">
                   <p className="text-[9px] font-medium uppercase tracking-wide text-teal-600">
                     Siap diimport
@@ -302,7 +318,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                     {previewData.length}
                   </p>
 
-                  <p className="text-[9px] text-teal-600">data valid</p>
+                  <p className="text-[9px] text-teal-600">data</p>
                 </div>
 
                 <div
@@ -317,7 +333,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                       errors.length > 0 ? "text-red-600" : "text-gray-500"
                     }`}
                   >
-                    Bermasalah
+                    Dilewati
                   </p>
 
                   <p
@@ -336,15 +352,109 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                     baris
                   </p>
                 </div>
-              </div>
 
-              {errors.length > 0 && (
-                <div className="rounded-lg border border-red-100 bg-red-50 p-3">
-                  <p className="text-[10px] font-semibold text-red-700">
-                    Data yang perlu diperbaiki
+                <div
+                  className={`rounded-lg border px-3 py-2.5 ${
+                    warnings.length > 0
+                      ? "border-amber-100 bg-amber-50"
+                      : "border-gray-100 bg-gray-50"
+                  }`}
+                >
+                  <p
+                    className={`text-[9px] font-medium uppercase tracking-wide ${
+                      warnings.length > 0 ? "text-amber-600" : "text-gray-500"
+                    }`}
+                  >
+                    Peringatan
                   </p>
 
-                  <div className="mt-2 max-h-32 space-y-1.5 overflow-y-auto">
+                  <p
+                    className={`mt-0.5 text-lg font-semibold ${
+                      warnings.length > 0 ? "text-amber-700" : "text-gray-700"
+                    }`}
+                  >
+                    {warnings.length}
+                  </p>
+
+                  <p
+                    className={`text-[9px] ${
+                      warnings.length > 0 ? "text-amber-600" : "text-gray-500"
+                    }`}
+                  >
+                    temuan
+                  </p>
+                </div>
+              </div>
+
+              {/* IMPORT INFO */}
+              {(errors.length > 0 || warnings.length > 0) && (
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
+                  <div className="flex items-start gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      className="mt-0.5 h-4 w-4 shrink-0 text-gray-500"
+                    >
+                      <circle cx="12" cy="12" r="9" />
+
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 11v5M12 8h.01"
+                      />
+                    </svg>
+
+                    <div>
+                      <p className="text-[10px] font-medium text-gray-700">
+                        Data tetap dapat diimport
+                      </p>
+
+                      <p className="mt-0.5 text-[9px] leading-4 text-gray-500">
+                        Baris yang gagal akan dilewati. Field yang memiliki
+                        peringatan tetap diimport dengan nilai kosong.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ERRORS */}
+              {errors.length > 0 && (
+                <div className="rounded-lg border border-red-100 bg-red-50 p-3">
+                  <div className="flex items-start gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="mt-0.5 h-4 w-4 shrink-0 text-red-500"
+                    >
+                      <circle cx="12" cy="12" r="9" />
+
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 8v4M12 16h.01"
+                      />
+                    </svg>
+
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold text-red-700">
+                        Baris tidak dapat diimport
+                      </p>
+
+                      <p className="mt-0.5 text-[9px] leading-4 text-red-600">
+                        Nama Lengkap, Desa, Kelompok, dan Jenis Kelamin wajib
+                        diisi dengan benar.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 max-h-32 space-y-1.5 overflow-y-auto border-t border-red-100 pt-2">
                     {errors.map((item, index) => (
                       <div
                         key={`${item.rowNumber}-${index}`}
@@ -361,31 +471,109 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                 </div>
               )}
 
+              {/* WARNINGS */}
+              {warnings.length > 0 && (
+                <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
+                  <div className="flex items-start gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="mt-0.5 h-4 w-4 shrink-0 text-amber-500"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M10.3 3.5 2.9 16.3A2 2 0 0 0 4.6 19.3h14.8a2 2 0 0 0 1.7-3L13.7 3.5a2 2 0 0 0-3.4 0Z"
+                      />
+
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 9v3M12 15h.01"
+                      />
+                    </svg>
+
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold text-amber-700">
+                        Peringatan data
+                      </p>
+
+                      <p className="mt-0.5 text-[9px] leading-4 text-amber-600">
+                        Data tetap akan diimport. Field yang kosong atau
+                        formatnya tidak sesuai akan disimpan sebagai kosong.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 max-h-36 space-y-1.5 overflow-y-auto border-t border-amber-100 pt-2">
+                    {warnings.map((item, index) => (
+                      <div
+                        key={`${item.rowNumber}-${index}`}
+                        className="flex gap-2 text-[9px] leading-4 text-amber-700"
+                      >
+                        <span className="shrink-0 font-semibold">
+                          Baris {item.rowNumber}:
+                        </span>
+
+                        <span>{item.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* PREVIEW TABLE */}
               {previewData.length > 0 && (
                 <div className="overflow-hidden rounded-lg border border-gray-200">
                   <div className="border-b border-gray-100 bg-gray-50 px-3 py-2">
-                    <p className="text-[10px] font-semibold text-gray-700">
-                      Preview Data
-                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold text-gray-700">
+                          Preview Data
+                        </p>
+
+                        <p className="mt-0.5 text-[9px] text-gray-400">
+                          Data yang ditampilkan sudah lolos validasi kolom
+                          wajib.
+                        </p>
+                      </div>
+
+                      <span className="shrink-0 rounded-md bg-teal-50 px-2 py-1 text-[9px] font-medium text-teal-600">
+                        {previewData.length} data
+                      </span>
+                    </div>
                   </div>
 
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-150 text-left text-[9px]">
                       <thead className="bg-white text-gray-400">
                         <tr>
-                          <th className="px-3 py-2 font-medium">Baris</th>
+                          <th className="px-3 py-2 font-medium">#</th>
+
                           <th className="px-3 py-2 font-medium">Nama</th>
+
                           <th className="px-3 py-2 font-medium">Desa</th>
+
                           <th className="px-3 py-2 font-medium">Kelompok</th>
+
                           <th className="px-3 py-2 font-medium">JK</th>
+
                           <th className="px-3 py-2 font-medium">Kelas</th>
                         </tr>
                       </thead>
 
                       <tbody className="divide-y divide-gray-100">
-                        {previewData.slice(0, 8).map((item) => (
-                          <tr key={item.rowNumber} className="text-gray-600">
-                            <td className="px-3 py-2">{item.rowNumber}</td>
+                        {previewData.slice(0, 8).map((item, index) => (
+                          <tr
+                            key={`${item.nama}-${index}`}
+                            className="text-gray-600"
+                          >
+                            <td className="px-3 py-2 text-gray-400">
+                              {index + 1}
+                            </td>
 
                             <td className="px-3 py-2 font-medium text-gray-800">
                               {item.nama}
@@ -397,7 +585,11 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
 
                             <td className="px-3 py-2">{item.jenis_kelamin}</td>
 
-                            <td className="px-3 py-2">{item.kelas}</td>
+                            <td className="px-3 py-2">
+                              {item.kelas ?? (
+                                <span className="text-gray-300">Kosong</span>
+                              )}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -406,7 +598,8 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
 
                   {previewData.length > 8 && (
                     <div className="border-t border-gray-100 px-3 py-2 text-[9px] text-gray-400">
-                      Menampilkan 8 dari {previewData.length} data valid.
+                      Menampilkan 8 dari {previewData.length} data yang siap
+                      diimport.
                     </div>
                   )}
                 </div>
@@ -439,9 +632,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
             <button
               type="button"
               onClick={handleImport}
-              disabled={
-                loading || previewData.length === 0 || errors.length > 0
-              }
+              disabled={loading || previewData.length === 0}
               className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-[#171717] px-5 text-[11px] font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Mengimport..." : `Import ${previewData.length} Data`}
