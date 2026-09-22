@@ -3,13 +3,13 @@ import Link from "next/link";
 const steps = [
   {
     number: "01",
-    title: "Verifikasi Data",
-    description: "Masukkan nama dan tanggal lahir untuk memverifikasi data.",
+    title: "Scan QR Kegiatan",
+    description: "Buka kamera dan scan QR Code kegiatan yang tersedia.",
   },
   {
     number: "02",
-    title: "Scan QR Kegiatan",
-    description: "Buka kamera dan scan QR Code kegiatan yang tersedia.",
+    title: "Verifikasi Data",
+    description: "Masukkan nama dan tanggal lahir untuk memverifikasi data.",
   },
   {
     number: "03",
