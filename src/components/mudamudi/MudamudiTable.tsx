@@ -22,10 +22,11 @@ type Props = {
   sortConfig: Parameters<typeof SearchFilterBar>[0]["sortConfig"];
   setSortConfig: Parameters<typeof SearchFilterBar>[0]["setSortConfig"];
   onReset: () => void;
+  adminDesa: string | null;
   sortIndicator: (
-    key: Parameters<
-      typeof MudamudiTableView
-    >[0]["sortIndicator"] extends (key: infer K) => string
+    key: Parameters<typeof MudamudiTableView>[0]["sortIndicator"] extends (
+      key: infer K,
+    ) => string
       ? K
       : never,
   ) => string;
@@ -55,6 +56,7 @@ export default function MudamudiTable({
   sortConfig,
   setSortConfig,
   onReset,
+  adminDesa,
   sortIndicator,
   toggleSort,
   filterKey,
@@ -80,6 +82,7 @@ export default function MudamudiTable({
         setSortConfig={setSortConfig}
         hasActiveFilters={hasActiveFilters}
         onReset={onReset}
+        adminDesa={adminDesa}
       />
 
       <MudamudiTableView
