@@ -4,6 +4,7 @@ import { DESA_OPTIONS, KELOMPOK_BY_DESA } from "./constants";
 
 type ExportOptions = {
   data: Mudamudi[];
+  adminDesa: string | null;
 };
 
 function getKelompokIndex(desa: string, kelompok: string): number {
@@ -16,6 +17,7 @@ function getKelompokIndex(desa: string, kelompok: string): number {
 function sortByDesaThenKelompokThenNama(data: Mudamudi[]): Mudamudi[] {
   return [...data].sort((a, b) => {
     const desaIndexA = DESA_OPTIONS.indexOf(a.desa);
+
     const desaIndexB = DESA_OPTIONS.indexOf(b.desa);
 
     if (desaIndexA !== desaIndexB) {
@@ -30,7 +32,7 @@ function sortByDesaThenKelompokThenNama(data: Mudamudi[]): Mudamudi[] {
       return kelompokIndexA - kelompokIndexB;
     }
 
-    return a.nama.localeCompare(b.nama);
+    return a.nama.localeCompare(b.nama, "id");
   });
 }
 
@@ -93,8 +95,12 @@ function getTimestamp(): string {
   return `${tanggal}_${jam}`;
 }
 
-export async function exportPresensiExcel({ data }: ExportOptions) {
-  const sorted = sortByDesaThenKelompokThenNama(data);
+export async function exportPresensiExcel({ data, adminDesa }: ExportOptions) {
+  const scopedData = adminDesa
+    ? data.filter((item) => item.desa === adminDesa)
+    : data;
+
+  const sorted = sortByDesaThenKelompokThenNama(scopedData);
 
   const header = [
     "NO",
@@ -150,10 +156,18 @@ export async function exportPresensiExcel({ data }: ExportOptions) {
     };
 
     cell.border = {
-      top: { style: "thin" },
-      bottom: { style: "thin" },
-      left: { style: "thin" },
-      right: { style: "thin" },
+      top: {
+        style: "thin",
+      },
+      bottom: {
+        style: "thin",
+      },
+      left: {
+        style: "thin",
+      },
+      right: {
+        style: "thin",
+      },
     };
 
     cell.fill = {
@@ -188,10 +202,18 @@ export async function exportPresensiExcel({ data }: ExportOptions) {
 
     row.eachCell((cell, colNumber) => {
       cell.border = {
-        top: { style: "thin" },
-        bottom: { style: "thin" },
-        left: { style: "thin" },
-        right: { style: "thin" },
+        top: {
+          style: "thin",
+        },
+        bottom: {
+          style: "thin",
+        },
+        left: {
+          style: "thin",
+        },
+        right: {
+          style: "thin",
+        },
       };
 
       cell.alignment = {

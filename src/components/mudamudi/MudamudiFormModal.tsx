@@ -12,6 +12,7 @@ import ModalWrapper from "./ModalWrapper";
 type Props = {
   mode: "add" | "edit";
   initialData?: Mudamudi;
+  adminDesa: string | null;
   fieldErrors: FieldErrors;
   error: string;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
@@ -76,12 +77,15 @@ function calculatekelas(umur: number | null): string {
 export default function MudamudiFormModal({
   mode,
   initialData,
+  adminDesa,
   fieldErrors,
   error,
   onSubmit,
   onClose,
 }: Props) {
-  const [desa, setDesa] = useState(initialData?.desa ?? "");
+  const isAdminDesa = adminDesa !== null;
+
+  const [desa, setDesa] = useState(adminDesa ?? initialData?.desa ?? "");
 
   const [tanggalLahir, setTanggalLahir] = useState(
     initialData?.tanggal_lahir ?? "",
@@ -89,18 +93,26 @@ export default function MudamudiFormModal({
 
   const [kelompok, setKelompok] = useState(initialData?.kelompok ?? "");
 
+  useEffect(() => {
+    if (adminDesa !== null) {
+      setDesa(adminDesa);
+    } else if (mode === "edit" && initialData?.desa) {
+      setDesa(initialData.desa);
+    }
+  }, [adminDesa, mode, initialData?.desa]);
+
   const kelompokOptions = desa
     ? (KELOMPOK_BY_DESA[desa as keyof typeof KELOMPOK_BY_DESA] ?? [])
     : [];
-
-  const umur = calculateAge(tanggalLahir);
-  const kelas = calculatekelas(umur);
 
   useEffect(() => {
     if (kelompok && !kelompokOptions.includes(kelompok as never)) {
       setKelompok("");
     }
   }, [desa]);
+
+  const umur = calculateAge(tanggalLahir);
+  const kelas = calculatekelas(umur);
 
   return (
     <ModalWrapper onClose={onClose}>
@@ -257,54 +269,72 @@ export default function MudamudiFormModal({
               </label>
 
               <div className="relative">
-                <select
-                  id="desa"
-                  name="desa"
-                  value={desa}
-                  onChange={(e) => {
-                    setDesa(e.target.value);
-                    setKelompok("");
-                  }}
-                  className={`h-9.75 w-full appearance-none rounded-lg border bg-white px-3 pr-9 text-[12px] outline-none transition focus:ring-2 ${
-                    desa ? "text-gray-700" : "text-gray-500"
-                  } ${
-                    fieldErrors.desa
-                      ? "border-red-300 focus:border-red-400 focus:ring-red-50"
-                      : "border-gray-200 focus:border-teal-300 focus:ring-teal-50"
-                  }`}
-                >
-                  <option value="" disabled>
-                    Pilih Desa
-                  </option>
+                {isAdminDesa ? (
+                  <>
+                    <div className="flex h-9.75 w-full items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-[12px] text-gray-600">
+                      {adminDesa}
+                    </div>
 
-                  {DESA_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                    <input type="hidden" name="desa" value={desa} />
+                  </>
+                ) : (
+                  <>
+                    <select
+                      id="desa"
+                      name="desa"
+                      value={desa}
+                      onChange={(e) => {
+                        setDesa(e.target.value);
+                        setKelompok("");
+                      }}
+                      className={`h-9.75 w-full appearance-none rounded-lg border bg-white px-3 pr-9 text-[12px] outline-none transition focus:ring-2 ${
+                        desa ? "text-gray-700" : "text-gray-500"
+                      } ${
+                        fieldErrors.desa
+                          ? "border-red-300 focus:border-red-400 focus:ring-red-50"
+                          : "border-gray-200 focus:border-teal-300 focus:ring-teal-50"
+                      }`}
+                    >
+                      <option value="" disabled>
+                        Pilih Desa
+                      </option>
 
-                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-500">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    className="h-3.5 w-3.5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="m6 9 6 6 6-6"
-                    />
-                  </svg>
-                </div>
+                      {DESA_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-500">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        className="h-3.5 w-3.5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="m6 9 6 6 6-6"
+                        />
+                      </svg>
+                    </div>
+                  </>
+                )}
               </div>
 
               {fieldErrors.desa && (
                 <p className="mt-1 text-[10px] text-red-500">
                   {fieldErrors.desa}
+                </p>
+              )}
+
+              {isAdminDesa && (
+                <p className="mt-1 text-[9px] text-gray-400">
+                  Desa mengikuti wilayah akun admin.
                 </p>
               )}
             </div>

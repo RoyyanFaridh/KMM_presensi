@@ -4,9 +4,14 @@ import {
   formatJam,
   formatTanggal,
   getKegiatanStatus,
-  getKegiatanStatusLabel,
 } from "../../backend/kegiatan/format";
-import { Kegiatan, SortConfig, SortKey } from "../../backend/kegiatan/types";
+
+import {
+  Kegiatan,
+  SortConfig,
+  SortKey,
+} from "../../backend/kegiatan/types";
+
 import { DeleteIcon, EditIcon } from "../mudamudi/icons";
 
 type Props = {
@@ -16,6 +21,7 @@ type Props = {
   onEdit: (kegiatan: Kegiatan) => void;
   onDelete: (kegiatan: Kegiatan) => void;
   onShowQR: (kegiatan: Kegiatan) => void;
+  onScanQR: (kegiatan: Kegiatan) => void;
 };
 
 const columns: {
@@ -35,6 +41,7 @@ export default function DesktopTable({
   onEdit,
   onDelete,
   onShowQR,
+  onScanQR,
 }: Props) {
   return (
     <div className="hidden overflow-hidden rounded-xl border border-gray-200 bg-white md:block">
@@ -57,7 +64,10 @@ export default function DesktopTable({
               </th>
 
               {columns.map((column) => (
-                <th key={column.key} className="px-4 py-3">
+                <th
+                  key={column.key}
+                  className="px-4 py-3"
+                >
                   <button
                     type="button"
                     onClick={() => onSort(column.key)}
@@ -67,7 +77,9 @@ export default function DesktopTable({
 
                     {sort?.key === column.key && (
                       <span className="text-teal-600">
-                        {sort.direction === "asc" ? "↑" : "↓"}
+                        {sort.direction === "asc"
+                          ? "↑"
+                          : "↓"}
                       </span>
                     )}
                   </button>
@@ -124,10 +136,16 @@ export default function DesktopTable({
                     <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-gray-600">
                       {formatTanggal(item.tanggal_mulai)}
 
-                      {item.tanggal_selesai !== item.tanggal_mulai && (
+                      {item.tanggal_selesai !==
+                        item.tanggal_mulai && (
                         <>
-                          <span className="mx-1 text-gray-300">-</span>
-                          {formatTanggal(item.tanggal_selesai)}
+                          <span className="mx-1 text-gray-300">
+                            -
+                          </span>
+
+                          {formatTanggal(
+                            item.tanggal_selesai,
+                          )}
                         </>
                       )}
                     </td>
@@ -147,11 +165,13 @@ export default function DesktopTable({
                     </td>
 
                     <td className="px-2 py-3 align-middle">
-                      {itemStatus === "sedang_berlangsung" ? (
+                      {itemStatus ===
+                      "sedang_berlangsung" ? (
                         <span className="inline-block max-w-full rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-medium leading-3 text-emerald-700">
                           Sedang berlangsung
                         </span>
-                      ) : itemStatus === "akan_berlangsung" ? (
+                      ) : itemStatus ===
+                        "akan_berlangsung" ? (
                         <span className="inline-block max-w-full rounded-full bg-amber-50 px-2 py-1 text-[9px] font-medium leading-3 text-amber-700">
                           Akan berlangsung
                         </span>
@@ -166,10 +186,10 @@ export default function DesktopTable({
                       <div className="flex items-center justify-center gap-1">
                         <button
                           type="button"
-                          onClick={() => onShowQR(item)}
-                          className="inline-flex h-8 items-center justify-center rounded-lg px-2.5 text-[10px] font-medium text-teal-700 transition-colors hover:bg-teal-50"
+                          onClick={() => onScanQR(item)}
+                          className="inline-flex h-8 items-center justify-center rounded-lg bg-teal-50 px-2.5 text-[10px] font-semibold text-teal-700 transition-colors hover:bg-teal-100"
                         >
-                          QR
+                          Scan QR
                         </button>
 
                         <button

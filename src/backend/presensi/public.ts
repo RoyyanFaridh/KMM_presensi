@@ -1,15 +1,19 @@
 "use server";
 
 import { createAdminClient } from "../supabase/admin";
-import { isKegiatanAktif } from "./helpers";
+import { isKegiatanAktif, buildDateTime } from "./helpers";
 
 import {
-  createDeviceToken,
+  createDeviceToken as createDeviceTokenLegacy,
   getDeviceByToken,
   updateDeviceLastUsed,
 } from "./device";
 
-import type { PresensiMetode, PresensiStatus } from "./types";
+import type { PresensiStatus, PresensiMetode } from "./types";
+
+const HADIR_TOLERANCE_MINUTES = 10;
+
+const MUDA_MUDI_QR_PREFIX = "SIKEMA:MUDA_MUDI:";
 
 type Identity = {
   nama: string;
@@ -26,92 +30,352 @@ type Kegiatan = {
   lokasi: string;
 };
 
-type MudamudiPresensi = {
+type Mudamudi = {
   id: number;
   nama: string;
-  kelas: string;
   desa: string;
   kelompok: string;
+  kelas: string;
   jenis_kelamin: string | null;
+  tanggal_lahir: string | null;
 };
 
-const BATAS_TERLAMBAT_MENIT = 10;
+export type ScanMudamudiQRResult =
+  | {
+      success: true;
+      type: "success";
+      message: string;
+      presensiId: number;
+      waktuCheckin: string;
+      status: PresensiStatus;
+      metode: PresensiMetode;
+      kegiatan: Kegiatan;
+      mudamudi: Mudamudi;
+    }
+  | {
+      success: false;
+      type:
+        | "invalid_qr"
+        | "mudamudi_not_found"
+        | "kegiatan_not_found"
+        | "kegiatan_inactive"
+        | "already_present"
+        | "database_error";
+      message: string;
+      mudamudi?: Mudamudi;
+      kegiatan?: Kegiatan;
+    };
 
-function getStatusPresensi(
-  tanggalMulai: string,
-  jamMulai: string,
-): PresensiStatus {
-  const normalizedJamMulai =
-    jamMulai.length === 5 ? `${jamMulai}:00` : jamMulai;
+function parseMudamudiQR(qrText: string): string | null {
+  const value = qrText.trim();
 
-  const waktuMulai = new Date(`${tanggalMulai}T${normalizedJamMulai}+07:00`);
-
-  const batasHadir = waktuMulai.getTime() + BATAS_TERLAMBAT_MENIT * 60 * 1000;
-
-  const sekarang = Date.now();
-
-  if (sekarang <= batasHadir) {
-    return "hadir";
+  if (!value.startsWith(MUDA_MUDI_QR_PREFIX)) {
+    return null;
   }
 
-  return "terlambat";
+  const qrId = value.slice(MUDA_MUDI_QR_PREFIX.length).trim();
+
+  if (!qrId) {
+    return null;
+  }
+
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  if (!uuidRegex.test(qrId)) {
+    return null;
+  }
+
+  return qrId;
 }
 
-/**
- * Mengambil data kegiatan berdasarkan ID.
- */
-export async function getKegiatanById(kegiatanId: number) {
-  const supabase = createAdminClient();
+function determinePresensiStatus(
+  tanggalMulai: string,
+  jamMulai: string,
+  waktuCheckin: Date,
+): PresensiStatus {
+  const waktuMulai = buildDateTime(tanggalMulai, jamMulai);
 
-  if (!Number.isInteger(kegiatanId) || kegiatanId <= 0) {
-    return {
-      data: null,
-      error: "Kegiatan tidak valid.",
-    };
-  }
+  const batasHadir = new Date(
+    waktuMulai.getTime() + HADIR_TOLERANCE_MINUTES * 60 * 1000,
+  );
+
+  return waktuCheckin.getTime() <= batasHadir.getTime() ? "hadir" : "terlambat";
+}
+
+export async function getKegiatanById(
+  kegiatanId: number,
+): Promise<Kegiatan | null> {
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi",
+      `
+        id,
+        nama,
+        tanggal_mulai,
+        tanggal_selesai,
+        jam_mulai,
+        jam_selesai,
+        lokasi
+      `,
     )
     .eq("id", kegiatanId)
     .maybeSingle();
 
   if (error) {
+    console.error("[getKegiatanById] Database error:", error);
+    return null;
+  }
+
+  return data as Kegiatan | null;
+}
+
+/*
+ * ============================================
+ * NEW QR MUDAMUDI FLOW
+ * ============================================
+ */
+
+export async function scanMudamudiQR(
+  qrText: string,
+  kegiatanId: number,
+): Promise<ScanMudamudiQRResult> {
+  if (!qrText?.trim()) {
     return {
-      data: null,
-      error: "Gagal memuat kegiatan.",
+      success: false,
+      type: "invalid_qr",
+      message: "QR Code tidak terbaca.",
     };
   }
 
-  if (!data) {
+  if (!Number.isInteger(kegiatanId) || kegiatanId <= 0) {
     return {
-      data: null,
-      error: "Kegiatan tidak ditemukan.",
+      success: false,
+      type: "kegiatan_not_found",
+      message: "Kegiatan tidak valid.",
+    };
+  }
+
+  const qrId = parseMudamudiQR(qrText);
+
+  if (!qrId) {
+    return {
+      success: false,
+      type: "invalid_qr",
+      message: "QR Code bukan QR Muda-Mudi SIKEMA.",
+    };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: mudamudiData, error: mudamudiError } = await supabase
+    .from("mudamudi")
+    .select(
+      `
+        id,
+        nama,
+        desa,
+        kelompok,
+        kelas,
+        jenis_kelamin,
+        tanggal_lahir
+      `,
+    )
+    .eq("qr_id", qrId)
+    .maybeSingle();
+
+  if (mudamudiError) {
+    console.error("[scanMudamudiQR] Mudamudi lookup error:", mudamudiError);
+
+    return {
+      success: false,
+      type: "database_error",
+      message: "Terjadi kesalahan saat mencari data Muda-Mudi.",
+    };
+  }
+
+  if (!mudamudiData) {
+    return {
+      success: false,
+      type: "mudamudi_not_found",
+      message: "QR Code tidak terdaftar pada data Muda-Mudi.",
+    };
+  }
+
+  const mudamudi = mudamudiData as Mudamudi;
+
+  const { data: kegiatanData, error: kegiatanError } = await supabase
+    .from("kegiatan")
+    .select(
+      `
+        id,
+        nama,
+        tanggal_mulai,
+        tanggal_selesai,
+        jam_mulai,
+        jam_selesai,
+        lokasi
+      `,
+    )
+    .eq("id", kegiatanId)
+    .maybeSingle();
+
+  if (kegiatanError) {
+    console.error("[scanMudamudiQR] Kegiatan lookup error:", kegiatanError);
+
+    return {
+      success: false,
+      type: "database_error",
+      message: "Terjadi kesalahan saat mencari kegiatan.",
+      mudamudi,
+    };
+  }
+
+  if (!kegiatanData) {
+    return {
+      success: false,
+      type: "kegiatan_not_found",
+      message: "Kegiatan tidak ditemukan.",
+      mudamudi,
+    };
+  }
+
+  const kegiatan = kegiatanData as Kegiatan;
+
+  const kegiatanAktif = isKegiatanAktif(
+    kegiatan.tanggal_mulai,
+    kegiatan.tanggal_selesai,
+    kegiatan.jam_mulai,
+    kegiatan.jam_selesai,
+  );
+
+  if (!kegiatanAktif) {
+    return {
+      success: false,
+      type: "kegiatan_inactive",
+      message: "Kegiatan belum dimulai atau sudah selesai.",
+      kegiatan,
+      mudamudi,
+    };
+  }
+
+  const { data: existingPresensi, error: existingError } = await supabase
+    .from("presensi")
+    .select("id, status, waktu_checkin")
+    .eq("kegiatan_id", kegiatanId)
+    .eq("mudamudi_id", mudamudi.id)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error(
+      "[scanMudamudiQR] Existing presensi lookup error:",
+      existingError,
+    );
+
+    return {
+      success: false,
+      type: "database_error",
+      message: "Terjadi kesalahan saat mengecek presensi.",
+      kegiatan,
+      mudamudi,
+    };
+  }
+
+  if (existingPresensi) {
+    return {
+      success: false,
+      type: "already_present",
+      message: `${mudamudi.nama} sudah melakukan presensi.`,
+      kegiatan,
+      mudamudi,
+    };
+  }
+
+  const waktuCheckin = new Date();
+
+  const status = determinePresensiStatus(
+    kegiatan.tanggal_mulai,
+    kegiatan.jam_mulai,
+    waktuCheckin,
+  );
+
+  const { data: presensiData, error: presensiError } = await supabase
+    .from("presensi")
+    .insert({
+      kegiatan_id: kegiatanId,
+      mudamudi_id: mudamudi.id,
+      waktu_checkin: waktuCheckin.toISOString(),
+      status,
+      metode: "qr",
+      keterangan: null,
+    })
+    .select("id")
+    .single();
+
+  if (presensiError) {
+    if (presensiError.code === "23505") {
+      return {
+        success: false,
+        type: "already_present",
+        message: `${mudamudi.nama} sudah melakukan presensi.`,
+        kegiatan,
+        mudamudi,
+      };
+    }
+
+    console.error("[scanMudamudiQR] Insert presensi error:", presensiError);
+
+    return {
+      success: false,
+      type: "database_error",
+      message: "Presensi gagal disimpan. Silakan coba lagi.",
+      kegiatan,
+      mudamudi,
     };
   }
 
   return {
-    data: data as Kegiatan,
+    success: true,
+    type: "success",
+    message:
+      status === "hadir"
+        ? `${mudamudi.nama} berhasil melakukan presensi.`
+        : `${mudamudi.nama} berhasil melakukan presensi terlambat.`,
+    presensiId: presensiData.id,
+    waktuCheckin: waktuCheckin.toISOString(),
+    status,
+    metode: "qr",
+    kegiatan,
+    mudamudi,
   };
 }
 
-/**
- * Memeriksa status device.
+/*
+ * ============================================
+ * LEGACY DEVICE FLOW
+ * ============================================
+ *
+ * Fungsi-fungsi di bawah ini sementara
+ * dipertahankan agar file lain yang masih
+ * menggunakan alur lama tidak langsung error.
  */
+
 export async function getDeviceStatus(deviceToken: string | null) {
   if (!deviceToken?.trim()) {
     return {
-      status: "unknown" as const,
+      registered: false,
+      mudamudi: null,
     };
   }
 
-  const deviceResult = await getDeviceByToken(deviceToken);
+  const device = await getDeviceByToken(deviceToken);
 
-  if (deviceResult.error || !deviceResult.data) {
+  if (device.error || !device.data) {
     return {
-      status: "unknown" as const,
+      registered: false,
+      mudamudi: null,
     };
   }
 
@@ -120,17 +384,18 @@ export async function getDeviceStatus(deviceToken: string | null) {
   const { data: mudamudi, error } = await supabase
     .from("mudamudi")
     .select("id, nama")
-    .eq("id", deviceResult.data.mudamudiId)
+    .eq("id", device.data.mudamudiId)
     .maybeSingle();
 
   if (error || !mudamudi) {
     return {
-      status: "unknown" as const,
+      registered: false,
+      mudamudi: null,
     };
   }
 
   return {
-    status: "known" as const,
+    registered: true,
     mudamudi: {
       id: mudamudi.id,
       nama: mudamudi.nama,
@@ -138,182 +403,81 @@ export async function getDeviceStatus(deviceToken: string | null) {
   };
 }
 
-/**
- * Memverifikasi identitas Muda-Mudi.
- *
- * Jika tanggal lahir sudah tersedia:
- * - tanggal lahir harus sesuai.
- *
- * Jika tanggal lahir masih kosong:
- * - tanggal lahir yang dimasukkan disimpan
- *   sebagai data awal.
- */
 export async function verifyIdentity(identity: Identity) {
   const supabase = createAdminClient();
 
-  const namaNormalized = identity.nama.trim();
+  const nama = identity.nama.trim();
 
-  const tanggalLahirNormalized = identity.tanggalLahir.trim();
-
-  if (!namaNormalized) {
+  if (!nama || !identity.tanggalLahir) {
     return {
-      success: false as const,
-      error: "Nama wajib diisi.",
+      success: false,
+      mudamudi: null,
+      message: "Nama dan tanggal lahir wajib diisi.",
     };
   }
 
-  if (!tanggalLahirNormalized) {
-    return {
-      success: false as const,
-      error: "Tanggal lahir wajib diisi.",
-    };
-  }
-
-  const { data: candidates, error } = await supabase
+  const { data, error } = await supabase
     .from("mudamudi")
     .select(
       `
         id,
         nama,
-        tanggal_lahir,
-        kelas,
         desa,
         kelompok,
-        jenis_kelamin
+        kelas,
+        jenis_kelamin,
+        tanggal_lahir
       `,
     )
-    .ilike("nama", namaNormalized);
+    .ilike("nama", nama)
+    .eq("tanggal_lahir", identity.tanggalLahir)
+    .maybeSingle();
 
   if (error) {
+    console.error("[verifyIdentity] Database error:", error);
+
     return {
-      success: false as const,
-      error: "Gagal memeriksa data Muda-Mudi.",
+      success: false,
+      mudamudi: null,
+      message: "Terjadi kesalahan saat memverifikasi identitas.",
     };
   }
 
-  if (!candidates || candidates.length === 0) {
+  if (!data) {
     return {
-      success: false as const,
-      error: "Data Muda-Mudi tidak ditemukan. Periksa nama.",
+      success: false,
+      mudamudi: null,
+      message: "Data Muda-Mudi tidak ditemukan.",
     };
   }
 
-  /**
-   * Cari data yang tanggal lahirnya sudah
-   * tersimpan dan sesuai dengan input.
-   */
-  const matchedWithTanggalLahir = candidates.find(
-    (item) => item.tanggal_lahir === tanggalLahirNormalized,
-  );
-
-  if (matchedWithTanggalLahir) {
-    const matched: MudamudiPresensi = {
-      id: matchedWithTanggalLahir.id,
-      nama: matchedWithTanggalLahir.nama,
-      kelas: matchedWithTanggalLahir.kelas,
-      desa: matchedWithTanggalLahir.desa,
-      kelompok: matchedWithTanggalLahir.kelompok,
-      jenis_kelamin: matchedWithTanggalLahir.jenis_kelamin,
-    };
-
-    return {
-      success: true as const,
-      tanggalLahirBaru: false as const,
-      mudamudi: matched,
-    };
-  }
-
-  /**
-   * Cari kandidat yang tanggal lahirnya
-   * masih kosong.
-   */
-  const kandidatDenganTanggalKosong = candidates.filter(
-    (item) => !item.tanggal_lahir,
-  );
-
-  /**
-   * Tidak ada data dengan tanggal lahir kosong.
-   * Artinya tanggal lahir yang dimasukkan salah.
-   */
-  if (kandidatDenganTanggalKosong.length === 0) {
-    return {
-      success: false as const,
-      error: "Tanggal lahir tidak sesuai. Periksa kembali data Anda.",
-    };
-  }
-
-  /**
-   * Jika nama hanya mengarah ke satu data
-   * yang tanggal lahirnya kosong, data dapat
-   * dilengkapi.
-   */
-  if (kandidatDenganTanggalKosong.length === 1) {
-    const matched = kandidatDenganTanggalKosong[0];
-
-    if (!matched) {
-      return {
-        success: false as const,
-        error: "Data Muda-Mudi tidak ditemukan.",
-      };
-    }
-
-    const { error: updateError } = await supabase
-      .from("mudamudi")
-      .update({
-        tanggal_lahir: tanggalLahirNormalized,
-      })
-      .eq("id", matched.id);
-
-    if (updateError) {
-      return {
-        success: false as const,
-        error: "Tanggal lahir gagal disimpan. Silakan coba lagi.",
-      };
-    }
-
-    const updatedMudamudi: MudamudiPresensi = {
-      id: matched.id,
-      nama: matched.nama,
-      kelas: matched.kelas,
-      desa: matched.desa,
-      kelompok: matched.kelompok,
-      jenis_kelamin: matched.jenis_kelamin,
-    };
-
-    return {
-      success: true as const,
-      tanggalLahirBaru: true as const,
-      mudamudi: updatedMudamudi,
-    };
-  }
-
-  /**
-   * Nama sama dan terdapat lebih dari satu
-   * data dengan tanggal lahir kosong.
-   *
-   * Jangan menentukan akun secara sembarang.
-   */
   return {
-    success: false as const,
-    error:
-      "Ditemukan beberapa Muda-Mudi dengan nama yang sama. Hubungi admin untuk melengkapi data.",
+    success: true,
+    mudamudi: data,
+    message: "Identitas berhasil diverifikasi.",
   };
 }
 
-/**
- * Membuat device token setelah identitas
- * berhasil diverifikasi.
- */
 export async function registerDevice(mudamudiId: number) {
-  return createDeviceToken(mudamudiId);
+  const result = await createDeviceTokenLegacy(mudamudiId);
+
+  if (!result.success) {
+    return {
+      success: false,
+      deviceToken: null,
+      mudamudi: null,
+      message: result.error,
+    };
+  }
+
+  return {
+    success: true,
+    deviceToken: result.deviceToken,
+    mudamudi: result.mudamudi,
+    message: "Device berhasil didaftarkan.",
+  };
 }
 
-/**
- * Mengganti akun yang terhubung dengan device.
- *
- * Digunakan untuk fitur:
- * "Gunakan akun lain"
- */
 export async function changeDeviceAccount(
   deviceToken: string,
   mudamudiId: number,
@@ -324,109 +488,83 @@ export async function changeDeviceAccount(
 
   if (!token) {
     return {
-      success: false as const,
-      error: "Device token tidak valid.",
+      success: false,
+      mudamudi: null,
+      message: "Device token tidak valid.",
     };
   }
 
   if (!Number.isInteger(mudamudiId) || mudamudiId <= 0) {
     return {
-      success: false as const,
-      error: "Data Muda-Mudi tidak valid.",
+      success: false,
+      mudamudi: null,
+      message: "Data Muda-Mudi tidak valid.",
     };
   }
 
-  /**
-   * Pastikan device terdaftar.
-   */
-  const deviceResult = await getDeviceByToken(token);
-
-  if (deviceResult.error) {
-    return {
-      success: false as const,
-      error: deviceResult.error,
-    };
-  }
-
-  if (!deviceResult.data) {
-    return {
-      success: false as const,
-      error: "Perangkat belum terdaftar.",
-    };
-  }
-
-  /**
-   * Ambil data Muda-Mudi yang akan
-   * dihubungkan ke device.
-   */
-  const { data: mudamudi, error } = await supabase
+  const { data: mudamudi, error: mudamudiError } = await supabase
     .from("mudamudi")
-    .select("id, nama, kelas, desa, kelompok, jenis_kelamin")
+    .select("id, nama")
     .eq("id", mudamudiId)
     .maybeSingle();
 
-  if (error) {
+  if (mudamudiError || !mudamudi) {
     return {
-      success: false as const,
-      error: "Gagal memeriksa data Muda-Mudi.",
+      success: false,
+      mudamudi: null,
+      message: "Data Muda-Mudi tidak ditemukan.",
     };
   }
 
-  if (!mudamudi) {
+  const { data: device, error: deviceError } = await supabase
+    .from("presensi_device")
+    .select("id")
+    .eq("device_token", token)
+    .maybeSingle();
+
+  if (deviceError) {
+    console.error("[changeDeviceAccount] Device lookup error:", deviceError);
+
     return {
-      success: false as const,
-      error: "Muda-Mudi tidak ditemukan.",
+      success: false,
+      mudamudi: null,
+      message: "Gagal memeriksa perangkat.",
     };
   }
 
-  /**
-   * Ubah akun yang terhubung dengan device.
-   */
+  if (!device) {
+    return {
+      success: false,
+      mudamudi: null,
+      message: "Perangkat belum terdaftar.",
+    };
+  }
+
   const { error: updateError } = await supabase
     .from("presensi_device")
     .update({
       mudamudi_id: mudamudi.id,
       last_used_at: new Date().toISOString(),
     })
-    .eq("device_token", token);
+    .eq("id", device.id);
 
   if (updateError) {
+    console.error("[changeDeviceAccount] Update error:", updateError);
+
     return {
-      success: false as const,
-      error: "Gagal mengganti akun perangkat.",
+      success: false,
+      mudamudi: null,
+      message: "Akun device gagal diperbarui.",
     };
   }
 
   return {
-    success: true as const,
-    deviceToken: token,
-    mudamudi: {
-      id: mudamudi.id,
-      nama: mudamudi.nama,
-      kelas: mudamudi.kelas,
-      desa: mudamudi.desa,
-      kelompok: mudamudi.kelompok,
-      jenis_kelamin: mudamudi.jenis_kelamin,
-    },
+    success: true,
+    mudamudi,
+    message: "Akun device berhasil diperbarui.",
   };
 }
 
-/**
- * Submit presensi QR.
- *
- * Flow:
- * 1. Validasi kegiatan.
- * 2. Validasi kegiatan masih aktif.
- * 3. Cek device token.
- * 4. Jika device dikenal, gunakan akun device.
- * 5. Jika device belum dikenal, minta identitas.
- * 6. Verifikasi nama + tanggal lahir.
- * 7. Lengkapi tanggal lahir jika masih kosong.
- * 8. Buat device token jika diperlukan.
- * 9. Cek duplikasi presensi.
- * 10. Tentukan status hadir/terlambat.
- * 11. Simpan presensi.
- */
 export async function submitPresensi(
   deviceToken: string | null,
   kegiatanId: number,
@@ -434,258 +572,140 @@ export async function submitPresensi(
 ) {
   const supabase = createAdminClient();
 
-  if (!Number.isInteger(kegiatanId) || kegiatanId <= 0) {
-    return {
-      error: "Kegiatan tidak valid.",
-    };
-  }
-
-  /**
-   * Ambil kegiatan.
-   */
-  const kegiatanResult = await getKegiatanById(kegiatanId);
-
-  if (kegiatanResult.error) {
-    return {
-      error: kegiatanResult.error,
-    };
-  }
-
-  const kegiatan = kegiatanResult.data;
+  const kegiatan = await getKegiatanById(kegiatanId);
 
   if (!kegiatan) {
     return {
-      error: "Kegiatan tidak ditemukan.",
+      success: false,
+      message: "Kegiatan tidak ditemukan.",
     };
   }
 
-  /**
-   * Pastikan kegiatan masih aktif.
-   */
-  if (
-    !isKegiatanAktif(
-      kegiatan.tanggal_mulai,
-      kegiatan.tanggal_selesai,
-      kegiatan.jam_mulai,
-      kegiatan.jam_selesai,
-    )
-  ) {
+  const kegiatanAktif = isKegiatanAktif(
+    kegiatan.tanggal_mulai,
+    kegiatan.tanggal_selesai,
+    kegiatan.jam_mulai,
+    kegiatan.jam_selesai,
+  );
+
+  if (!kegiatanAktif) {
     return {
-      error: "Kegiatan ini tidak sedang aktif atau sudah selesai.",
+      success: false,
+      message: "Kegiatan belum dimulai atau sudah selesai.",
     };
   }
 
-  let mudamudi: MudamudiPresensi | null = null;
+  let mudamudi: Mudamudi | null = null;
 
-  let currentDeviceToken = deviceToken?.trim() || null;
+  if (deviceToken?.trim()) {
+    const device = await getDeviceByToken(deviceToken);
 
-  /**
-   * =====================================================
-   * 1. CEK DEVICE
-   * =====================================================
-   */
-  if (currentDeviceToken) {
-    const deviceResult = await getDeviceByToken(currentDeviceToken);
-
-    if (deviceResult.error) {
-      return {
-        error: deviceResult.error,
-      };
-    }
-
-    if (deviceResult.data) {
+    if (!device.error && device.data) {
       const { data: deviceMudamudi, error: mudamudiError } = await supabase
         .from("mudamudi")
-        .select("id, nama, kelas, desa, kelompok, jenis_kelamin")
-        .eq("id", deviceResult.data.mudamudiId)
+        .select(
+          `
+            id,
+            nama,
+            desa,
+            kelompok,
+            kelas,
+            jenis_kelamin,
+            tanggal_lahir
+          `,
+        )
+        .eq("id", device.data.mudamudiId)
         .maybeSingle();
 
-      if (mudamudiError) {
-        return {
-          error: "Gagal memeriksa data Muda-Mudi.",
-        };
-      }
-
-      if (deviceMudamudi) {
-        mudamudi = {
-          id: deviceMudamudi.id,
-          nama: deviceMudamudi.nama,
-          kelas: deviceMudamudi.kelas,
-          desa: deviceMudamudi.desa,
-          kelompok: deviceMudamudi.kelompok,
-          jenis_kelamin: deviceMudamudi.jenis_kelamin,
-        };
+      if (!mudamudiError && deviceMudamudi) {
+        mudamudi = deviceMudamudi as Mudamudi;
       }
     }
   }
 
-  /**
-   * =====================================================
-   * 2. JIKA DEVICE BELUM DIKENAL
-   * =====================================================
-   */
-  if (!mudamudi) {
-    if (!identity) {
-      return {
-        requiresIdentity: true,
-      };
-    }
-
+  if (!mudamudi && identity) {
     const identityResult = await verifyIdentity(identity);
 
-    if (!identityResult.success) {
-      return {
-        error: identityResult.error,
-      };
-    }
-
-    mudamudi = identityResult.mudamudi;
-
-    /**
-     * Jika belum ada device token,
-     * buat token baru setelah identitas
-     * berhasil diverifikasi.
-     */
-    if (!currentDeviceToken) {
-      const deviceResult = await createDeviceToken(mudamudi.id);
-
-      if (!deviceResult.success) {
-        return {
-          error: deviceResult.error,
-        };
-      }
-
-      currentDeviceToken = deviceResult.deviceToken;
+    if (identityResult.success && identityResult.mudamudi) {
+      mudamudi = identityResult.mudamudi as Mudamudi;
     }
   }
 
-  /**
-   * Guard untuk memastikan TypeScript
-   * mengetahui bahwa mudamudi sudah ada.
-   */
   if (!mudamudi) {
     return {
-      error: "Data Muda-Mudi tidak ditemukan.",
+      success: false,
+      message: "Data Muda-Mudi tidak dapat ditemukan.",
     };
   }
 
-  /**
-   * =====================================================
-   * 3. CEK DUPLIKASI PRESENSI
-   * =====================================================
-   */
-  const { data: existingPresensi, error: presensiCheckError } = await supabase
+  const { data: existing } = await supabase
     .from("presensi")
     .select("id")
-    .eq("kegiatan_id", kegiatan.id)
+    .eq("kegiatan_id", kegiatanId)
     .eq("mudamudi_id", mudamudi.id)
     .maybeSingle();
 
-  if (presensiCheckError) {
+  if (existing) {
     return {
-      error: "Gagal memeriksa status presensi.",
+      success: false,
+      message: "Muda-Mudi sudah melakukan presensi.",
     };
   }
 
-  if (existingPresensi) {
-    return {
-      alreadyPresent: true,
-      error: "Anda sudah melakukan presensi pada kegiatan ini.",
-    };
-  }
+  const waktuCheckin = new Date();
 
-  /**
-   * =====================================================
-   * 4. TENTUKAN STATUS
-   * =====================================================
-   */
-  const status = getStatusPresensi(kegiatan.tanggal_mulai, kegiatan.jam_mulai);
+  const status = determinePresensiStatus(
+    kegiatan.tanggal_mulai,
+    kegiatan.jam_mulai,
+    waktuCheckin,
+  );
 
-  const waktuCheckin = new Date().toISOString();
-
-  /**
-   * =====================================================
-   * 5. SIMPAN PRESENSI
-   * =====================================================
-   */
-  const { data: presensi, error: insertError } = await supabase
+  const { data, error } = await supabase
     .from("presensi")
     .insert({
-      kegiatan_id: kegiatan.id,
+      kegiatan_id: kegiatanId,
       mudamudi_id: mudamudi.id,
-      waktu_checkin: waktuCheckin,
+      waktu_checkin: waktuCheckin.toISOString(),
       status,
       metode: "qr",
       keterangan: null,
     })
-    .select("id, waktu_checkin, status, metode, keterangan")
+    .select("id")
     .single();
 
-  if (insertError) {
-    /**
-     * Pengaman jika dua request presensi
-     * masuk hampir bersamaan.
-     */
-    if (insertError.code === "23505") {
+  if (error) {
+    if (error.code === "23505") {
       return {
-        alreadyPresent: true,
-        error: "Anda sudah melakukan presensi pada kegiatan ini.",
+        success: false,
+        message: "Muda-Mudi sudah melakukan presensi.",
       };
     }
 
+    console.error("[submitPresensi] Database error:", error);
+
     return {
-      error: "Presensi gagal disimpan.",
+      success: false,
+      message: "Presensi gagal disimpan.",
     };
   }
 
-  /**
-   * =====================================================
-   * 6. UPDATE LAST USED DEVICE
-   * =====================================================
-   */
-  if (currentDeviceToken) {
-    await updateDeviceLastUsed(currentDeviceToken);
+  if (deviceToken?.trim()) {
+    try {
+      await updateDeviceLastUsed(deviceToken);
+    } catch (error) {
+      console.error("[submitPresensi] Failed to update device:", error);
+    }
   }
 
-  /**
-   * =====================================================
-   * 7. HASIL
-   * =====================================================
-   */
   return {
     success: true,
-
-    data: {
-      presensiId: presensi.id,
-
-      waktuCheckin: presensi.waktu_checkin,
-
-      status: presensi.status as PresensiStatus,
-
-      metode: presensi.metode as PresensiMetode,
-
-      keterangan: presensi.keterangan,
-
-      deviceToken: currentDeviceToken,
-
-      kegiatan: {
-        id: kegiatan.id,
-        nama: kegiatan.nama,
-        tanggalMulai: kegiatan.tanggal_mulai,
-        tanggalSelesai: kegiatan.tanggal_selesai,
-        jamMulai: kegiatan.jam_mulai,
-        jamSelesai: kegiatan.jam_selesai,
-        lokasi: kegiatan.lokasi,
-      },
-
-      mudamudi: {
-        id: mudamudi.id,
-        nama: mudamudi.nama,
-        kelas: mudamudi.kelas,
-        desa: mudamudi.desa,
-        kelompok: mudamudi.kelompok,
-        jenisKelamin: mudamudi.jenis_kelamin,
-      },
-    },
+    presensiId: data.id,
+    waktuCheckin: waktuCheckin.toISOString(),
+    status,
+    metode: "qr",
+    keterangan: null,
+    deviceToken,
+    kegiatan,
+    mudamudi,
   };
 }

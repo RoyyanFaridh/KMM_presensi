@@ -12,6 +12,7 @@ type Props = {
   onDetail: (s: Mudamudi) => void;
   onEdit: (s: Mudamudi) => void;
   onDelete: (s: Mudamudi) => void;
+  onShowQR: (s: Mudamudi) => void;
   startIndex: number;
 };
 
@@ -20,6 +21,7 @@ export default function MobileList({
   onDetail,
   onEdit,
   onDelete,
+  onShowQR,
   startIndex,
 }: Props) {
   if (data.length === 0) {
@@ -41,7 +43,6 @@ export default function MobileList({
             className="rounded-xl border border-gray-200 bg-white px-3.5 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)]"
           >
             <div className="flex items-stretch justify-between gap-3">
-              {/* KIRI */}
               <div className="flex min-w-0 items-center gap-2.5">
                 <span className="w-4 shrink-0 text-center text-[10px] font-medium text-gray-400">
                   {startIndex + index + 1}
@@ -49,7 +50,9 @@ export default function MobileList({
 
                 <div
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-medium text-white ring-2 ${avatarColor.ring}`}
-                  style={{ backgroundColor: avatarColor.bg }}
+                  style={{
+                    backgroundColor: avatarColor.bg,
+                  }}
                 >
                   {getInitials(s.nama)}
                 </div>
@@ -69,15 +72,26 @@ export default function MobileList({
                 </div>
               </div>
 
-              {/* KANAN */}
               <div className="flex shrink-0 flex-col items-end justify-between gap-4">
                 <span
-                  className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${getKelasBadgeClass(s.kelas)}`}
+                  className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${getKelasBadgeClass(
+                    s.kelas,
+                  )}`}
                 >
                   {s.kelas}
                 </span>
 
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onShowQR(s)}
+                    aria-label={`Tampilkan QR ${s.nama}`}
+                    title="Tampilkan QR"
+                    className="rounded-md bg-teal-50 px-2 py-1 text-[10px] font-semibold text-teal-700 transition-colors hover:bg-teal-100 active:bg-teal-200"
+                  >
+                    QR
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => onDetail(s)}

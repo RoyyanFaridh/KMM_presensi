@@ -6,7 +6,9 @@ import {
   getKegiatanStatus,
   getKegiatanStatusLabel,
 } from "../../backend/kegiatan/format";
+
 import { Kegiatan } from "../../backend/kegiatan/types";
+
 import { DeleteIcon, EditIcon } from "../mudamudi/icons";
 
 type Props = {
@@ -14,6 +16,7 @@ type Props = {
   onEdit: (kegiatan: Kegiatan) => void;
   onDelete: (kegiatan: Kegiatan) => void;
   onShowQR: (kegiatan: Kegiatan) => void;
+  onScanQR: (kegiatan: Kegiatan) => void;
 };
 
 export default function MobileList({
@@ -21,6 +24,7 @@ export default function MobileList({
   onEdit,
   onDelete,
   onShowQR,
+  onScanQR,
 }: Props) {
   if (data.length === 0) {
     return (
@@ -76,6 +80,7 @@ export default function MobileList({
                   {item.tanggal_selesai !== item.tanggal_mulai && (
                     <>
                       <span className="mx-1 text-gray-300">-</span>
+
                       {formatTanggal(item.tanggal_selesai)}
                     </>
                   )}
@@ -102,10 +107,10 @@ export default function MobileList({
             <div className="mt-2 flex items-center justify-end gap-1">
               <button
                 type="button"
-                onClick={() => onShowQR(item)}
-                className="inline-flex h-6.5 items-center justify-center rounded-md px-2 text-[10px] font-medium text-teal-700 transition-colors hover:bg-teal-50 active:bg-teal-100"
+                onClick={() => onScanQR(item)}
+                className="inline-flex h-6.5 items-center justify-center rounded-md bg-teal-50 px-2.5 text-[10px] font-semibold text-teal-700 transition-colors hover:bg-teal-100 active:bg-teal-100"
               >
-                QR Presensi
+                Scan QR
               </button>
 
               <span className="mx-0.5 h-4 w-px bg-gray-200" />

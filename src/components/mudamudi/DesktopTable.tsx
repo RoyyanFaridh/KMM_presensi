@@ -15,6 +15,7 @@ type Props = {
   onDetail: (s: Mudamudi) => void;
   onEdit: (s: Mudamudi) => void;
   onDelete: (s: Mudamudi) => void;
+  onShowQR: (s: Mudamudi) => void;
 };
 
 export default function DesktopTable({
@@ -25,6 +26,7 @@ export default function DesktopTable({
   onDetail,
   onEdit,
   onDelete,
+  onShowQR,
 }: Props) {
   function SortIcon({ sortKey }: { sortKey: SortKey }) {
     const indicator = sortIndicator(sortKey);
@@ -76,12 +78,10 @@ export default function DesktopTable({
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50/60">
-            {/* NO */}
             <th className="w-12 px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-wide text-gray-500">
               NO
             </th>
 
-            {/* DESA */}
             <th
               className="w-28 cursor-pointer select-none px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-wide text-gray-500 transition hover:text-gray-800"
               onClick={() => toggleSort("desa")}
@@ -92,7 +92,6 @@ export default function DesktopTable({
               </div>
             </th>
 
-            {/* KELOMPOK */}
             <th
               className="w-40 cursor-pointer select-none px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-wide text-gray-500 transition hover:text-gray-800"
               onClick={() => toggleSort("kelompok")}
@@ -103,7 +102,6 @@ export default function DesktopTable({
               </div>
             </th>
 
-            {/* NAMA */}
             <th
               className="cursor-pointer select-none px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-wide text-gray-500 transition hover:text-gray-800"
               onClick={() => toggleSort("nama")}
@@ -114,12 +112,10 @@ export default function DesktopTable({
               </div>
             </th>
 
-            {/* JENIS KELAMIN */}
             <th className="w-28 px-3 py-2.5 text-center text-[10px] font-medium uppercase tracking-wide text-gray-500">
               Jenis Kelamin
             </th>
 
-            {/* KELAS */}
             <th
               className="w-32 cursor-pointer select-none px-3 py-2.5 text-center text-[10px] font-medium uppercase tracking-wide text-gray-500 transition hover:text-gray-800"
               onClick={() => toggleSort("kelas")}
@@ -130,8 +126,7 @@ export default function DesktopTable({
               </div>
             </th>
 
-            {/* AKSI */}
-            <th className="w-40 px-3 py-2.5 text-right text-[10px] font-medium uppercase tracking-wide text-gray-500">
+            <th className="w-44 px-3 py-2.5 text-right text-[10px] font-medium uppercase tracking-wide text-gray-500">
               AKSI
             </th>
           </tr>
@@ -156,24 +151,25 @@ export default function DesktopTable({
                   key={s.id}
                   className="border-b border-gray-100 transition hover:bg-gray-50/50 last:border-b-0"
                 >
-                  {/* NO */}
                   <td className="px-3 py-2.5 text-[11px] text-gray-400">
                     {startIndex + i + 1}
                   </td>
-                  {/* DESA */}
+
                   <td className="px-3 py-2.5 text-[11px] text-gray-600">
                     {s.desa}
                   </td>
-                  {/* KELOMPOK */}
+
                   <td className="px-3 py-2.5 text-[11px] text-gray-600">
                     {s.kelompok}
                   </td>
-                  {/* NAMA */}
+
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2.5">
                       <div
                         className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[9px] font-medium text-white ring-2 ${avatarColor.ring}`}
-                        style={{ backgroundColor: avatarColor.bg }}
+                        style={{
+                          backgroundColor: avatarColor.bg,
+                        }}
                       >
                         {getInitials(s.nama)}
                       </div>
@@ -183,7 +179,7 @@ export default function DesktopTable({
                       </span>
                     </div>
                   </td>
-                  {/* JENIS KELAMIN */}
+
                   <td className="px-3 py-2.5 text-center text-[11px] text-gray-600">
                     {s.jenis_kelamin === "Laki-laki"
                       ? "L"
@@ -191,7 +187,7 @@ export default function DesktopTable({
                         ? "P"
                         : "-"}
                   </td>
-                  {/* KELAS */}
+
                   <td className="px-3 py-2.5 text-center">
                     <span
                       className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-medium ${getKelasBadgeClass(
@@ -202,9 +198,18 @@ export default function DesktopTable({
                     </span>
                   </td>
 
-                  {/* AKSI */}
                   <td className="px-3 py-2.5">
-                    <div className="flex items-center justify-end gap-3">
+                    <div className="flex items-center justify-end gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => onShowQR(s)}
+                        aria-label={`Tampilkan QR ${s.nama}`}
+                        title="Tampilkan QR"
+                        className="rounded-md bg-teal-50 px-2 py-1 text-[10px] font-semibold text-teal-700 transition-colors hover:bg-teal-100 active:bg-teal-200"
+                      >
+                        QR
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => onDetail(s)}

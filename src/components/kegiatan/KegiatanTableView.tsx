@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+
 import {
   Kegiatan,
   PerPageOption,
   SortConfig,
   SortKey,
 } from "../../backend/kegiatan/types";
+
 import DesktopTable from "./DesktopTable";
 import MobileList from "./MobileList";
 import Pagination from "./Pagination";
@@ -18,6 +20,7 @@ type Props = {
   onEdit: (kegiatan: Kegiatan) => void;
   onDelete: (kegiatan: Kegiatan) => void;
   onShowQR: (kegiatan: Kegiatan) => void;
+  onScanQR: (kegiatan: Kegiatan) => void;
 };
 
 const perPageOptions: PerPageOption[] = [10, 50, 100];
@@ -29,6 +32,7 @@ export default function KegiatanTableView({
   onEdit,
   onDelete,
   onShowQR,
+  onScanQR,
 }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -68,13 +72,17 @@ export default function KegiatanTableView({
         onEdit={onEdit}
         onDelete={onDelete}
         onShowQR={onShowQR}
+        onScanQR={onScanQR}
       />
+
       <MobileList
         data={paginatedData}
         onEdit={onEdit}
         onDelete={onDelete}
         onShowQR={onShowQR}
+        onScanQR={onScanQR}
       />
+
       <Pagination
         currentPage={page}
         totalPages={totalPages}

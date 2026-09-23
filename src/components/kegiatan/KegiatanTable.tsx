@@ -20,7 +20,6 @@ import {
 
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import KegiatanFormModal from "./KegiatanFormModal";
-import KegiatanQRModal from "./KegiatanQRModal";
 import KegiatanTableView from "./KegiatanTableView";
 import SearchFilterBar from "./SearchFilterBar";
 
@@ -132,6 +131,10 @@ export default function KegiatanTable({ initialData }: Props) {
 
   function handleShowQR(kegiatan: Kegiatan) {
     setQrKegiatan(kegiatan);
+  }
+
+  function handleScanQR(kegiatan: Kegiatan) {
+    window.location.href = `/admin/presensi/scan/${kegiatan.id}`;
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -246,6 +249,7 @@ export default function KegiatanTable({ initialData }: Props) {
           onEdit={openEdit}
           onDelete={openDelete}
           onShowQR={handleShowQR}
+          onScanQR={handleScanQR}
         />
       </div>
 
@@ -278,11 +282,6 @@ export default function KegiatanTable({ initialData }: Props) {
           onClose={() => setModal(null)}
         />
       )}
-
-      <KegiatanQRModal
-        kegiatan={qrKegiatan}
-        onClose={() => setQrKegiatan(null)}
-      />
     </>
   );
 }

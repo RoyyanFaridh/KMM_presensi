@@ -1,24 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
 import { Mudamudi } from "../../backend/mudamudi/types";
 import {
   DESA_OPTIONS,
   JENIS_KELAMIN_OPTIONS,
+  KELOMPOK_BY_DESA,
   KELOMPOK_OPTIONS,
   KELAS_OPTIONS,
 } from "../../backend/mudamudi/constants";
+
 import { exportPresensiExcel } from "../../backend/mudamudi/exportExcel";
+
 import FilterCheckboxGroup from "./FilterCheckboxGroup";
 import ModalWrapper from "./ModalWrapper";
 import { DownloadIcon } from "./icons";
 
 type Props = {
   allData: Mudamudi[];
+  adminDesa: string | null;
   onClose: () => void;
 };
 
-export default function ExportModal({ allData, onClose }: Props) {
+export default function ExportModal({ allData, adminDesa, onClose }: Props) {
   const [selectedDesa, setSelectedDesa] = useState<string[]>([]);
   const [selectedJenisKelamin, setSelectedJenisKelamin] = useState<string[]>(
     [],
@@ -26,10 +31,63 @@ export default function ExportModal({ allData, onClose }: Props) {
   const [selectedKelompok, setSelectedKelompok] = useState<string[]>([]);
   const [selectedKelas, setSelectedKelas] = useState<string[]>([]);
 
+  const desaOptions = useMemo(() => {
+    if (adminDesa) {
+      return [adminDesa];
+    }
+
+    return [...DESA_OPTIONS];
+  }, [adminDesa]);
+
+  const kelompokOptions = useMemo(() => {
+    if (adminDesa) {
+      return [
+        ...(KELOMPOK_BY_DESA[adminDesa as keyof typeof KELOMPOK_BY_DESA] ?? []),
+      ];
+    }
+
+    if (selectedDesa.length === 0) {
+      return [...KELOMPOK_OPTIONS];
+    }
+
+    return Array.from(
+      new Set(
+        selectedDesa.flatMap((desa) => [
+          ...(KELOMPOK_BY_DESA[desa as keyof typeof KELOMPOK_BY_DESA] ?? []),
+        ]),
+      ),
+    );
+  }, [adminDesa, selectedDesa]);
+
+  function handleDesaChange(next: string[]) {
+    if (adminDesa) {
+      setSelectedDesa(next.includes(adminDesa) ? [adminDesa] : []);
+      return;
+    }
+
+    setSelectedDesa(next);
+
+    setSelectedKelompok((current) =>
+      current.filter((kelompok) =>
+        next.length === 0
+          ? true
+          : next.some((desa) =>
+              (
+                KELOMPOK_BY_DESA[desa as keyof typeof KELOMPOK_BY_DESA] ?? []
+              ).includes(kelompok as never),
+            ),
+      ),
+    );
+  }
+
   async function handleExport(e: React.FormEvent) {
     e.preventDefault();
 
-    const filtered = allData.filter((s) => {
+    const scopedData = adminDesa
+      ? allData.filter((s) => s.desa === adminDesa)
+      : allData;
+
+    const filtered = scopedData.filter((s) => {
       const matchDesa =
         selectedDesa.length === 0 || selectedDesa.includes(s.desa);
 
@@ -49,6 +107,7 @@ export default function ExportModal({ allData, onClose }: Props) {
 
     await exportPresensiExcel({
       data: filtered,
+      adminDesa,
     });
 
     onClose();
@@ -60,7 +119,6 @@ export default function ExportModal({ allData, onClose }: Props) {
         onSubmit={handleExport}
         className="w-full max-w-150 overflow-hidden rounded-2xl bg-white shadow-xl"
       >
-        {/* HEADER */}
         <div className="flex items-start justify-between border-b border-gray-100 px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-50 text-teal-600">
@@ -71,11 +129,13 @@ export default function ExportModal({ allData, onClose }: Props) {
               <h2 className="text-[14px] font-semibold leading-5 text-gray-800">
                 Export Data
               </h2>
+
               <p className="mt-0.5 text-[10px] leading-4 text-gray-400">
                 Pilih data yang ingin diexport ke Excel
               </p>
             </div>
           </div>
+
           <button
             type="button"
             onClick={onClose}
@@ -98,14 +158,22 @@ export default function ExportModal({ allData, onClose }: Props) {
             </svg>
           </button>
         </div>
-        {/* BODY */}
+
         <div className="space-y-4 px-5 py-5">
           <FilterCheckboxGroup
             label="Desa"
-            options={DESA_OPTIONS}
+            options={desaOptions}
             selected={selectedDesa}
-            onChange={setSelectedDesa}
+            onChange={handleDesaChange}
             colorClass="border-teal-400 bg-teal-50 text-teal-700"
+          />
+
+          <FilterCheckboxGroup
+            label="Kelompok"
+            options={kelompokOptions}
+            selected={selectedKelompok}
+            onChange={setSelectedKelompok}
+            colorClass="border-sky-400 bg-sky-50 text-sky-700"
           />
 
           <FilterCheckboxGroup
@@ -117,14 +185,6 @@ export default function ExportModal({ allData, onClose }: Props) {
           />
 
           <FilterCheckboxGroup
-            label="Kelompok"
-            options={KELOMPOK_OPTIONS}
-            selected={selectedKelompok}
-            onChange={setSelectedKelompok}
-            colorClass="border-sky-400 bg-sky-50 text-sky-700"
-          />
-
-          <FilterCheckboxGroup
             label="Kelas"
             options={KELAS_OPTIONS}
             selected={selectedKelas}
@@ -132,7 +192,7 @@ export default function ExportModal({ allData, onClose }: Props) {
             colorClass="border-orange-400 bg-orange-50 text-orange-700"
           />
         </div>
-        {/* FOOTER */}
+
         <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50/50 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"

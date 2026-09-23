@@ -14,6 +14,7 @@ type Props = {
   onDetail: (s: Mudamudi) => void;
   onEdit: (s: Mudamudi) => void;
   onDelete: (s: Mudamudi) => void;
+  onShowQR: (s: Mudamudi) => void;
   filterKey: string;
 };
 
@@ -27,6 +28,7 @@ export default function MudamudiTableView({
   onDetail,
   onEdit,
   onDelete,
+  onShowQR,
   filterKey,
 }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,6 +67,7 @@ export default function MudamudiTableView({
     if (page < 1 || page > totalPages) return;
 
     setCurrentPage(page);
+
     window.scrollTo({
       top: 0,
       behavior: "smooth",
@@ -90,6 +93,7 @@ export default function MudamudiTableView({
         onDetail={onDetail}
         onEdit={onEdit}
         onDelete={onDelete}
+        onShowQR={onShowQR}
         startIndex={startIndex}
       />
 
@@ -101,6 +105,7 @@ export default function MudamudiTableView({
         onDetail={onDetail}
         onEdit={onEdit}
         onDelete={onDelete}
+        onShowQR={onShowQR}
       />
 
       <Pagination

@@ -25,9 +25,11 @@ import DeleteConfirmModal from "./DeleteConfirmModal";
 import DetailModal from "./DetailModal";
 import ExportModal from "./ExportModal";
 import ImportModal from "./ImportModal";
+import MudamudiQRModal from "./MudamudiQRModal";
 
 type Props = {
   initialData: Mudamudi[];
+  adminDesa: string | null;
 };
 
 function UploadIcon() {
@@ -41,9 +43,7 @@ function UploadIcon() {
       className="h-4 w-4"
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4" />
-
       <path strokeLinecap="round" strokeLinejoin="round" d="m7 9 5-5 5 5" />
-
       <path strokeLinecap="round" strokeLinejoin="round" d="M5 20h14" />
     </svg>
   );
@@ -66,12 +66,14 @@ function DownloadIcon() {
   );
 }
 
-export default function MudamudiPage({ initialData }: Props) {
+export default function MudamudiPage({ initialData, adminDesa }: Props) {
   const router = useRouter();
 
   const [modal, setModal] = useState<ModalState | null>(null);
 
   const [detailData, setDetailData] = useState<Mudamudi | null>(null);
+
+  const [qrData, setQrData] = useState<Mudamudi | null>(null);
 
   const [showExportModal, setShowExportModal] = useState(false);
 
@@ -81,7 +83,7 @@ export default function MudamudiPage({ initialData }: Props) {
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
-  const filter = useMudamudiFilter(initialData);
+  const filter = useMudamudiFilter(initialData, adminDesa);
 
   function closeModal() {
     setModal(null);
@@ -92,6 +94,7 @@ export default function MudamudiPage({ initialData }: Props) {
   function openAddModal() {
     setError("");
     setFieldErrors({});
+
     setModal({
       type: "add",
     });
@@ -107,9 +110,18 @@ export default function MudamudiPage({ initialData }: Props) {
     setDetailData(null);
   }
 
+  function openQRModal(data: Mudamudi) {
+    setQrData(data);
+  }
+
+  function closeQRModal() {
+    setQrData(null);
+  }
+
   function openEditModal(data: Mudamudi) {
     setError("");
     setFieldErrors({});
+
     setModal({
       type: "edit",
       data,
@@ -119,6 +131,7 @@ export default function MudamudiPage({ initialData }: Props) {
   function openDeleteModal(data: Mudamudi) {
     setError("");
     setFieldErrors({});
+
     setModal({
       type: "delete",
       data,
@@ -131,15 +144,10 @@ export default function MudamudiPage({ initialData }: Props) {
     const formData = new FormData(e.currentTarget);
 
     const nama = String(formData.get("nama") ?? "");
-
     const desa = String(formData.get("desa") ?? "");
-
     const kelas = String(formData.get("kelas") ?? "");
-
     const kelompok = String(formData.get("kelompok") ?? "");
-
     const jenisKelamin = String(formData.get("jenis_kelamin") ?? "");
-
     const tanggalLahir = String(formData.get("tanggal_lahir") ?? "");
 
     const errors = validateClient(
@@ -179,15 +187,10 @@ export default function MudamudiPage({ initialData }: Props) {
     const formData = new FormData(e.currentTarget);
 
     const nama = String(formData.get("nama") ?? "");
-
     const desa = String(formData.get("desa") ?? "");
-
     const kelas = String(formData.get("kelas") ?? "");
-
     const kelompok = String(formData.get("kelompok") ?? "");
-
     const jenisKelamin = String(formData.get("jenis_kelamin") ?? "");
-
     const tanggalLahir = String(formData.get("tanggal_lahir") ?? "");
 
     const errors = validateClient(
@@ -313,6 +316,7 @@ export default function MudamudiPage({ initialData }: Props) {
             setSortConfig={filter.setSortConfig}
             hasActiveFilters={filter.hasActiveFilters}
             onReset={filter.resetAll}
+            adminDesa={adminDesa}
           />
 
           <MudamudiTableView
@@ -324,6 +328,7 @@ export default function MudamudiPage({ initialData }: Props) {
             onDetail={openDetailModal}
             onEdit={openEditModal}
             onDelete={openDeleteModal}
+            onShowQR={openQRModal}
           />
         </section>
       </div>
@@ -332,9 +337,12 @@ export default function MudamudiPage({ initialData }: Props) {
         <DetailModal data={detailData} onClose={closeDetailModal} />
       )}
 
+      {qrData && <MudamudiQRModal data={qrData} onClose={closeQRModal} />}
+
       {modal?.type === "add" && (
         <MudamudiFormModal
           mode="add"
+          adminDesa={adminDesa}
           fieldErrors={fieldErrors}
           error={error}
           onSubmit={handleAddSubmit}
@@ -346,9 +354,12 @@ export default function MudamudiPage({ initialData }: Props) {
         <MudamudiFormModal
           mode="edit"
           initialData={modal.data}
+          adminDesa={adminDesa}
           fieldErrors={fieldErrors}
           error={error}
-          onSubmit={(e) => handleEditSubmit(e, modal.data.id)}
+          onSubmit={(e: React.FormEvent<HTMLFormElement>) =>
+            handleEditSubmit(e, modal.data.id)
+          }
           onClose={closeModal}
         />
       )}
@@ -365,6 +376,7 @@ export default function MudamudiPage({ initialData }: Props) {
       {showExportModal && (
         <ExportModal
           allData={initialData}
+          adminDesa={adminDesa}
           onClose={() => setShowExportModal(false)}
         />
       )}

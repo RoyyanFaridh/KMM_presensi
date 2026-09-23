@@ -26,5 +26,7 @@ export async function requireAdmin() {
   return {
     user,
     profile,
+    desa: profile.desa,
+    isSuperAdmin: profile.desa === null,
   };
 }

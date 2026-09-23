@@ -10,7 +10,10 @@ const DEFAULT_SORT: SortConfig = {
   direction: "desc",
 };
 
-export function useMudamudiFilter(initialData: Mudamudi[]) {
+export function useMudamudiFilter(
+  initialData: Mudamudi[],
+  adminDesa: string | null,
+) {
   const [search, setSearch] = useState("");
   const [filterDesa, setFilterDesa] = useState("");
   const [filterJenisKelamin, setFilterJenisKelamin] = useState("");
@@ -18,50 +21,53 @@ export function useMudamudiFilter(initialData: Mudamudi[]) {
   const [filterKelompok, setFilterKelompok] = useState("");
   const [sortConfig, setSortConfig] = useState<SortConfig>(DEFAULT_SORT);
 
+  const isSuperAdmin = adminDesa === null;
+
   const kelompokFilterOptions = useMemo(() => {
+    if (adminDesa) {
+      return KELOMPOK_BY_DESA[adminDesa as keyof typeof KELOMPOK_BY_DESA] ?? [];
+    }
+
     if (!filterDesa) {
       return Object.values(KELOMPOK_BY_DESA).flat();
     }
 
     return KELOMPOK_BY_DESA[filterDesa as keyof typeof KELOMPOK_BY_DESA] ?? [];
-  }, [filterDesa]);
+  }, [adminDesa, filterDesa]);
 
   const displayedData = useMemo(() => {
     let result = [...initialData];
 
-    // Search
+    if (adminDesa) {
+      result = result.filter((s) => s.desa === adminDesa);
+    }
+
     if (search.trim()) {
       const keyword = search.trim().toLowerCase();
 
       result = result.filter((s) => s.nama.toLowerCase().includes(keyword));
     }
 
-    // Filter Desa
-    if (filterDesa) {
+    if (isSuperAdmin && filterDesa) {
       result = result.filter((s) => s.desa === filterDesa);
     }
 
-    // Filter Jenis Kelamin
     if (filterJenisKelamin) {
       result = result.filter((s) => s.jenis_kelamin === filterJenisKelamin);
     }
 
-    // Filter kelas
     if (filterkelas) {
       result = result.filter((s) => s.kelas === filterkelas);
     }
 
-    // Filter Kelompok
     if (filterKelompok) {
       result = result.filter((s) => s.kelompok === filterKelompok);
     }
 
-    // Sort
     if (sortConfig) {
       result.sort((a, b) => {
         if (sortConfig.key === "created_at") {
           const dateA = new Date(a.created_at).getTime();
-
           const dateB = new Date(b.created_at).getTime();
 
           return sortConfig.direction === "asc" ? dateA - dateB : dateB - dateA;
@@ -93,6 +99,8 @@ export function useMudamudiFilter(initialData: Mudamudi[]) {
     return result;
   }, [
     initialData,
+    adminDesa,
+    isSuperAdmin,
     search,
     filterDesa,
     filterJenisKelamin,
@@ -101,7 +109,6 @@ export function useMudamudiFilter(initialData: Mudamudi[]) {
     sortConfig,
   ]);
 
-  // Sort
   function toggleSort(key: SortKey) {
     setSortConfig((prev) => {
       if (!prev || prev.key !== key) {
@@ -122,7 +129,6 @@ export function useMudamudiFilter(initialData: Mudamudi[]) {
     });
   }
 
-  // Sort Indikator
   function sortIndicator(key: SortKey) {
     if (!sortConfig || sortConfig.key !== key) {
       return "";
@@ -131,26 +137,28 @@ export function useMudamudiFilter(initialData: Mudamudi[]) {
     return sortConfig.direction === "asc" ? " ▲" : " ▼";
   }
 
-  // Reset
   function resetAll() {
     setSearch("");
-    setFilterDesa("");
     setFilterJenisKelamin("");
     setFilterkelas("");
     setFilterKelompok("");
     setSortConfig(DEFAULT_SORT);
+
+    if (isSuperAdmin) {
+      setFilterDesa("");
+    } else {
+      setFilterDesa("");
+    }
   }
 
-  // Active Filter
   const hasActiveFilters = !!(
     search ||
-    filterDesa ||
     filterJenisKelamin ||
     filterkelas ||
-    filterKelompok
+    filterKelompok ||
+    (isSuperAdmin && filterDesa)
   );
 
-  // Filter Key
   const filterKey = [
     search,
     filterDesa,
@@ -178,7 +186,8 @@ export function useMudamudiFilter(initialData: Mudamudi[]) {
     setFilterKelompok,
 
     kelompokFilterOptions,
-    desaOptions: DESA_OPTIONS,
+
+    desaOptions: isSuperAdmin ? DESA_OPTIONS : adminDesa ? [adminDesa] : [],
 
     sortConfig,
     setSortConfig,

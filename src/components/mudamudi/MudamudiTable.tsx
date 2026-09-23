@@ -23,9 +23,9 @@ type Props = {
   setSortConfig: Parameters<typeof SearchFilterBar>[0]["setSortConfig"];
   onReset: () => void;
   sortIndicator: (
-    key: Parameters<typeof MudamudiTableView>[0]["sortIndicator"] extends (
-      key: infer K,
-    ) => string
+    key: Parameters<
+      typeof MudamudiTableView
+    >[0]["sortIndicator"] extends (key: infer K) => string
       ? K
       : never,
   ) => string;
@@ -34,6 +34,7 @@ type Props = {
   onDetail: (data: Mudamudi) => void;
   onEdit: (data: Mudamudi) => void;
   onDelete: (data: Mudamudi) => void;
+  onShowQR: (data: Mudamudi) => void;
 };
 
 export default function MudamudiTable({
@@ -60,6 +61,7 @@ export default function MudamudiTable({
   onDetail,
   onEdit,
   onDelete,
+  onShowQR,
 }: Props) {
   return (
     <div>
@@ -89,6 +91,7 @@ export default function MudamudiTable({
         onDetail={onDetail}
         onEdit={onEdit}
         onDelete={onDelete}
+        onShowQR={onShowQR}
       />
     </div>
   );

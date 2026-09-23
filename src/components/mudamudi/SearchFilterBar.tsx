@@ -24,6 +24,7 @@ type Props = {
   sortConfig: SortConfig;
   setSortConfig: (config: SortConfig) => void;
   onReset: () => void;
+  adminDesa: string | null;
 };
 
 export default function SearchFilterBar({
@@ -41,18 +42,23 @@ export default function SearchFilterBar({
   setSortConfig,
   hasActiveFilters,
   onReset,
+  adminDesa,
 }: Props) {
   const [showFilter, setShowFilter] = useState(false);
 
-  const kelompokOptions = filterDesa
-    ? (KELOMPOK_BY_DESA[filterDesa as keyof typeof KELOMPOK_BY_DESA] ?? [])
-    : Object.values(KELOMPOK_BY_DESA).flat();
+  const isSuperAdmin = adminDesa === null;
+
+  const kelompokOptions = adminDesa
+    ? (KELOMPOK_BY_DESA[adminDesa as keyof typeof KELOMPOK_BY_DESA] ?? [])
+    : filterDesa
+      ? (KELOMPOK_BY_DESA[filterDesa as keyof typeof KELOMPOK_BY_DESA] ?? [])
+      : Object.values(KELOMPOK_BY_DESA).flat();
 
   const activeFilterCount = [
-    filterDesa,
     filterJenisKelamin,
     filterkelas,
     filterKelompok,
+    isSuperAdmin ? filterDesa : "",
   ].filter(Boolean).length;
 
   function handleDesaChange(desa: string) {
@@ -67,6 +73,19 @@ export default function SearchFilterBar({
     ) {
       setFilterKelompok("");
     }
+  }
+
+  function handleReset() {
+    if (isSuperAdmin) {
+      onReset();
+      return;
+    }
+
+    setFilterDesa("");
+    setFilterKelompok("");
+    setFilterJenisKelamin("");
+    setFilterkelas("");
+    setSearch("");
   }
 
   return (
@@ -161,6 +180,7 @@ export default function SearchFilterBar({
                   strokeLinejoin="round"
                   d="M6 6l12 12"
                 />
+
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -239,36 +259,49 @@ export default function SearchFilterBar({
 
               <p className="mb-2 text-[11px] font-medium text-gray-600">Desa</p>
 
-              <div className="flex flex-wrap gap-x-4 gap-y-2">
-                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
-                  <input
-                    type="radio"
-                    name="desa"
-                    value=""
-                    checked={filterDesa === ""}
-                    onChange={() => handleDesaChange("")}
-                    className="h-3.5 w-3.5 accent-teal-600"
-                  />
-                  Semua
-                </label>
-
-                {DESA_OPTIONS.map((desa) => (
-                  <label
-                    key={desa}
-                    className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600"
-                  >
+              {isSuperAdmin ? (
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
                     <input
                       type="radio"
                       name="desa"
-                      value={desa}
-                      checked={filterDesa === desa}
-                      onChange={() => handleDesaChange(desa)}
+                      value=""
+                      checked={filterDesa === ""}
+                      onChange={() => handleDesaChange("")}
                       className="h-3.5 w-3.5 accent-teal-600"
                     />
-                    {desa}
+                    Semua
                   </label>
-                ))}
-              </div>
+
+                  {DESA_OPTIONS.map((desa) => (
+                    <label
+                      key={desa}
+                      className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600"
+                    >
+                      <input
+                        type="radio"
+                        name="desa"
+                        value={desa}
+                        checked={filterDesa === desa}
+                        onChange={() => handleDesaChange(desa)}
+                        className="h-3.5 w-3.5 accent-teal-600"
+                      />
+
+                      {desa}
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-teal-100 bg-teal-50 px-3 py-2">
+                  <p className="text-[11px] font-medium text-teal-700">
+                    {adminDesa}
+                  </p>
+
+                  <p className="mt-0.5 text-[9px] text-teal-600/70">
+                    Mengikuti wilayah akun
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="border-t border-gray-100 pt-4 md:border-t-0 md:border-l md:pl-6 md:pt-0">
@@ -302,6 +335,7 @@ export default function SearchFilterBar({
                       onChange={(e) => setFilterJenisKelamin(e.target.value)}
                       className="h-3.5 w-3.5 accent-teal-600"
                     />
+
                     {jk}
                   </label>
                 ))}
@@ -339,6 +373,7 @@ export default function SearchFilterBar({
                       onChange={(e) => setFilterkelas(e.target.value)}
                       className="h-3.5 w-3.5 accent-teal-600"
                     />
+
                     {kelas}
                   </label>
                 ))}
@@ -376,6 +411,7 @@ export default function SearchFilterBar({
                       onChange={(e) => setFilterKelompok(e.target.value)}
                       className="h-3.5 w-3.5 accent-teal-600"
                     />
+
                     {kelompok}
                   </label>
                 ))}
@@ -386,7 +422,7 @@ export default function SearchFilterBar({
           <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
             <button
               type="button"
-              onClick={onReset}
+              onClick={handleReset}
               className="text-[11px] text-gray-500 underline underline-offset-2 transition hover:text-gray-700"
             >
               Reset filter
