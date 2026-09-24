@@ -2,7 +2,13 @@
 
 import { createClient } from "../supabase/server";
 
-import { PresensiMetode, PresensiStatus, RekapitulasiPresensi } from "./types";
+import {
+  PresensiMetode,
+  PresensiStatus,
+  RekapitulasiPresensi,
+} from "./types";
+
+import { isMudamudiTargeted } from "./target";
 
 type GetRekapitulasiParams = {
   page: number;
@@ -12,7 +18,62 @@ type GetRekapitulasiParams = {
   kegiatanId?: number;
   desa?: string;
   kelompok?: string;
+  kelas?: string;
 };
+
+type KegiatanRekap = {
+  id: number;
+  nama: string;
+  tanggal_mulai: string;
+  tanggal_selesai: string;
+  lokasi: string;
+  desa: string[] | null;
+  kelas: string[] | null;
+  jenis_kelamin: string | null;
+};
+
+type MudamudiRekap = {
+  id: number;
+  nama: string;
+  desa: string;
+  kelompok: string;
+  kelas: string;
+  jenis_kelamin: string | null;
+};
+
+type PresensiRekap = {
+  kegiatan_id: number;
+  mudamudi_id: number;
+  status: string;
+  metode: string;
+  waktu_checkin: string | null;
+  keterangan: string | null;
+};
+
+function emptyResult(
+  page: number,
+  itemsPerPage: number,
+  error: string,
+  totalItems = 0,
+  totalPages = 0,
+) {
+  return {
+    data: {
+      mudamudi: [],
+      kegiatan: [],
+      kehadiran: [],
+    } as RekapitulasiPresensi,
+
+    pagination: {
+      page,
+      itemsPerPage,
+      totalItems,
+      totalPages,
+    },
+
+    error,
+  };
+}
 
 export async function getRekapitulasiPresensi({
   page,
@@ -22,24 +83,24 @@ export async function getRekapitulasiPresensi({
   kegiatanId,
   desa,
   kelompok,
+  kelas,
 }: GetRekapitulasiParams) {
   const supabase = await createClient();
 
-  const safePage = Math.max(1, page);
-  const safeItemsPerPage = Math.max(1, itemsPerPage);
-
-  const from = (safePage - 1) * safeItemsPerPage;
-  const to = from + safeItemsPerPage - 1;
+  const safePage = Math.max(1, Math.floor(page));
+  const safeItemsPerPage = Math.min(
+    100,
+    Math.max(1, Math.floor(itemsPerPage)),
+  );
 
   /*
    * ============================================================
-   * KEGIATAN
+   * 1. QUERY KEGIATAN
    * ============================================================
    *
-   * Kegiatan tetap diambil berdasarkan filter kegiatan/bulan.
-   * Jumlah kegiatan biasanya jauh lebih kecil daripada data
-   * Muda-Mudi sehingga tidak menggunakan pagination.
+   * Hanya mengambil kolom yang memang dibutuhkan Rekapitulasi.
    */
+
   let kegiatanQuery = supabase
     .from("kegiatan")
     .select(
@@ -48,10 +109,16 @@ export async function getRekapitulasiPresensi({
         nama,
         tanggal_mulai,
         tanggal_selesai,
-        lokasi
+        lokasi,
+        desa,
+        kelas,
+        jenis_kelamin
       `,
     )
     .order("tanggal_mulai", {
+      ascending: false,
+    })
+    .order("jam_mulai", {
       ascending: false,
     });
 
@@ -77,19 +144,29 @@ export async function getRekapitulasiPresensi({
   }
 
   if (kegiatanId !== undefined) {
+    if (!Number.isInteger(kegiatanId) || kegiatanId <= 0) {
+      return emptyResult(
+        safePage,
+        safeItemsPerPage,
+        "Kegiatan tidak valid",
+      );
+    }
+
     kegiatanQuery = kegiatanQuery.eq("id", kegiatanId);
   }
 
   /*
    * ============================================================
-   * MUDA-MUDI
+   * 2. QUERY MUDA-MUDI
    * ============================================================
    *
-   * count: "exact" digunakan untuk mendapatkan jumlah seluruh
-   * data yang sesuai filter tanpa mengambil semuanya.
+   * Search, desa, kelompok, dan kelas semuanya diterapkan
+   * langsung di Supabase.
    *
-   * range() hanya mengambil data untuk halaman aktif.
+   * Jadi Vercel tidak perlu menerima data yang tidak sesuai
+   * filter tersebut.
    */
+
   let mudamudiQuery = supabase
     .from("mudamudi")
     .select(
@@ -101,19 +178,18 @@ export async function getRekapitulasiPresensi({
         kelas,
         jenis_kelamin
       `,
-      {
-        count: "exact",
-      },
     )
     .order("nama", {
       ascending: true,
-    })
-    .range(from, to);
+    });
 
   const keyword = search.trim();
 
   if (keyword) {
-    mudamudiQuery = mudamudiQuery.ilike("nama", `%${keyword}%`);
+    mudamudiQuery = mudamudiQuery.ilike(
+      "nama",
+      `%${keyword}%`,
+    );
   }
 
   if (desa) {
@@ -124,89 +200,130 @@ export async function getRekapitulasiPresensi({
     mudamudiQuery = mudamudiQuery.eq("kelompok", kelompok);
   }
 
+  if (kelas) {
+    mudamudiQuery = mudamudiQuery.eq("kelas", kelas);
+  }
+
+  /*
+   * Kegiatan dan Muda-Mudi bisa diambil bersamaan.
+   *
+   * Ini tetap dua query Supabase, tetapi berjalan paralel
+   * sehingga tidak menunggu query pertama selesai dahulu.
+   */
+
   const [mudamudiResult, kegiatanResult] = await Promise.all([
     mudamudiQuery,
     kegiatanQuery,
   ]);
 
   if (mudamudiResult.error) {
-    console.error("Gagal mengambil data muda-mudi:", mudamudiResult.error);
+    console.error(
+      "Gagal mengambil data Muda-Mudi:",
+      mudamudiResult.error,
+    );
 
-    return {
-      data: {
-        mudamudi: [],
-        kegiatan: [],
-        kehadiran: [],
-      } as RekapitulasiPresensi,
-
-      pagination: {
-        page: safePage,
-        itemsPerPage: safeItemsPerPage,
-        totalItems: 0,
-        totalPages: 0,
-      },
-
-      error: "Gagal mengambil data muda-mudi",
-    };
+    return emptyResult(
+      safePage,
+      safeItemsPerPage,
+      "Gagal mengambil data Muda-Mudi",
+    );
   }
 
   if (kegiatanResult.error) {
-    console.error("Gagal mengambil data kegiatan:", kegiatanResult.error);
+    console.error(
+      "Gagal mengambil data kegiatan:",
+      kegiatanResult.error,
+    );
 
-    return {
-      data: {
-        mudamudi: [],
-        kegiatan: [],
-        kehadiran: [],
-      } as RekapitulasiPresensi,
-
-      pagination: {
-        page: safePage,
-        itemsPerPage: safeItemsPerPage,
-        totalItems: 0,
-        totalPages: 0,
-      },
-
-      error: "Gagal mengambil data kegiatan",
-    };
+    return emptyResult(
+      safePage,
+      safeItemsPerPage,
+      "Gagal mengambil data kegiatan",
+    );
   }
 
-  const mudamudiData = mudamudiResult.data ?? [];
-  const kegiatanData = kegiatanResult.data ?? [];
+  const kegiatanData = (kegiatanResult.data ??
+    []) as KegiatanRekap[];
 
-  const totalItems = mudamudiResult.count ?? 0;
-
-  const totalPages =
-    totalItems === 0 ? 0 : Math.ceil(totalItems / safeItemsPerPage);
+  const mudamudiData = (mudamudiResult.data ??
+    []) as MudamudiRekap[];
 
   /*
    * ============================================================
-   * PRESENSI
+   * 3. TENTUKAN PESERTA SASARAN
+   * ============================================================
+   *
+   * Seseorang hanya masuk Rekapitulasi jika menjadi sasaran
+   * minimal pada salah satu kegiatan yang sedang ditampilkan.
+   *
+   * Target tetap menggunakan satu sumber kebenaran:
+   * isMudamudiTargeted().
+   */
+
+  const pesertaSasaran =
+    kegiatanData.length === 0
+      ? []
+      : mudamudiData.filter((mudamudi) =>
+          kegiatanData.some((kegiatan) =>
+            isMudamudiTargeted(kegiatan, mudamudi),
+          ),
+        );
+
+  /*
+   * ============================================================
+   * 4. PAGINATION
+   * ============================================================
+   *
+   * Pagination dilakukan setelah peserta sasaran diketahui.
+   *
+   * Ini sengaja dipertahankan karena target kegiatan bersifat
+   * dinamis berdasarkan desa, kelas, dan jenis kelamin.
+   */
+
+  const totalItems = pesertaSasaran.length;
+
+  const totalPages =
+    totalItems === 0
+      ? 0
+      : Math.ceil(totalItems / safeItemsPerPage);
+
+  const from = (safePage - 1) * safeItemsPerPage;
+  const to = from + safeItemsPerPage;
+
+  const mudamudiDataPaginated = pesertaSasaran.slice(
+    from,
+    to,
+  );
+
+  const mudamudiIds = mudamudiDataPaginated.map(
+    (item) => item.id,
+  );
+
+  const kegiatanIds = kegiatanData.map(
+    (item) => item.id,
+  );
+
+  /*
+   * ============================================================
+   * 5. QUERY PRESENSI
    * ============================================================
    *
    * Hanya mengambil presensi:
-   *
-   * - Muda-Mudi yang sedang berada di halaman aktif
+   * - Muda-Mudi yang ada pada halaman aktif
    * - Kegiatan yang sedang ditampilkan
    *
-   * Jadi tidak lagi mengambil seluruh tabel presensi.
+   * Tidak mengambil seluruh tabel presensi.
+   *
+   * Tidak menggunakan ORDER BY karena pasangan
+   * (kegiatan_id, mudamudi_id) sudah UNIQUE.
    */
-  const mudamudiIds = mudamudiData.map((item) => item.id);
 
-  const kegiatanIds = kegiatanData.map((item) => item.id);
+  let presensiData: PresensiRekap[] = [];
 
-  let presensiData: typeof mudamudiData extends never[]
-    ? never[]
-    : {
-        kegiatan_id: number;
-        mudamudi_id: number;
-        status: string;
-        metode: string;
-        waktu_checkin: string | null;
-        keterangan: string | null;
-      }[] = [];
-
-  if (mudamudiIds.length > 0 && kegiatanIds.length > 0) {
+  if (
+    mudamudiIds.length > 0 &&
+    kegiatanIds.length > 0
+  ) {
     const presensiResult = await supabase
       .from("presensi")
       .select(
@@ -220,43 +337,35 @@ export async function getRekapitulasiPresensi({
         `,
       )
       .in("mudamudi_id", mudamudiIds)
-      .in("kegiatan_id", kegiatanIds)
-      .order("waktu_checkin", {
-        ascending: false,
-        nullsFirst: false,
-      });
+      .in("kegiatan_id", kegiatanIds);
 
     if (presensiResult.error) {
-      console.error("Gagal mengambil data presensi:", presensiResult.error);
+      console.error(
+        "Gagal mengambil data presensi:",
+        presensiResult.error,
+      );
 
-      return {
-        data: {
-          mudamudi: [],
-          kegiatan: [],
-          kehadiran: [],
-        } as RekapitulasiPresensi,
-
-        pagination: {
-          page: safePage,
-          itemsPerPage: safeItemsPerPage,
-          totalItems,
-          totalPages,
-        },
-
-        error: "Gagal mengambil data presensi",
-      };
+      return emptyResult(
+        safePage,
+        safeItemsPerPage,
+        "Gagal mengambil data presensi",
+        totalItems,
+        totalPages,
+      );
     }
 
-    presensiData = presensiResult.data ?? [];
+    presensiData =
+      (presensiResult.data ?? []) as PresensiRekap[];
   }
 
   /*
    * ============================================================
-   * HASIL
+   * 6. BENTUK RESPONSE
    * ============================================================
    */
+
   const result: RekapitulasiPresensi = {
-    mudamudi: mudamudiData.map((item) => ({
+    mudamudi: mudamudiDataPaginated.map((item) => ({
       id: item.id,
       nama: item.nama,
       desa: item.desa,
@@ -271,6 +380,9 @@ export async function getRekapitulasiPresensi({
       tanggal_mulai: item.tanggal_mulai,
       tanggal_selesai: item.tanggal_selesai,
       lokasi: item.lokasi,
+      desa: item.desa,
+      kelas: item.kelas,
+      jenis_kelamin: item.jenis_kelamin,
     })),
 
     kehadiran: presensiData.map((item) => ({

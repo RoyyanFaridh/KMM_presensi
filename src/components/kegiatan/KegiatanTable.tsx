@@ -30,7 +30,6 @@ type Props = {
 export default function KegiatanTable({ initialData }: Props) {
   const [data, setData] = useState(initialData);
   const [modal, setModal] = useState<ModalState>(null);
-  const [qrKegiatan, setQrKegiatan] = useState<Kegiatan | null>(null);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [search, setSearch] = useState("");
@@ -129,10 +128,6 @@ export default function KegiatanTable({ initialData }: Props) {
     });
   }
 
-  function handleShowQR(kegiatan: Kegiatan) {
-    setQrKegiatan(kegiatan);
-  }
-
   function handleScanQR(kegiatan: Kegiatan) {
     window.location.href = `/admin/presensi/scan/${kegiatan.id}`;
   }
@@ -155,6 +150,18 @@ export default function KegiatanTable({ initialData }: Props) {
       return;
     }
 
+    const desa = formData
+      .getAll("desa")
+      .map((value) => String(value).trim())
+      .filter(Boolean);
+
+    const kelas = formData
+      .getAll("kelas")
+      .map((value) => String(value).trim())
+      .filter(Boolean);
+
+    const jenisKelamin = String(formData.get("jenis_kelamin") ?? "").trim();
+
     if (modal?.type === "edit") {
       setData((current) =>
         current.map((item) =>
@@ -167,6 +174,9 @@ export default function KegiatanTable({ initialData }: Props) {
                 jam_mulai: String(formData.get("jam_mulai") ?? ""),
                 jam_selesai: String(formData.get("jam_selesai") ?? ""),
                 lokasi: String(formData.get("lokasi") ?? "").trim(),
+                desa: desa.length > 0 ? desa : null,
+                kelas: kelas.length > 0 ? kelas : null,
+                jenis_kelamin: jenisKelamin || null,
               }
             : item,
         ),
@@ -248,7 +258,6 @@ export default function KegiatanTable({ initialData }: Props) {
           onSort={handleSort}
           onEdit={openEdit}
           onDelete={openDelete}
-          onShowQR={handleShowQR}
           onScanQR={handleScanQR}
         />
       </div>

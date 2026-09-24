@@ -19,7 +19,6 @@ type Props = {
   onSort: (key: SortKey) => void;
   onEdit: (kegiatan: Kegiatan) => void;
   onDelete: (kegiatan: Kegiatan) => void;
-  onShowQR: (kegiatan: Kegiatan) => void;
   onScanQR: (kegiatan: Kegiatan) => void;
 };
 
@@ -31,7 +30,6 @@ export default function KegiatanTableView({
   onSort,
   onEdit,
   onDelete,
-  onShowQR,
   onScanQR,
 }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -71,7 +69,6 @@ export default function KegiatanTableView({
         onSort={onSort}
         onEdit={onEdit}
         onDelete={onDelete}
-        onShowQR={onShowQR}
         onScanQR={onScanQR}
       />
 
@@ -79,7 +76,6 @@ export default function KegiatanTableView({
         data={paginatedData}
         onEdit={onEdit}
         onDelete={onDelete}
-        onShowQR={onShowQR}
         onScanQR={onScanQR}
       />
 

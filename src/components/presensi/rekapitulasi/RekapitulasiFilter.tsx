@@ -2,7 +2,10 @@
 
 import { useMemo, useState } from "react";
 
-import { DESA_OPTIONS } from "../../../backend/mudamudi/constants";
+import {
+  DESA_OPTIONS,
+  KELAS_OPTIONS,
+} from "../../../backend/mudamudi/constants";
 
 import type {
   RekapitulasiKegiatan,
@@ -20,6 +23,7 @@ type Props = {
   selectedKegiatan: string;
   selectedDesa: string;
   selectedKelompok: string;
+  selectedKelas: string;
   kegiatan: RekapitulasiKegiatan[];
   bulanOptions: BulanOption[];
   mudamudi: RekapitulasiMudaMudi[];
@@ -28,6 +32,7 @@ type Props = {
   onKegiatanChange: (value: string) => void;
   onDesaChange: (value: string) => void;
   onKelompokChange: (value: string) => void;
+  onKelasChange: (value: string) => void;
 };
 
 export default function RekapitulasiFilter({
@@ -36,6 +41,7 @@ export default function RekapitulasiFilter({
   selectedKegiatan,
   selectedDesa,
   selectedKelompok,
+  selectedKelas,
   kegiatan,
   bulanOptions,
   mudamudi,
@@ -44,6 +50,7 @@ export default function RekapitulasiFilter({
   onKegiatanChange,
   onDesaChange,
   onKelompokChange,
+  onKelasChange,
 }: Props) {
   const [showFilter, setShowFilter] = useState(false);
 
@@ -61,9 +68,11 @@ export default function RekapitulasiFilter({
     return Array.from(kelompok).sort((a, b) => a.localeCompare(b, "id"));
   }, [mudamudi, selectedDesa]);
 
-  const activeFilterCount = [selectedDesa, selectedKelompok].filter(
-    Boolean,
-  ).length;
+  const activeFilterCount = [
+    selectedDesa,
+    selectedKelompok,
+    selectedKelas,
+  ].filter(Boolean).length;
 
   function handleDesaChange(desa: string) {
     onDesaChange(desa);
@@ -84,7 +93,7 @@ export default function RekapitulasiFilter({
     <div className="mb-4">
       {/* =========================================================
           MOBILE
-          Search + Filter icon
+          Search + Filter
           Bulan + Kegiatan
           ========================================================= */}
       <div className="space-y-2.5 sm:hidden">
@@ -116,15 +125,11 @@ export default function RekapitulasiFilter({
             onClick={() => setShowFilter((prev) => !prev)}
             aria-label="Buka filter"
             title="Filter"
-            className={`
-              relative flex h-9.5 w-10 items-center justify-center
-              rounded-lg border transition
-              ${
-                showFilter || activeFilterCount > 0
-                  ? "border-teal-200 bg-teal-50 text-teal-700"
-                  : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-              }
-            `}
+            className={`relative flex h-9.5 w-10 items-center justify-center rounded-lg border transition ${
+              showFilter || activeFilterCount > 0
+                ? "border-teal-200 bg-teal-50 text-teal-700"
+                : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+            }`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -239,16 +244,11 @@ export default function RekapitulasiFilter({
         <button
           type="button"
           onClick={() => setShowFilter((prev) => !prev)}
-          className={`
-            flex h-9.5 items-center justify-center gap-1.5
-            rounded-lg border px-3 text-[12px]
-            transition
-            ${
-              showFilter || activeFilterCount > 0
-                ? "border-teal-200 bg-teal-50 text-teal-700"
-                : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-            }
-          `}
+          className={`flex h-9.5 items-center justify-center gap-1.5 rounded-lg border px-3 text-[12px] transition ${
+            showFilter || activeFilterCount > 0
+              ? "border-teal-200 bg-teal-50 text-teal-700"
+              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+          }`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -315,9 +315,9 @@ export default function RekapitulasiFilter({
             </button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 md:gap-6">
+          <div className="grid gap-4 md:grid-cols-3 md:gap-0">
             {/* Desa */}
-            <div>
+            <div className="md:pr-5">
               <p className="mb-2 text-[11px] font-medium text-gray-600">Desa</p>
 
               <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -354,7 +354,7 @@ export default function RekapitulasiFilter({
             </div>
 
             {/* Kelompok */}
-            <div className="border-t border-gray-100 pt-4 md:border-l md:border-t-0 md:pl-6 md:pt-0">
+            <div className="border-t border-gray-100 pt-4 md:border-l md:border-t-0 md:px-5 md:pt-0">
               <p className="mb-2 text-[11px] font-medium text-gray-600">
                 Kelompok
               </p>
@@ -391,6 +391,45 @@ export default function RekapitulasiFilter({
                 ))}
               </div>
             </div>
+
+            {/* Kelas */}
+            <div className="border-t border-gray-100 pt-4 md:border-l md:border-t-0 md:pl-5 md:pt-0">
+              <p className="mb-2 text-[11px] font-medium text-gray-600">
+                Kelas
+              </p>
+
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
+                  <input
+                    type="radio"
+                    name="rekapitulasi-kelas"
+                    value=""
+                    checked={selectedKelas === ""}
+                    onChange={() => onKelasChange("")}
+                    className="h-3.5 w-3.5 accent-teal-600"
+                  />
+                  Semua
+                </label>
+
+                {KELAS_OPTIONS.map((kelas) => (
+                  <label
+                    key={kelas}
+                    className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600"
+                  >
+                    <input
+                      type="radio"
+                      name="rekapitulasi-kelas"
+                      value={kelas}
+                      checked={selectedKelas === kelas}
+                      onChange={() => onKelasChange(kelas)}
+                      className="h-3.5 w-3.5 accent-teal-600"
+                    />
+
+                    {kelas}
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Action */}
@@ -400,6 +439,7 @@ export default function RekapitulasiFilter({
               onClick={() => {
                 onDesaChange("");
                 onKelompokChange("");
+                onKelasChange("");
               }}
               className="text-[11px] text-gray-500 underline underline-offset-2 transition hover:text-gray-700"
             >

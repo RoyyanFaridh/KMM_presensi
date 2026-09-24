@@ -3,6 +3,8 @@
 import { requireAdmin } from "../auth/admin";
 import { createClient } from "../supabase/server";
 
+import { isMudamudiTargeted } from "./target";
+
 import { PresensiStatus } from "./types";
 
 type UpdatePresensiStatusInput = {
@@ -33,6 +35,81 @@ function normalizeKeterangan(keterangan?: string | null) {
   const value = keterangan?.trim() || null;
 
   return value ? value.slice(0, 500) : null;
+}
+
+async function validateTarget(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  kegiatanId: number,
+  mudamudiId: number,
+) {
+  const { data: kegiatan, error: kegiatanError } = await supabase
+    .from("kegiatan")
+    .select(
+      `
+          id,
+          desa,
+          kelas,
+          jenis_kelamin
+        `,
+    )
+    .eq("id", kegiatanId)
+    .maybeSingle();
+
+  if (kegiatanError) {
+    console.error("Gagal mengambil sasaran kegiatan:", kegiatanError);
+
+    return {
+      valid: false,
+      error: "Gagal memeriksa sasaran kegiatan.",
+    };
+  }
+
+  if (!kegiatan) {
+    return {
+      valid: false,
+      error: "Kegiatan tidak ditemukan.",
+    };
+  }
+
+  const { data: mudamudi, error: mudamudiError } = await supabase
+    .from("mudamudi")
+    .select(
+      `
+          id,
+          desa,
+          kelas,
+          jenis_kelamin
+        `,
+    )
+    .eq("id", mudamudiId)
+    .maybeSingle();
+
+  if (mudamudiError) {
+    console.error("Gagal mengambil data Muda-Mudi:", mudamudiError);
+
+    return {
+      valid: false,
+      error: "Gagal memeriksa data Muda-Mudi.",
+    };
+  }
+
+  if (!mudamudi) {
+    return {
+      valid: false,
+      error: "Muda-Mudi tidak ditemukan.",
+    };
+  }
+
+  if (!isMudamudiTargeted(kegiatan, mudamudi)) {
+    return {
+      valid: false,
+      error: "Muda-Mudi tidak termasuk sasaran kegiatan.",
+    };
+  }
+
+  return {
+    valid: true,
+  };
 }
 
 export async function updatePresensiStatus(input: UpdatePresensiStatusInput) {
@@ -71,16 +148,27 @@ export async function updatePresensiStatus(input: UpdatePresensiStatusInput) {
     };
   }
 
+  const targetValidation = await validateTarget(
+    supabase,
+    input.kegiatanId,
+    input.mudamudiId,
+  );
+
+  if (!targetValidation.valid) {
+    return {
+      success: false,
+      error: targetValidation.error,
+    };
+  }
+
   const keterangan = normalizeKeterangan(input.keterangan);
 
   /*
-   * ============================================================
+   * ============================================
    * 1. PRESENSI SUDAH ADA
-   * ============================================================
-   *
-   * Update status + keterangan.
-   * Waktu check-in dan metode tetap dipertahankan.
+   * ============================================
    */
+
   if (input.presensiId !== null) {
     const { data: existingPresensi, error: checkError } = await supabase
       .from("presensi")
@@ -155,6 +243,7 @@ export async function updatePresensiStatus(input: UpdatePresensiStatusInput) {
 
     return {
       success: true,
+
       data: {
         presensiId: updatedPresensi.id,
         kegiatanId: updatedPresensi.kegiatan_id,
@@ -168,24 +257,23 @@ export async function updatePresensiStatus(input: UpdatePresensiStatusInput) {
   }
 
   /*
-   * ============================================================
+   * ============================================
    * 2. BELUM ADA PRESENSI
-   * ============================================================
-   *
-   * Buat presensi manual dengan status + keterangan.
+   * ============================================
    */
+
   const { data: existingByParticipant, error: existingError } = await supabase
     .from("presensi")
     .select(
       `
-          id,
-          kegiatan_id,
-          mudamudi_id,
-          waktu_checkin,
-          status,
-          metode,
-          keterangan
-        `,
+        id,
+        kegiatan_id,
+        mudamudi_id,
+        waktu_checkin,
+        status,
+        metode,
+        keterangan
+      `,
     )
     .eq("kegiatan_id", input.kegiatanId)
     .eq("mudamudi_id", input.mudamudiId)
@@ -204,6 +292,7 @@ export async function updatePresensiStatus(input: UpdatePresensiStatusInput) {
    * Jika ternyata presensi sudah dibuat oleh proses lain,
    * update record tersebut.
    */
+
   if (existingByParticipant) {
     const { data: updatedPresensi, error: updateError } = await supabase
       .from("presensi")
@@ -236,6 +325,7 @@ export async function updatePresensiStatus(input: UpdatePresensiStatusInput) {
 
     return {
       success: true,
+
       data: {
         presensiId: updatedPresensi.id,
         kegiatanId: updatedPresensi.kegiatan_id,
@@ -291,6 +381,7 @@ export async function updatePresensiStatus(input: UpdatePresensiStatusInput) {
 
   return {
     success: true,
+
     data: {
       presensiId: newPresensi.id,
       kegiatanId: newPresensi.kegiatan_id,

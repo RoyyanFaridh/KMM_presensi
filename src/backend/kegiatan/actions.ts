@@ -8,6 +8,36 @@ function normalize(value: string) {
   return value.trim().toLowerCase();
 }
 
+function normalizeArray(values: string[]) {
+  return [...values]
+    .map((value) => normalize(value))
+    .filter(Boolean)
+    .sort();
+}
+
+function sameArray(
+  first: string[] | null | undefined,
+  second: string[] | null | undefined,
+) {
+  const firstNormalized = normalizeArray(first ?? []);
+  const secondNormalized = normalizeArray(second ?? []);
+
+  if (firstNormalized.length !== secondNormalized.length) {
+    return false;
+  }
+
+  return firstNormalized.every(
+    (value, index) => value === secondNormalized[index],
+  );
+}
+
+function getStringArray(formData: FormData, name: string) {
+  return formData
+    .getAll(name)
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+}
+
 function validateServer(
   nama: string,
   tanggalMulai: string,
@@ -15,6 +45,9 @@ function validateServer(
   jamMulai: string,
   jamSelesai: string,
   lokasi: string,
+  desa: string[],
+  kelas: string[],
+  jenisKelamin: string,
 ) {
   if (!nama.trim()) {
     return "Nama kegiatan wajib diisi";
@@ -48,6 +81,18 @@ function validateServer(
     return "Lokasi wajib diisi";
   }
 
+  if (!Array.isArray(desa)) {
+    return "Desa tidak valid";
+  }
+
+  if (!Array.isArray(kelas)) {
+    return "Kelas tidak valid";
+  }
+
+  if (jenisKelamin !== "" && !jenisKelamin) {
+    return "Jenis kelamin tidak valid";
+  }
+
   return null;
 }
 
@@ -57,7 +102,7 @@ export async function getKegiatan() {
   const { data, error } = await supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, created_at",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelas, jenis_kelamin, created_at",
     )
     .order("tanggal_mulai", { ascending: false })
     .order("jam_mulai", { ascending: false });
@@ -79,6 +124,10 @@ export async function addKegiatan(formData: FormData) {
   const jamSelesai = String(formData.get("jam_selesai") ?? "");
   const lokasiRaw = String(formData.get("lokasi") ?? "");
 
+  const desa = getStringArray(formData, "desa");
+  const kelas = getStringArray(formData, "kelas");
+  const jenisKelamin = String(formData.get("jenis_kelamin") ?? "").trim();
+
   const nama = namaRaw.trim();
   const lokasi = lokasiRaw.trim();
 
@@ -89,6 +138,9 @@ export async function addKegiatan(formData: FormData) {
     jamMulai,
     jamSelesai,
     lokasi,
+    desa,
+    kelas,
+    jenisKelamin,
   );
 
   if (validationError) {
@@ -98,7 +150,7 @@ export async function addKegiatan(formData: FormData) {
   const { data: candidates } = await supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelas, jenis_kelamin",
     )
     .eq("tanggal_mulai", tanggalMulai)
     .eq("tanggal_selesai", tanggalSelesai);
@@ -108,7 +160,10 @@ export async function addKegiatan(formData: FormData) {
       normalize(item.nama) === normalize(nama) &&
       item.jam_mulai === jamMulai &&
       item.jam_selesai === jamSelesai &&
-      normalize(item.lokasi) === normalize(lokasi),
+      normalize(item.lokasi ?? "") === normalize(lokasi) &&
+      sameArray(item.desa, desa) &&
+      sameArray(item.kelas, kelas) &&
+      (item.jenis_kelamin ?? "") === jenisKelamin,
   );
 
   if (isDuplicate) {
@@ -124,6 +179,9 @@ export async function addKegiatan(formData: FormData) {
     jam_mulai: jamMulai,
     jam_selesai: jamSelesai,
     lokasi,
+    desa: desa.length > 0 ? desa : null,
+    kelas: kelas.length > 0 ? kelas : null,
+    jenis_kelamin: jenisKelamin || null,
   });
 
   if (error) {
@@ -145,6 +203,10 @@ export async function updateKegiatan(id: number, formData: FormData) {
   const jamSelesai = String(formData.get("jam_selesai") ?? "");
   const lokasiRaw = String(formData.get("lokasi") ?? "");
 
+  const desa = getStringArray(formData, "desa");
+  const kelas = getStringArray(formData, "kelas");
+  const jenisKelamin = String(formData.get("jenis_kelamin") ?? "").trim();
+
   const nama = namaRaw.trim();
   const lokasi = lokasiRaw.trim();
 
@@ -155,6 +217,9 @@ export async function updateKegiatan(id: number, formData: FormData) {
     jamMulai,
     jamSelesai,
     lokasi,
+    desa,
+    kelas,
+    jenisKelamin,
   );
 
   if (validationError) {
@@ -164,7 +229,7 @@ export async function updateKegiatan(id: number, formData: FormData) {
   const { data: candidates } = await supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelas, jenis_kelamin",
     )
     .eq("tanggal_mulai", tanggalMulai)
     .eq("tanggal_selesai", tanggalSelesai)
@@ -175,7 +240,10 @@ export async function updateKegiatan(id: number, formData: FormData) {
       normalize(item.nama) === normalize(nama) &&
       item.jam_mulai === jamMulai &&
       item.jam_selesai === jamSelesai &&
-      normalize(item.lokasi) === normalize(lokasi),
+      normalize(item.lokasi ?? "") === normalize(lokasi) &&
+      sameArray(item.desa, desa) &&
+      sameArray(item.kelas, kelas) &&
+      (item.jenis_kelamin ?? "") === jenisKelamin,
   );
 
   if (isDuplicate) {
@@ -193,6 +261,9 @@ export async function updateKegiatan(id: number, formData: FormData) {
       jam_mulai: jamMulai,
       jam_selesai: jamSelesai,
       lokasi,
+      desa: desa.length > 0 ? desa : null,
+      kelas: kelas.length > 0 ? kelas : null,
+      jenis_kelamin: jenisKelamin || null,
     })
     .eq("id", id);
 

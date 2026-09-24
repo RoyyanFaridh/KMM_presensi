@@ -9,6 +9,8 @@ import {
   updateDeviceLastUsed,
 } from "./device";
 
+import { isMudamudiTargeted } from "./target";
+
 import type { PresensiStatus, PresensiMetode } from "./types";
 
 const HADIR_TOLERANCE_MINUTES = 10;
@@ -28,6 +30,9 @@ type Kegiatan = {
   jam_mulai: string;
   jam_selesai: string;
   lokasi: string;
+  desa: string[] | null;
+  kelas: string[] | null;
+  jenis_kelamin: string | null;
 };
 
 type Mudamudi = {
@@ -59,6 +64,7 @@ export type ScanMudamudiQRResult =
         | "mudamudi_not_found"
         | "kegiatan_not_found"
         | "kegiatan_inactive"
+        | "not_target"
         | "already_present"
         | "database_error";
       message: string;
@@ -118,7 +124,10 @@ export async function getKegiatanById(
         tanggal_selesai,
         jam_mulai,
         jam_selesai,
-        lokasi
+        lokasi,
+        desa,
+        kelas,
+        jenis_kelamin
       `,
     )
     .eq("id", kegiatanId)
@@ -216,7 +225,10 @@ export async function scanMudamudiQR(
         tanggal_selesai,
         jam_mulai,
         jam_selesai,
-        lokasi
+        lokasi,
+        desa,
+        kelas,
+        jenis_kelamin
       `,
     )
     .eq("id", kegiatanId)
@@ -256,6 +268,16 @@ export async function scanMudamudiQR(
       success: false,
       type: "kegiatan_inactive",
       message: "Kegiatan belum dimulai atau sudah selesai.",
+      kegiatan,
+      mudamudi,
+    };
+  }
+
+  if (!isMudamudiTargeted(kegiatan, mudamudi)) {
+    return {
+      success: false,
+      type: "not_target",
+      message: "Muda-Mudi tidak termasuk sasaran kegiatan.",
       kegiatan,
       mudamudi,
     };
@@ -356,10 +378,6 @@ export async function scanMudamudiQR(
  * ============================================
  * LEGACY DEVICE FLOW
  * ============================================
- *
- * Fungsi-fungsi di bawah ini sementara
- * dipertahankan agar file lain yang masih
- * menggunakan alur lama tidak langsung error.
  */
 
 export async function getDeviceStatus(deviceToken: string | null) {
@@ -605,14 +623,14 @@ export async function submitPresensi(
         .from("mudamudi")
         .select(
           `
-            id,
-            nama,
-            desa,
-            kelompok,
-            kelas,
-            jenis_kelamin,
-            tanggal_lahir
-          `,
+              id,
+              nama,
+              desa,
+              kelompok,
+              kelas,
+              jenis_kelamin,
+              tanggal_lahir
+            `,
         )
         .eq("id", device.data.mudamudiId)
         .maybeSingle();
@@ -635,6 +653,13 @@ export async function submitPresensi(
     return {
       success: false,
       message: "Data Muda-Mudi tidak dapat ditemukan.",
+    };
+  }
+
+  if (!isMudamudiTargeted(kegiatan, mudamudi)) {
+    return {
+      success: false,
+      message: "Muda-Mudi tidak termasuk sasaran kegiatan.",
     };
   }
 

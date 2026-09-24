@@ -6,11 +6,7 @@ import {
   getKegiatanStatus,
 } from "../../backend/kegiatan/format";
 
-import {
-  Kegiatan,
-  SortConfig,
-  SortKey,
-} from "../../backend/kegiatan/types";
+import { Kegiatan, SortConfig, SortKey } from "../../backend/kegiatan/types";
 
 import { DeleteIcon, EditIcon } from "../mudamudi/icons";
 
@@ -20,7 +16,6 @@ type Props = {
   onSort: (key: SortKey) => void;
   onEdit: (kegiatan: Kegiatan) => void;
   onDelete: (kegiatan: Kegiatan) => void;
-  onShowQR: (kegiatan: Kegiatan) => void;
   onScanQR: (kegiatan: Kegiatan) => void;
 };
 
@@ -40,7 +35,6 @@ export default function DesktopTable({
   onSort,
   onEdit,
   onDelete,
-  onShowQR,
   onScanQR,
 }: Props) {
   return (
@@ -64,10 +58,7 @@ export default function DesktopTable({
               </th>
 
               {columns.map((column) => (
-                <th
-                  key={column.key}
-                  className="px-4 py-3"
-                >
+                <th key={column.key} className="px-4 py-3">
                   <button
                     type="button"
                     onClick={() => onSort(column.key)}
@@ -77,9 +68,7 @@ export default function DesktopTable({
 
                     {sort?.key === column.key && (
                       <span className="text-teal-600">
-                        {sort.direction === "asc"
-                          ? "↑"
-                          : "↓"}
+                        {sort.direction === "asc" ? "↑" : "↓"}
                       </span>
                     )}
                   </button>
@@ -136,16 +125,11 @@ export default function DesktopTable({
                     <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-gray-600">
                       {formatTanggal(item.tanggal_mulai)}
 
-                      {item.tanggal_selesai !==
-                        item.tanggal_mulai && (
+                      {item.tanggal_selesai !== item.tanggal_mulai && (
                         <>
-                          <span className="mx-1 text-gray-300">
-                            -
-                          </span>
+                          <span className="mx-1 text-gray-300">-</span>
 
-                          {formatTanggal(
-                            item.tanggal_selesai,
-                          )}
+                          {formatTanggal(item.tanggal_selesai)}
                         </>
                       )}
                     </td>
@@ -165,13 +149,11 @@ export default function DesktopTable({
                     </td>
 
                     <td className="px-2 py-3 align-middle">
-                      {itemStatus ===
-                      "sedang_berlangsung" ? (
+                      {itemStatus === "sedang_berlangsung" ? (
                         <span className="inline-block max-w-full rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-medium leading-3 text-emerald-700">
                           Sedang berlangsung
                         </span>
-                      ) : itemStatus ===
-                        "akan_berlangsung" ? (
+                      ) : itemStatus === "akan_berlangsung" ? (
                         <span className="inline-block max-w-full rounded-full bg-amber-50 px-2 py-1 text-[9px] font-medium leading-3 text-amber-700">
                           Akan berlangsung
                         </span>

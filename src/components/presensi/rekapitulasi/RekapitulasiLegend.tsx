@@ -40,6 +40,17 @@ export default function RekapitulasiLegend({ className = "" }: Props) {
           <span>{item.label}</span>
         </div>
       ))}
+
+      <div className="flex items-center gap-2">
+        <span
+          className="text-[11px] font-medium text-gray-300"
+          aria-hidden="true"
+        >
+          -
+        </span>
+
+        <span>Tidak Berlaku</span>
+      </div>
     </div>
   );
 }

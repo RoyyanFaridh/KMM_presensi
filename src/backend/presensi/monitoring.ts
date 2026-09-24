@@ -9,16 +9,45 @@ import {
   PresensiStatus,
 } from "./types";
 
+type KegiatanMonitoring = {
+  id: number;
+  nama: string;
+  tanggal_mulai: string;
+  tanggal_selesai: string;
+  jam_mulai: string;
+  jam_selesai: string;
+  lokasi: string;
+  desa: string[] | null;
+  kelas: string[] | null;
+  jenis_kelamin: string | null;
+};
+
+type MudamudiMonitoring = {
+  id: number;
+  nama: string;
+  desa: string;
+  kelompok: string;
+  kelas: string;
+  jenis_kelamin: string | null;
+};
+
+function emptyResult(error: string) {
+  return {
+    data: null as MonitoringPresensi | null,
+    error,
+  };
+}
+
 export async function getMonitoringPresensi(kegiatanId: number) {
   const supabase = await createClient();
 
   if (!Number.isInteger(kegiatanId) || kegiatanId <= 0) {
-    return {
-      data: null as MonitoringPresensi | null,
-      error: "Kegiatan tidak valid",
-    };
+    return emptyResult("Kegiatan tidak valid");
   }
 
+  /*
+   * Ambil hanya data kegiatan yang benar-benar diperlukan.
+   */
   const { data: kegiatan, error: kegiatanError } = await supabase
     .from("kegiatan")
     .select(
@@ -29,7 +58,10 @@ export async function getMonitoringPresensi(kegiatanId: number) {
         tanggal_selesai,
         jam_mulai,
         jam_selesai,
-        lokasi
+        lokasi,
+        desa,
+        kelas,
+        jenis_kelamin
       `,
     )
     .eq("id", kegiatanId)
@@ -38,35 +70,62 @@ export async function getMonitoringPresensi(kegiatanId: number) {
   if (kegiatanError) {
     console.error("Gagal mengambil kegiatan:", kegiatanError);
 
-    return {
-      data: null as MonitoringPresensi | null,
-      error: "Gagal mengambil data kegiatan",
-    };
+    return emptyResult("Gagal mengambil data kegiatan");
   }
 
   if (!kegiatan) {
-    return {
-      data: null as MonitoringPresensi | null,
-      error: "Kegiatan tidak ditemukan",
-    };
+    return emptyResult("Kegiatan tidak ditemukan");
   }
 
+  const kegiatanMonitoring = kegiatan as KegiatanMonitoring;
+
+  /*
+   * Query Muda-Mudi langsung berdasarkan target kegiatan.
+   *
+   * NULL / array kosong = semua.
+   *
+   * Dengan begitu kita tidak perlu mengambil seluruh
+   * Muda-Mudi kemudian memfilter di server.
+   */
+  let mudamudiQuery = supabase
+    .from("mudamudi")
+    .select(
+      `
+        id,
+        nama,
+        desa,
+        kelompok,
+        kelas,
+        jenis_kelamin
+      `,
+    )
+    .order("nama", {
+      ascending: true,
+    });
+
+  if (kegiatanMonitoring.desa?.length) {
+    mudamudiQuery = mudamudiQuery.in("desa", kegiatanMonitoring.desa);
+  }
+
+  if (kegiatanMonitoring.kelas?.length) {
+    mudamudiQuery = mudamudiQuery.in("kelas", kegiatanMonitoring.kelas);
+  }
+
+  if (kegiatanMonitoring.jenis_kelamin) {
+    mudamudiQuery = mudamudiQuery.eq(
+      "jenis_kelamin",
+      kegiatanMonitoring.jenis_kelamin,
+    );
+  }
+
+  /*
+   * Muda-Mudi dan presensi dapat diambil bersamaan.
+   *
+   * Presensi dibatasi hanya untuk kegiatan yang sedang
+   * dimonitor.
+   */
   const [mudamudiResult, presensiResult] = await Promise.all([
-    supabase
-      .from("mudamudi")
-      .select(
-        `
-          id,
-          nama,
-          desa,
-          kelompok,
-          kelas,
-          jenis_kelamin
-        `,
-      )
-      .order("nama", {
-        ascending: true,
-      }),
+    mudamudiQuery,
 
     supabase
       .from("presensi")
@@ -90,21 +149,24 @@ export async function getMonitoringPresensi(kegiatanId: number) {
   if (mudamudiResult.error) {
     console.error("Gagal mengambil Muda-Mudi:", mudamudiResult.error);
 
-    return {
-      data: null as MonitoringPresensi | null,
-      error: "Gagal mengambil data Muda-Mudi",
-    };
+    return emptyResult("Gagal mengambil data Muda-Mudi");
   }
 
   if (presensiResult.error) {
     console.error("Gagal mengambil presensi:", presensiResult.error);
 
-    return {
-      data: null as MonitoringPresensi | null,
-      error: "Gagal mengambil data presensi",
-    };
+    return emptyResult("Gagal mengambil data presensi");
   }
 
+  const mudamudiSasaran = (mudamudiResult.data ?? []) as MudamudiMonitoring[];
+
+  /*
+   * Buat map presensi berdasarkan ID Muda-Mudi.
+   *
+   * Karena database memiliki UNIQUE(kegiatan_id, mudamudi_id),
+   * satu Muda-Mudi maksimal memiliki satu presensi
+   * untuk satu kegiatan.
+   */
   const presensiMap = new Map<
     number,
     {
@@ -126,9 +188,12 @@ export async function getMonitoringPresensi(kegiatanId: number) {
     });
   }
 
-  const peserta: MonitoringPeserta[] = (
-    mudamudiResult.data ?? []
-  ).map((item) => {
+  /*
+   * Gabungkan peserta target dengan data presensinya.
+   *
+   * Tidak ada presensi = Belum Hadir.
+   */
+  const peserta: MonitoringPeserta[] = mudamudiSasaran.map((item) => {
     const presensi = presensiMap.get(item.id);
 
     if (!presensi) {
@@ -162,36 +227,51 @@ export async function getMonitoringPresensi(kegiatanId: number) {
     };
   });
 
-  const totalPeserta = peserta.length;
+  /*
+   * Hitung summary dalam satu loop.
+   *
+   * Lebih hemat CPU daripada melakukan 6x filter()
+   * terhadap array peserta.
+   */
+  let totalHadir = 0;
+  let totalTerlambat = 0;
+  let totalIzin = 0;
+  let totalSakit = 0;
+  let totalAlpa = 0;
+  let totalBelumHadir = 0;
 
-  const totalHadir = peserta.filter(
-    (item) => item.status === "hadir",
-  ).length;
+  for (const item of peserta) {
+    switch (item.status) {
+      case "hadir":
+        totalHadir++;
+        break;
 
-  const totalTerlambat = peserta.filter(
-    (item) => item.status === "terlambat",
-  ).length;
+      case "terlambat":
+        totalTerlambat++;
+        break;
 
-  const totalIzin = peserta.filter(
-    (item) => item.status === "izin",
-  ).length;
+      case "izin":
+        totalIzin++;
+        break;
 
-  const totalSakit = peserta.filter(
-    (item) => item.status === "sakit",
-  ).length;
+      case "sakit":
+        totalSakit++;
+        break;
 
-  const totalAlpa = peserta.filter(
-    (item) => item.status === "alpa",
-  ).length;
+      case "alpa":
+        totalAlpa++;
+        break;
 
-  const totalBelumHadir = peserta.filter(
-    (item) => item.status === null,
-  ).length;
+      default:
+        totalBelumHadir++;
+        break;
+    }
+  }
 
   return {
     data: {
-      kegiatan,
-      totalPeserta,
+      kegiatan: kegiatanMonitoring,
+      totalPeserta: peserta.length,
       totalHadir,
       totalTerlambat,
       totalIzin,

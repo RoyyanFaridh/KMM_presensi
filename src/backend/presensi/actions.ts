@@ -16,7 +16,6 @@ import {
 } from "./dashboard";
 
 import { getMonitoringPresensi as getMonitoringPresensiAdmin } from "./monitoring";
-
 import { getRekapitulasiPresensi as getRekapitulasiPresensiAdmin } from "./rekapitulasi";
 
 import { createManualPresensi as createManualPresensiAdmin } from "./manual";
@@ -86,6 +85,7 @@ export async function getRekapitulasiPresensi(input: {
   kegiatanId?: number;
   desa?: string;
   kelompok?: string;
+  kelas?: string;
 }) {
   return getRekapitulasiPresensiAdmin(input);
 }

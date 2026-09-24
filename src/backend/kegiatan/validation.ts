@@ -7,6 +7,9 @@ export function validateClient(
   jamMulai: string,
   jamSelesai: string,
   lokasi: string,
+  desa: string[],
+  kelas: string[],
+  jenisKelamin: string,
 ): FieldErrors {
   const errors: FieldErrors = {};
 
@@ -48,6 +51,18 @@ export function validateClient(
 
   if (!lokasi.trim()) {
     errors.lokasi = "Lokasi wajib diisi";
+  }
+
+  if (!Array.isArray(desa)) {
+    errors.desa = "Desa tidak valid";
+  }
+
+  if (!Array.isArray(kelas)) {
+    errors.kelas = "Kelas tidak valid";
+  }
+
+  if (jenisKelamin !== "" && !jenisKelamin) {
+    errors.jenis_kelamin = "Jenis kelamin tidak valid";
   }
 
   return errors;

@@ -15,7 +15,6 @@ type Props = {
   data: Kegiatan[];
   onEdit: (kegiatan: Kegiatan) => void;
   onDelete: (kegiatan: Kegiatan) => void;
-  onShowQR: (kegiatan: Kegiatan) => void;
   onScanQR: (kegiatan: Kegiatan) => void;
 };
 
@@ -23,7 +22,6 @@ export default function MobileList({
   data,
   onEdit,
   onDelete,
-  onShowQR,
   onScanQR,
 }: Props) {
   if (data.length === 0) {

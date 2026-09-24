@@ -3,6 +3,8 @@
 import { requireAdmin } from "../auth/admin";
 import { createClient } from "../supabase/server";
 
+import { isMudamudiTargeted } from "./target";
+
 import { PresensiStatus } from "./types";
 
 type ManualPresensiInput = {
@@ -11,6 +13,14 @@ type ManualPresensiInput = {
   status: PresensiStatus;
   keterangan?: string | null;
 };
+
+const VALID_STATUSES: PresensiStatus[] = [
+  "hadir",
+  "terlambat",
+  "izin",
+  "sakit",
+  "alpa",
+];
 
 export async function createManualPresensi(input: ManualPresensiInput) {
   await requireAdmin();
@@ -31,15 +41,7 @@ export async function createManualPresensi(input: ManualPresensiInput) {
     };
   }
 
-  const validStatuses: PresensiStatus[] = [
-    "hadir",
-    "terlambat",
-    "izin",
-    "sakit",
-    "alpa",
-  ];
-
-  if (!validStatuses.includes(input.status)) {
+  if (!VALID_STATUSES.includes(input.status)) {
     return {
       success: false,
       error: "Status presensi tidak valid.",
@@ -50,14 +52,17 @@ export async function createManualPresensi(input: ManualPresensiInput) {
     .from("kegiatan")
     .select(
       `
-        id,
-        nama,
-        tanggal_mulai,
-        tanggal_selesai,
-        jam_mulai,
-        jam_selesai,
-        lokasi
-      `,
+          id,
+          nama,
+          tanggal_mulai,
+          tanggal_selesai,
+          jam_mulai,
+          jam_selesai,
+          lokasi,
+          desa,
+          kelas,
+          jenis_kelamin
+        `,
     )
     .eq("id", input.kegiatanId)
     .maybeSingle();
@@ -82,13 +87,13 @@ export async function createManualPresensi(input: ManualPresensiInput) {
     .from("mudamudi")
     .select(
       `
-        id,
-        nama,
-        desa,
-        kelompok,
-        kelas,
-        jenis_kelamin
-      `,
+          id,
+          nama,
+          desa,
+          kelompok,
+          kelas,
+          jenis_kelamin
+        `,
     )
     .eq("id", input.mudamudiId)
     .maybeSingle();
@@ -106,6 +111,13 @@ export async function createManualPresensi(input: ManualPresensiInput) {
     return {
       success: false,
       error: "Muda-Mudi tidak ditemukan.",
+    };
+  }
+
+  if (!isMudamudiTargeted(kegiatan, mudamudi)) {
+    return {
+      success: false,
+      error: "Muda-Mudi tidak termasuk sasaran kegiatan.",
     };
   }
 
@@ -146,7 +158,7 @@ export async function createManualPresensi(input: ManualPresensiInput) {
       ? null
       : new Date().toISOString();
 
-  const keterangan = input.keterangan?.trim() || null;
+  const keterangan = input.keterangan?.trim().slice(0, 500) || null;
 
   const { data: presensi, error: insertError } = await supabase
     .from("presensi")
@@ -160,14 +172,14 @@ export async function createManualPresensi(input: ManualPresensiInput) {
     })
     .select(
       `
-        id,
-        kegiatan_id,
-        mudamudi_id,
-        waktu_checkin,
-        status,
-        metode,
-        keterangan
-      `,
+          id,
+          kegiatan_id,
+          mudamudi_id,
+          waktu_checkin,
+          status,
+          metode,
+          keterangan
+        `,
     )
     .single();
 
@@ -193,17 +205,11 @@ export async function createManualPresensi(input: ManualPresensiInput) {
 
     data: {
       presensiId: presensi.id,
-
       kegiatanId: presensi.kegiatan_id,
-
       mudamudiId: presensi.mudamudi_id,
-
       waktuCheckin: presensi.waktu_checkin,
-
       status: presensi.status as PresensiStatus,
-
       metode: "manual" as const,
-
       keterangan: presensi.keterangan,
 
       kegiatan: {

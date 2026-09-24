@@ -34,7 +34,6 @@ export type SubmitPresensiResult = {
   metode: PresensiMetode;
   keterangan: string | null;
   deviceToken: string | null;
-
   kegiatan: {
     id: number;
     nama: string;
@@ -44,7 +43,6 @@ export type SubmitPresensiResult = {
     jamSelesai: string;
     lokasi: string;
   };
-
   mudamudi: {
     id: number;
     nama: string;
@@ -79,7 +77,6 @@ export type MonitoringPresensi = {
     jam_selesai: string;
     lokasi: string;
   };
-
   totalPeserta: number;
   totalHadir: number;
   totalTerlambat: number;
@@ -87,7 +84,6 @@ export type MonitoringPresensi = {
   totalSakit: number;
   totalAlpa: number;
   totalBelumHadir: number;
-
   peserta: MonitoringPeserta[];
 };
 
@@ -111,6 +107,9 @@ export type RekapitulasiKegiatan = {
   tanggal_mulai: string;
   tanggal_selesai: string;
   lokasi: string;
+  desa: string[] | null;
+  kelas: string[] | null;
+  jenis_kelamin: string | null;
 };
 
 export type RekapitulasiKehadiran = {

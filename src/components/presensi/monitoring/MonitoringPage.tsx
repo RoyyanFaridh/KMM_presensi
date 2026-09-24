@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import {
   getMonitoringPresensi,
@@ -25,6 +25,16 @@ import MonitoringEditModal from "./MonitoringEditModal";
 type Props = {
   kegiatan: Kegiatan[];
 };
+
+type MonitoringResult =
+  | {
+      data: MonitoringPresensi | null;
+      error: string;
+    }
+  | {
+      data: MonitoringPresensi;
+      error?: never;
+    };
 
 export default function MonitoringPage({ kegiatan }: Props) {
   const [selectedKegiatanId, setSelectedKegiatanId] = useState<number | null>(
@@ -51,28 +61,63 @@ export default function MonitoringPage({ kegiatan }: Props) {
 
   const [editError, setEditError] = useState("");
 
+  /*
+   * Digunakan untuk memastikan response request lama
+   * tidak menimpa hasil request yang lebih baru.
+   */
+  const requestIdRef = useRef(0);
+
   async function loadMonitoring(kegiatanId: number) {
+    const requestId = ++requestIdRef.current;
+
     setLoading(true);
     setError("");
 
-    const result = await getMonitoringPresensi(kegiatanId);
+    try {
+      const result = (await getMonitoringPresensi(
+        kegiatanId,
+      )) as MonitoringResult;
 
-    if (result.error) {
-      setError(result.error);
+      /*
+       * Abaikan hasil request yang sudah tidak relevan.
+       */
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
+      if ("error" in result && result.error) {
+        setError(result.error);
+        setData(null);
+        return;
+      }
+
+      setData(result.data);
+    } catch (err) {
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
+      console.error(err);
+
+      setError("Terjadi kesalahan saat memuat data monitoring.");
       setData(null);
-      setLoading(false);
-      return;
+    } finally {
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
-
-    setData(result.data);
-    setLoading(false);
   }
 
   function handleSelectKegiatan(kegiatanId: number) {
+    if (kegiatanId === selectedKegiatanId && data) {
+      return;
+    }
+
     setSelectedKegiatanId(kegiatanId);
 
     setSearch("");
     setError("");
+    setData(null);
     setDetailPeserta(null);
     setEditPeserta(null);
     setEditError("");
@@ -106,24 +151,34 @@ export default function MonitoringPage({ kegiatan }: Props) {
     setEditLoading(true);
     setEditError("");
 
-    const result = await updatePresensiStatus({
-      presensiId: editPeserta.presensi_id,
-      kegiatanId: selectedKegiatanId,
-      mudamudiId: editPeserta.mudamudi_id,
-      status,
-      keterangan,
-    });
+    try {
+      const result = await updatePresensiStatus({
+        presensiId: editPeserta.presensi_id,
+        kegiatanId: selectedKegiatanId,
+        mudamudiId: editPeserta.mudamudi_id,
+        status,
+        keterangan,
+      });
 
-    if (!result.success) {
-      setEditError(result.error || "Data presensi gagal diperbarui.");
+      if (!result.success) {
+        setEditError(result.error || "Data presensi gagal diperbarui.");
+        return;
+      }
+
+      setEditPeserta(null);
+
+      /*
+       * Ambil ulang monitoring setelah status berhasil diubah
+       * agar summary dan tabel selalu sinkron dengan database.
+       */
+      await loadMonitoring(selectedKegiatanId);
+    } catch (err) {
+      console.error(err);
+
+      setEditError("Terjadi kesalahan saat memperbarui data presensi.");
+    } finally {
       setEditLoading(false);
-      return;
     }
-
-    setEditLoading(false);
-    setEditPeserta(null);
-
-    await loadMonitoring(selectedKegiatanId);
   }
 
   const filteredPeserta = useMemo(() => {

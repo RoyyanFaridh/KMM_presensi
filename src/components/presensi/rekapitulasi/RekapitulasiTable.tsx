@@ -62,6 +62,27 @@ function getStatusStyle(status: PresensiStatus) {
   }
 }
 
+function isMudamudiTargeted(
+  kegiatan: RekapitulasiKegiatan,
+  mudamudi: RekapitulasiMudaMudi,
+) {
+  const matchesDesa =
+    !kegiatan.desa ||
+    kegiatan.desa.length === 0 ||
+    kegiatan.desa.includes(mudamudi.desa);
+
+  const matchesKelas =
+    !kegiatan.kelas ||
+    kegiatan.kelas.length === 0 ||
+    kegiatan.kelas.includes(mudamudi.kelas);
+
+  const matchesJenisKelamin =
+    !kegiatan.jenis_kelamin ||
+    kegiatan.jenis_kelamin === mudamudi.jenis_kelamin;
+
+  return matchesDesa && matchesKelas && matchesJenisKelamin;
+}
+
 export default function RekapitulasiTable({
   loading,
   mudaMudi,
@@ -82,7 +103,7 @@ export default function RekapitulasiTable({
 
   /*
    * Map status berdasarkan kombinasi:
-   * mudamudi_id + kegiatan_id
+   * mudamudi_id + kegiatan_id.
    */
   const attendanceMap = new Map<string, PresensiStatus>();
 
@@ -90,16 +111,36 @@ export default function RekapitulasiTable({
     attendanceMap.set(`${item.mudamudi_id}-${item.kegiatan_id}`, item.status);
   });
 
-  function getStatus(mudamudiId: number, kegiatanId: number): PresensiStatus {
-    return attendanceMap.get(`${mudamudiId}-${kegiatanId}`) ?? "alpa";
+  /*
+   * Mengambil status akhir Rekapitulasi.
+   *
+   * Bukan sasaran:
+   *     Tidak Berlaku (-)
+   *
+   * Sasaran + ada presensi:
+   *     Gunakan status presensi.
+   *
+   * Sasaran + tidak ada presensi:
+   *     Alpa.
+   */
+  function getStatus(
+    mudamudi: RekapitulasiMudaMudi,
+    kegiatanItem: RekapitulasiKegiatan,
+  ): PresensiStatus | null {
+    if (!isMudamudiTargeted(kegiatanItem, mudamudi)) {
+      return null;
+    }
+
+    return attendanceMap.get(`${mudamudi.id}-${kegiatanItem.id}`) ?? "alpa";
   }
 
   /*
-   * Menghitung total Hadir, Terlambat, Izin,
-   * Sakit, dan Alpa berdasarkan kegiatan
-   * yang sedang ditampilkan.
+   * Menghitung total H/T/I/S/A.
+   *
+   * Hanya kegiatan yang menjadi sasaran Muda-Mudi
+   * yang ikut dihitung.
    */
-  function getStatusTotals(mudamudiId: number) {
+  function getStatusTotals(mudamudi: RekapitulasiMudaMudi) {
     const totals: Record<PresensiStatus, number> = {
       hadir: 0,
       terlambat: 0,
@@ -109,9 +150,11 @@ export default function RekapitulasiTable({
     };
 
     kegiatan.forEach((kegiatanItem) => {
-      const status = getStatus(mudamudiId, kegiatanItem.id);
+      const status = getStatus(mudamudi, kegiatanItem);
 
-      totals[status]++;
+      if (status) {
+        totals[status]++;
+      }
     });
 
     return totals;
@@ -293,7 +336,7 @@ export default function RekapitulasiTable({
 
           <tbody>
             {mudaMudi.map((item) => {
-              const totals = getStatusTotals(item.id);
+              const totals = getStatusTotals(item);
 
               return (
                 <tr
@@ -313,7 +356,24 @@ export default function RekapitulasiTable({
 
                   {/* Status per kegiatan */}
                   {kegiatan.map((kegiatanItem) => {
-                    const status = getStatus(item.id, kegiatanItem.id);
+                    const status = getStatus(item, kegiatanItem);
+
+                    if (!status) {
+                      return (
+                        <td
+                          key={kegiatanItem.id}
+                          className="bg-white px-3 py-2 text-center"
+                        >
+                          <span
+                            className="text-[11px] font-medium text-gray-300"
+                            title="Tidak Berlaku"
+                            aria-label="Tidak Berlaku"
+                          >
+                            -
+                          </span>
+                        </td>
+                      );
+                    }
 
                     const statusStyle = getStatusStyle(status);
 
@@ -413,7 +473,7 @@ export default function RekapitulasiTable({
 
           <tbody>
             {mudaMudi.map((item) => {
-              const totals = getStatusTotals(item.id);
+              const totals = getStatusTotals(item);
 
               return (
                 <tr

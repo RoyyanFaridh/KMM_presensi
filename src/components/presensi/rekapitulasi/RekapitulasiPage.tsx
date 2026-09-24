@@ -6,8 +6,6 @@ import { getRekapitulasiPresensi } from "../../../backend/presensi/actions";
 
 import type { RekapitulasiPresensi } from "../../../backend/presensi/types";
 
-import { formatRentangTanggal } from "../../../backend/kegiatan/format";
-
 import RekapitulasiFilter from "./RekapitulasiFilter";
 import RekapitulasiLegend from "./RekapitulasiLegend";
 import RekapitulasiTable from "./RekapitulasiTable";
@@ -24,18 +22,40 @@ function formatBulan(tanggal: string) {
   }).format(new Date(`${tanggal}T00:00:00+07:00`));
 }
 
-export default function RekapitulasiPage() {
-  const [data, setData] = useState<RekapitulasiPresensi>({
-    mudamudi: [],
-    kegiatan: [],
-    kehadiran: [],
-  });
+type RekapitulasiResult = {
+  data: RekapitulasiPresensi;
+  pagination: {
+    page: number;
+    itemsPerPage: number;
+    totalItems: number;
+    totalPages: number;
+  };
+  error?: string;
+};
 
+const EMPTY_DATA: RekapitulasiPresensi = {
+  mudamudi: [],
+  kegiatan: [],
+  kehadiran: [],
+};
+
+export default function RekapitulasiPage() {
+  const [data, setData] = useState<RekapitulasiPresensi>(EMPTY_DATA);
+
+  /*
+   * searchInput = nilai yang sedang diketik user.
+   *
+   * search = nilai yang sudah melewati debounce dan
+   * benar-benar digunakan untuk request server.
+   */
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+
   const [selectedBulan, setSelectedBulan] = useState("");
   const [selectedKegiatan, setSelectedKegiatan] = useState("");
   const [selectedDesa, setSelectedDesa] = useState("");
   const [selectedKelompok, setSelectedKelompok] = useState("");
+  const [selectedKelas, setSelectedKelas] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
@@ -43,6 +63,41 @@ export default function RekapitulasiPage() {
   const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  /*
+   * ============================================================
+   * DEBOUNCE SEARCH
+   * ============================================================
+   *
+   * User bisa mengetik:
+   *
+   * A
+   * Ah
+   * Ahm
+   * Ahma
+   * Ahmad
+   *
+   * Tetapi server hanya dipanggil setelah user berhenti
+   * mengetik selama 400 ms.
+   */
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setSearch(searchInput.trim());
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [searchInput]);
+
+  /*
+   * Setiap filter berubah, kembali ke halaman pertama.
+   *
+   * Search menggunakan state "search", bukan "searchInput",
+   * supaya perubahan setiap karakter tidak langsung
+   * melakukan request.
+   */
 
   useEffect(() => {
     setCurrentPage(1);
@@ -52,8 +107,15 @@ export default function RekapitulasiPage() {
     selectedKegiatan,
     selectedDesa,
     selectedKelompok,
+    selectedKelas,
     itemsPerPage,
   ]);
+
+  /*
+   * ============================================================
+   * LOAD DATA
+   * ============================================================
+   */
 
   useEffect(() => {
     let cancelled = false;
@@ -63,17 +125,16 @@ export default function RekapitulasiPage() {
       setError("");
 
       try {
-        const result = await getRekapitulasiPresensi({
+        const result = (await getRekapitulasiPresensi({
           page: currentPage,
           itemsPerPage,
-          search: search.trim(),
+          search,
           bulan: selectedBulan || undefined,
-          kegiatanId: selectedKegiatan
-            ? Number(selectedKegiatan)
-            : undefined,
+          kegiatanId: selectedKegiatan ? Number(selectedKegiatan) : undefined,
           desa: selectedDesa || undefined,
           kelompok: selectedKelompok || undefined,
-        });
+          kelas: selectedKelas || undefined,
+        })) as RekapitulasiResult;
 
         if (cancelled) {
           return;
@@ -81,12 +142,9 @@ export default function RekapitulasiPage() {
 
         if (result.error) {
           setError(result.error);
-          setData({
-            mudamudi: [],
-            kegiatan: [],
-            kehadiran: [],
-          });
+          setData(EMPTY_DATA);
           setTotalItems(0);
+
           return;
         }
 
@@ -97,18 +155,15 @@ export default function RekapitulasiPage() {
           return;
         }
 
-        console.error(err);
+        console.error("Gagal memuat rekapitulasi:", err);
 
         setError(
-          "Terjadi kesalahan saat memuat rekapitulasi presensi.",
+          err instanceof Error
+            ? err.message
+            : "Terjadi kesalahan saat memuat rekapitulasi presensi.",
         );
 
-        setData({
-          mudamudi: [],
-          kegiatan: [],
-          kehadiran: [],
-        });
-
+        setData(EMPTY_DATA);
         setTotalItems(0);
       } finally {
         if (!cancelled) {
@@ -130,7 +185,14 @@ export default function RekapitulasiPage() {
     selectedKegiatan,
     selectedDesa,
     selectedKelompok,
+    selectedKelas,
   ]);
+
+  /*
+   * ============================================================
+   * BULAN OPTIONS
+   * ============================================================
+   */
 
   const bulanOptions = useMemo(() => {
     const bulan = new Map<string, string>();
@@ -151,6 +213,12 @@ export default function RekapitulasiPage() {
       }));
   }, [data.kegiatan]);
 
+  /*
+   * ============================================================
+   * KEGIATAN OPTIONS
+   * ============================================================
+   */
+
   const kegiatanOptions = useMemo(() => {
     return [...data.kegiatan].sort(
       (a, b) =>
@@ -158,6 +226,11 @@ export default function RekapitulasiPage() {
         new Date(`${a.tanggal_mulai}T00:00:00+07:00`).getTime(),
     );
   }, [data.kegiatan]);
+
+  /*
+   * Jika kegiatan yang sedang dipilih sudah tidak tersedia
+   * setelah filter berubah, reset pilihan kegiatan.
+   */
 
   useEffect(() => {
     if (
@@ -173,15 +246,17 @@ export default function RekapitulasiPage() {
   const filteredKegiatan = useMemo(() => {
     return kegiatanOptions.filter(
       (kegiatan) =>
-        !selectedKegiatan ||
-        kegiatan.id.toString() === selectedKegiatan,
+        !selectedKegiatan || kegiatan.id.toString() === selectedKegiatan,
     );
   }, [kegiatanOptions, selectedKegiatan]);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(totalItems / itemsPerPage),
-  );
+  /*
+   * ============================================================
+   * PAGINATION
+   * ============================================================
+   */
+
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -216,15 +291,16 @@ export default function RekapitulasiPage() {
           )}
 
           <RekapitulasiFilter
-            search={search}
+            search={searchInput}
             selectedMonth={selectedBulan}
             selectedKegiatan={selectedKegiatan}
             selectedDesa={selectedDesa}
             selectedKelompok={selectedKelompok}
+            selectedKelas={selectedKelas}
             kegiatan={kegiatanOptions}
             bulanOptions={bulanOptions}
             mudamudi={data.mudamudi}
-            onSearchChange={setSearch}
+            onSearchChange={setSearchInput}
             onMonthChange={setSelectedBulan}
             onKegiatanChange={setSelectedKegiatan}
             onDesaChange={(value) => {
@@ -232,6 +308,7 @@ export default function RekapitulasiPage() {
               setSelectedKelompok("");
             }}
             onKelompokChange={setSelectedKelompok}
+            onKelasChange={setSelectedKelas}
           />
         </div>
 
