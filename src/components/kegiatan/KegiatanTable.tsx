@@ -32,6 +32,7 @@ export default function KegiatanTable({ initialData }: Props) {
   const [modal, setModal] = useState<ModalState>(null);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
@@ -83,6 +84,10 @@ export default function KegiatanTable({ initialData }: Props) {
   }
 
   function handleSort(key: SortKey) {
+    if (loading) {
+      return;
+    }
+
     setSortConfig((current) => {
       if (!current || current.key !== key) {
         return {
@@ -103,12 +108,20 @@ export default function KegiatanTable({ initialData }: Props) {
   }
 
   function openAdd() {
+    if (loading) {
+      return;
+    }
+
     setError("");
     setFieldErrors({});
     setModal({ type: "add" });
   }
 
   function openEdit(kegiatan: Kegiatan) {
+    if (loading) {
+      return;
+    }
+
     setError("");
     setFieldErrors({});
 
@@ -119,6 +132,10 @@ export default function KegiatanTable({ initialData }: Props) {
   }
 
   function openDelete(kegiatan: Kegiatan) {
+    if (loading) {
+      return;
+    }
+
     setError("");
     setFieldErrors({});
 
@@ -129,83 +146,111 @@ export default function KegiatanTable({ initialData }: Props) {
   }
 
   function handleScanQR(kegiatan: Kegiatan) {
+    if (loading) {
+      return;
+    }
+
     window.location.href = `/admin/presensi/scan/${kegiatan.id}`;
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (loading) {
+      return;
+    }
+
+    setLoading(true);
     setError("");
     setFieldErrors({});
 
     const formData = new FormData(event.currentTarget);
 
-    const result =
-      modal?.type === "edit"
-        ? await updateKegiatan(modal.data.id, formData)
-        : await addKegiatan(formData);
+    try {
+      const result =
+        modal?.type === "edit"
+          ? await updateKegiatan(modal.data.id, formData)
+          : await addKegiatan(formData);
 
-    if (result?.error) {
-      setError(result.error);
-      return;
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+
+      const desa = formData
+        .getAll("desa")
+        .map((value) => String(value).trim())
+        .filter(Boolean);
+
+      const kelas = formData
+        .getAll("kelas")
+        .map((value) => String(value).trim())
+        .filter(Boolean);
+
+      const jenisKelamin = String(formData.get("jenis_kelamin") ?? "").trim();
+
+      if (modal?.type === "edit") {
+        setData((current) =>
+          current.map((item) =>
+            item.id === modal.data.id
+              ? {
+                  ...item,
+                  nama: String(formData.get("nama") ?? "").trim(),
+                  tanggal_mulai: String(formData.get("tanggal_mulai") ?? ""),
+                  tanggal_selesai: String(
+                    formData.get("tanggal_selesai") ?? "",
+                  ),
+                  jam_mulai: String(formData.get("jam_mulai") ?? ""),
+                  jam_selesai: String(formData.get("jam_selesai") ?? ""),
+                  lokasi: String(formData.get("lokasi") ?? "").trim(),
+                  desa: desa.length > 0 ? desa : null,
+                  kelas: kelas.length > 0 ? kelas : null,
+                  jenis_kelamin: jenisKelamin || null,
+                }
+              : item,
+          ),
+        );
+
+        setModal(null);
+        return;
+      }
+
+      window.location.reload();
+    } catch (error) {
+      console.error("Gagal menyimpan kegiatan:", error);
+
+      setError("Terjadi kesalahan saat menyimpan kegiatan.");
+    } finally {
+      setLoading(false);
     }
-
-    const desa = formData
-      .getAll("desa")
-      .map((value) => String(value).trim())
-      .filter(Boolean);
-
-    const kelas = formData
-      .getAll("kelas")
-      .map((value) => String(value).trim())
-      .filter(Boolean);
-
-    const jenisKelamin = String(formData.get("jenis_kelamin") ?? "").trim();
-
-    if (modal?.type === "edit") {
-      setData((current) =>
-        current.map((item) =>
-          item.id === modal.data.id
-            ? {
-                ...item,
-                nama: String(formData.get("nama") ?? "").trim(),
-                tanggal_mulai: String(formData.get("tanggal_mulai") ?? ""),
-                tanggal_selesai: String(formData.get("tanggal_selesai") ?? ""),
-                jam_mulai: String(formData.get("jam_mulai") ?? ""),
-                jam_selesai: String(formData.get("jam_selesai") ?? ""),
-                lokasi: String(formData.get("lokasi") ?? "").trim(),
-                desa: desa.length > 0 ? desa : null,
-                kelas: kelas.length > 0 ? kelas : null,
-                jenis_kelamin: jenisKelamin || null,
-              }
-            : item,
-        ),
-      );
-
-      setModal(null);
-      return;
-    }
-
-    window.location.reload();
   }
 
   async function handleDelete() {
-    if (modal?.type !== "delete") {
+    if (modal?.type !== "delete" || loading) {
       return;
     }
 
+    setLoading(true);
     setError("");
 
-    const result = await deleteKegiatan(modal.data.id);
+    try {
+      const result = await deleteKegiatan(modal.data.id);
 
-    if (result?.error) {
-      setError(result.error);
-      return;
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+
+      setData((current) => current.filter((item) => item.id !== modal.data.id));
+
+      setModal(null);
+    } catch (error) {
+      console.error("Gagal menghapus kegiatan:", error);
+
+      setError("Terjadi kesalahan saat menghapus kegiatan.");
+    } finally {
+      setLoading(false);
     }
-
-    setData((current) => current.filter((item) => item.id !== modal.data.id));
-
-    setModal(null);
   }
 
   return (
@@ -230,9 +275,10 @@ export default function KegiatanTable({ initialData }: Props) {
             <button
               type="button"
               onClick={openAdd}
+              disabled={loading}
               aria-label="Tambah kegiatan"
               title="Tambah kegiatan"
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-lg font-medium leading-none text-white transition-colors hover:bg-teal-700 sm:h-9 sm:w-auto sm:px-4 sm:text-[11px]"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-lg font-medium leading-none text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-auto sm:px-4 sm:text-[11px]"
             >
               <span className="sm:hidden">+</span>
 
@@ -267,8 +313,13 @@ export default function KegiatanTable({ initialData }: Props) {
           mode="add"
           fieldErrors={fieldErrors}
           error={error}
+          loading={loading}
           onSubmit={handleSubmit}
-          onClose={() => setModal(null)}
+          onClose={() => {
+            if (!loading) {
+              setModal(null);
+            }
+          }}
         />
       )}
 
@@ -278,8 +329,13 @@ export default function KegiatanTable({ initialData }: Props) {
           initialData={modal.data}
           fieldErrors={fieldErrors}
           error={error}
+          loading={loading}
           onSubmit={handleSubmit}
-          onClose={() => setModal(null)}
+          onClose={() => {
+            if (!loading) {
+              setModal(null);
+            }
+          }}
         />
       )}
 
@@ -288,7 +344,11 @@ export default function KegiatanTable({ initialData }: Props) {
           data={modal.data}
           error={error}
           onConfirm={handleDelete}
-          onClose={() => setModal(null)}
+          onClose={() => {
+            if (!loading) {
+              setModal(null);
+            }
+          }}
         />
       )}
     </>

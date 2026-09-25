@@ -17,6 +17,7 @@ type Props = {
   initialData?: Kegiatan;
   fieldErrors: FieldErrors;
   error: string;
+  loading: boolean;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
   onClose: () => void;
 };
@@ -26,6 +27,7 @@ export default function KegiatanFormModal({
   initialData,
   fieldErrors,
   error,
+  loading,
   onSubmit,
   onClose,
 }: Props) {
@@ -81,6 +83,7 @@ export default function KegiatanFormModal({
                   stroke="currentColor"
                   strokeWidth="1.8"
                   className="h-4 w-4"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -96,6 +99,7 @@ export default function KegiatanFormModal({
                   stroke="currentColor"
                   strokeWidth="1.8"
                   className="h-4 w-4"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -127,8 +131,9 @@ export default function KegiatanFormModal({
           <button
             type="button"
             onClick={onClose}
+            disabled={loading}
             aria-label="Tutup"
-            className="ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            className="ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -137,6 +142,7 @@ export default function KegiatanFormModal({
               stroke="currentColor"
               strokeWidth="2"
               className="h-4 w-4"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -174,11 +180,12 @@ export default function KegiatanFormModal({
                     type="text"
                     placeholder="Masukkan nama kegiatan"
                     defaultValue={initialData?.nama ?? ""}
+                    disabled={loading}
                     className={`h-9.75 w-full rounded-lg border bg-white px-3 text-[12px] text-gray-700 outline-none transition placeholder:text-gray-500 focus:ring-2 ${
                       fieldErrors.nama
                         ? "border-red-300 focus:border-red-400 focus:ring-red-50"
                         : "border-gray-200 focus:border-teal-400 focus:ring-teal-50"
-                    }`}
+                    } disabled:cursor-not-allowed disabled:bg-gray-50`}
                   />
 
                   {fieldErrors.nama && (
@@ -203,11 +210,12 @@ export default function KegiatanFormModal({
                       name="tanggal_mulai"
                       type="date"
                       defaultValue={initialData?.tanggal_mulai ?? ""}
+                      disabled={loading}
                       className={`h-9.75 w-full rounded-lg border bg-white px-2.5 text-[11px] text-gray-700 outline-none transition focus:ring-2 sm:px-3 sm:text-[12px] ${
                         fieldErrors.tanggal_mulai
                           ? "border-red-300 focus:border-red-400 focus:ring-red-50"
                           : "border-gray-200 focus:border-teal-400 focus:ring-teal-50"
-                      }`}
+                      } disabled:cursor-not-allowed disabled:bg-gray-50`}
                     />
 
                     {fieldErrors.tanggal_mulai && (
@@ -230,11 +238,12 @@ export default function KegiatanFormModal({
                       name="tanggal_selesai"
                       type="date"
                       defaultValue={initialData?.tanggal_selesai ?? ""}
+                      disabled={loading}
                       className={`h-9.75 w-full rounded-lg border bg-white px-2.5 text-[11px] text-gray-700 outline-none transition focus:ring-2 sm:px-3 sm:text-[12px] ${
                         fieldErrors.tanggal_selesai
                           ? "border-red-300 focus:border-red-400 focus:ring-red-50"
                           : "border-gray-200 focus:border-teal-400 focus:ring-teal-50"
-                      }`}
+                      } disabled:cursor-not-allowed disabled:bg-gray-50`}
                     />
 
                     {fieldErrors.tanggal_selesai && (
@@ -260,11 +269,12 @@ export default function KegiatanFormModal({
                       name="jam_mulai"
                       type="time"
                       defaultValue={initialData?.jam_mulai?.slice(0, 5) ?? ""}
+                      disabled={loading}
                       className={`h-9.75 w-full rounded-lg border bg-white px-2.5 text-[11px] text-gray-700 outline-none transition focus:ring-2 sm:px-3 sm:text-[12px] ${
                         fieldErrors.jam_mulai
                           ? "border-red-300 focus:border-red-400 focus:ring-red-50"
                           : "border-gray-200 focus:border-teal-400 focus:ring-teal-50"
-                      }`}
+                      } disabled:cursor-not-allowed disabled:bg-gray-50`}
                     />
 
                     {fieldErrors.jam_mulai && (
@@ -287,11 +297,12 @@ export default function KegiatanFormModal({
                       name="jam_selesai"
                       type="time"
                       defaultValue={initialData?.jam_selesai?.slice(0, 5) ?? ""}
+                      disabled={loading}
                       className={`h-9.75 w-full rounded-lg border bg-white px-2.5 text-[11px] text-gray-700 outline-none transition focus:ring-2 sm:px-3 sm:text-[12px] ${
                         fieldErrors.jam_selesai
                           ? "border-red-300 focus:border-red-400 focus:ring-red-50"
                           : "border-gray-200 focus:border-teal-400 focus:ring-teal-50"
-                      }`}
+                      } disabled:cursor-not-allowed disabled:bg-gray-50`}
                     />
 
                     {fieldErrors.jam_selesai && (
@@ -317,11 +328,12 @@ export default function KegiatanFormModal({
                     type="text"
                     placeholder="Masukkan lokasi kegiatan"
                     defaultValue={initialData?.lokasi ?? ""}
+                    disabled={loading}
                     className={`h-9.75 w-full rounded-lg border bg-white px-3 text-[12px] text-gray-700 outline-none transition placeholder:text-gray-500 focus:ring-2 ${
                       fieldErrors.lokasi
                         ? "border-red-300 focus:border-red-400 focus:ring-red-50"
                         : "border-gray-200 focus:border-teal-400 focus:ring-teal-50"
-                    }`}
+                    } disabled:cursor-not-allowed disabled:bg-gray-50`}
                   />
 
                   {fieldErrors.lokasi && (
@@ -371,7 +383,7 @@ export default function KegiatanFormModal({
                             checked
                               ? "border-teal-200 bg-teal-50 text-teal-800"
                               : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                          }`}
+                          } ${loading ? "cursor-not-allowed opacity-60" : ""}`}
                         >
                           <input
                             type="checkbox"
@@ -379,6 +391,7 @@ export default function KegiatanFormModal({
                             value={desa}
                             checked={checked}
                             onChange={() => toggleDesa(desa)}
+                            disabled={loading}
                             className="h-3.5 w-3.5 shrink-0 rounded border-gray-300 accent-teal-600 focus:ring-teal-500"
                           />
 
@@ -420,7 +433,7 @@ export default function KegiatanFormModal({
                             checked
                               ? "border-teal-200 bg-teal-50 text-teal-800"
                               : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                          }`}
+                          } ${loading ? "cursor-not-allowed opacity-60" : ""}`}
                         >
                           <input
                             type="checkbox"
@@ -428,6 +441,7 @@ export default function KegiatanFormModal({
                             value={kelas}
                             checked={checked}
                             onChange={() => toggleKelas(kelas)}
+                            disabled={loading}
                             className="h-3.5 w-3.5 shrink-0 rounded border-gray-300 accent-teal-600 focus:ring-teal-500"
                           />
 
@@ -462,7 +476,7 @@ export default function KegiatanFormModal({
                         jenisKelamin === ""
                           ? "border-teal-200 bg-teal-50 text-teal-800"
                           : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                      }`}
+                      } ${loading ? "cursor-not-allowed opacity-60" : ""}`}
                     >
                       <input
                         type="radio"
@@ -470,6 +484,7 @@ export default function KegiatanFormModal({
                         value=""
                         checked={jenisKelamin === ""}
                         onChange={() => setJenisKelamin("")}
+                        disabled={loading}
                         className="h-3.5 w-3.5 shrink-0 accent-teal-600 focus:ring-teal-500"
                       />
 
@@ -486,7 +501,7 @@ export default function KegiatanFormModal({
                             checked
                               ? "border-teal-200 bg-teal-50 text-teal-800"
                               : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                          }`}
+                          } ${loading ? "cursor-not-allowed opacity-60" : ""}`}
                         >
                           <input
                             type="radio"
@@ -494,6 +509,7 @@ export default function KegiatanFormModal({
                             value={option}
                             checked={checked}
                             onChange={() => setJenisKelamin(option)}
+                            disabled={loading}
                             className="h-3.5 w-3.5 shrink-0 accent-teal-600 focus:ring-teal-500"
                           />
 
@@ -529,16 +545,22 @@ export default function KegiatanFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-9 w-full rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-medium text-gray-600 transition hover:bg-gray-50 active:scale-[0.98] sm:w-auto"
+              disabled={loading}
+              className="h-9 w-full rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-medium text-gray-600 transition hover:bg-gray-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               Batal
             </button>
 
             <button
               type="submit"
-              className="inline-flex h-9 w-full items-center justify-center rounded-lg bg-[#171717] px-5 text-[11px] font-medium text-white transition hover:bg-gray-800 active:scale-[0.98] sm:w-auto"
+              disabled={loading}
+              className="inline-flex h-9 w-full items-center justify-center rounded-lg bg-[#171717] px-5 text-[11px] font-medium text-white transition hover:bg-gray-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
-              {mode === "add" ? "Simpan" : "Simpan Perubahan"}
+              {loading
+                ? "Menyimpan..."
+                : mode === "add"
+                  ? "Simpan"
+                  : "Simpan Perubahan"}
             </button>
           </div>
         </div>
