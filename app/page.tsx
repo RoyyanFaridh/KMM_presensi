@@ -1,20 +1,76 @@
 import Link from "next/link";
 
-const steps = [
+const features = [
   {
     number: "01",
-    title: "Scan QR Kegiatan",
-    description: "Buka kamera dan scan QR Code kegiatan yang tersedia.",
+    title: "Kelola Muda Mudi",
+    description:
+      "Kelola data Muda Mudi secara terpusat berdasarkan desa dan kelompok.",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        className="h-4 w-4"
+        aria-hidden="true"
+      >
+        <path
+          d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20"
+          strokeLinecap="round"
+        />
+        <circle cx="10" cy="7.5" r="3.5" />
+        <path
+          d="M16 4.5a3.5 3.5 0 0 1 0 6.8M20 20v-1.5a3.5 3.5 0 0 0-2.5-3.35"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
   },
   {
     number: "02",
-    title: "Verifikasi Data",
-    description: "Masukkan nama dan tanggal lahir untuk memverifikasi data.",
+    title: "Kelola Kegiatan",
+    description:
+      "Atur jadwal, lokasi, dan sasaran peserta untuk setiap kegiatan.",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        className="h-4 w-4"
+        aria-hidden="true"
+      >
+        <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+        <path d="M7.5 3.5v3M16.5 3.5v3M3.5 9.5h17" strokeLinecap="round" />
+        <path d="M8 13h3M13 13h3M8 16.5h3" strokeLinecap="round" />
+      </svg>
+    ),
   },
   {
     number: "03",
-    title: "Konfirmasi Presensi",
-    description: "Periksa detail kegiatan dan konfirmasi kehadiran.",
+    title: "Presensi QR",
+    description:
+      "Catat kehadiran dengan memindai QR personal Muda-Mudi melalui perangkat admin.",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        className="h-4 w-4"
+        aria-hidden="true"
+      >
+        <rect x="4" y="4" width="6" height="6" rx="1" />
+        <rect x="14" y="4" width="6" height="6" rx="1" />
+        <rect x="4" y="14" width="6" height="6" rx="1" />
+        <path
+          d="M14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
   },
 ];
 
@@ -22,11 +78,13 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="mx-auto flex min-h-screen w-full max-w-8xl flex-col px-5 sm:px-8 lg:px-10">
+        {/* HEADER */}
         <header className="flex h-16 items-center justify-between">
           <div>
             <p className="text-sm font-semibold tracking-tight text-teal-700">
               SIKEMA
             </p>
+
             <p className="text-[10px] text-gray-400">
               Sistem Informasi Kegiatan dan Muda Mudi
             </p>
@@ -40,6 +98,7 @@ export default function Home() {
           </Link>
         </header>
 
+        {/* HERO */}
         <section className="flex flex-1 items-center justify-center py-12">
           <div className="w-full max-w-xl text-center">
             <div className="mx-auto mb-5 flex h-10 w-10 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-600">
@@ -52,6 +111,7 @@ export default function Home() {
                 aria-hidden="true"
               >
                 <path d="M8 12h8M12 8v8" strokeLinecap="round" />
+
                 <path
                   d="M5 4.5h14A1.5 1.5 0 0 1 20.5 6v12A1.5 1.5 0 0 1 19 19.5H5A1.5 1.5 0 0 1 3.5 18V6A1.5 1.5 0 0 1 5 4.5Z"
                   strokeLinejoin="round"
@@ -72,10 +132,10 @@ export default function Home() {
             </p>
 
             <Link
-              href="/presensi"
+              href="/login"
               className="mt-6 inline-flex h-9 items-center justify-center rounded-lg bg-teal-600 px-5 text-[11px] font-medium text-white transition hover:bg-teal-700"
             >
-              Mulai Presensi
+              Masuk sebagai Admin
               <svg
                 viewBox="0 0 20 20"
                 fill="none"
@@ -94,32 +154,35 @@ export default function Home() {
           </div>
         </section>
 
+        {/* FEATURES */}
         <section className="border-t border-gray-200 py-6">
           <div className="grid gap-3 sm:grid-cols-3">
-            {steps.map((step) => (
+            {features.map((feature) => (
               <div
-                key={step.number}
+                key={feature.number}
                 className="rounded-xl border border-gray-200 bg-white px-4 py-3.5"
               >
-                <span className="text-[10px] font-semibold text-amber-600">
-                  {step.number}
-                </span>
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-600">
+                    {feature.icon}
+                  </div>
 
-                <h2 className="mt-1 text-[11px] font-semibold text-gray-800">
-                  {step.title}
+                  <span className="text-[10px] font-semibold text-gray-300">
+                    {feature.number}
+                  </span>
+                </div>
+
+                <h2 className="mt-2 text-[11px] font-semibold text-gray-800">
+                  {feature.title}
                 </h2>
 
                 <p className="mt-1 text-[10px] leading-4 text-gray-400">
-                  {step.description}
+                  {feature.description}
                 </p>
               </div>
             ))}
           </div>
         </section>
-
-        <footer className="flex h-12 items-center">
-          <p className="text-[9px] text-gray-400">SIKEMA</p>
-        </footer>
       </div>
     </main>
   );
