@@ -31,6 +31,10 @@ export type ImportPreviewResult = {
   warnings: ImportWarning[];
 };
 
+/* =========================================================
+   VALIDATION HELPERS
+========================================================= */
+
 function isValidDesa(desa: string): boolean {
   return DESA_OPTIONS.includes(desa as (typeof DESA_OPTIONS)[number]);
 }
@@ -49,66 +53,19 @@ function isValidJenisKelamin(jenisKelamin: string): boolean {
   return JENIS_KELAMIN_OPTIONS.includes(jenisKelamin);
 }
 
-function calculateAge(tanggalLahir: string): number | null {
-  if (!tanggalLahir) {
-    return null;
-  }
-
-  const birthDate = new Date(`${tanggalLahir}T00:00:00`);
-
-  if (Number.isNaN(birthDate.getTime())) {
-    return null;
-  }
-
-  const today = new Date();
-
-  let age = today.getFullYear() - birthDate.getFullYear();
-
-  const monthDifference = today.getMonth() - birthDate.getMonth();
-
-  if (
-    monthDifference < 0 ||
-    (monthDifference === 0 && today.getDate() < birthDate.getDate())
-  ) {
-    age--;
-  }
-
-  return age >= 0 ? age : null;
-}
-
-function calculatekelas(umur: number | null): string {
-  if (umur === null) {
-    return "";
-  }
-
-  if (umur >= 5 && umur <= 6) {
-    return "PAUD";
-  }
-
-  if (umur >= 7 && umur <= 12) {
-    return "Caberawit";
-  }
-
-  if (umur >= 13 && umur <= 15) {
-    return "Pra Remaja";
-  }
-
-  if (umur >= 16 && umur <= 18) {
-    return "Remaja";
-  }
-
-  if (umur >= 19) {
-    return "Usia Nikah";
-  }
-
-  return "";
-}
-
+/**
+ * Validasi tambah/edit manual.
+ *
+ * Kelas, umur, dan tanggal lahir berdiri sendiri.
+ * Ketiganya opsional dan tidak dihitung dari satu sama lain.
+ */
 function validate(
   nama: string,
   desa: string,
   kelompok: string,
   jenisKelamin: string,
+  kelas: string,
+  umurRaw: string,
   tanggalLahir: string,
 ): string | null {
   if (!nama.trim()) {
@@ -131,39 +88,77 @@ function validate(
     return "Jenis kelamin wajib dipilih";
   }
 
-  if (!tanggalLahir) {
-    return "Tanggal lahir wajib diisi";
+  // Kelas opsional. Tidak bergantung pada umur atau tanggal lahir.
+  // Nilai yang kosong diperbolehkan.
+
+  // Umur opsional dan diisi secara manual.
+  if (umurRaw !== "") {
+    const umur = Number(umurRaw);
+
+    if (!Number.isInteger(umur) || umur < 0) {
+      return "Umur harus berupa bilangan bulat minimal 0";
+    }
   }
 
-  const date = new Date(`${tanggalLahir}T00:00:00`);
+  // Tanggal lahir opsional dan tidak digunakan untuk menghitung umur.
+  if (tanggalLahir !== "") {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(tanggalLahir);
 
-  if (Number.isNaN(date.getTime())) {
-    return "Tanggal lahir tidak valid";
-  }
+    if (!match) {
+      return "Format tanggal lahir tidak valid";
+    }
 
-  const today = new Date();
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
 
-  if (date > today) {
-    return "Tanggal lahir tidak boleh melebihi tanggal hari ini";
-  }
+    const birthDate = new Date(year, month - 1, day);
 
-  const umur = calculateAge(tanggalLahir);
+    if (
+      birthDate.getFullYear() !== year ||
+      birthDate.getMonth() !== month - 1 ||
+      birthDate.getDate() !== day
+    ) {
+      return "Tanggal lahir tidak valid";
+    }
 
-  if (umur === null) {
-    return "Tanggal lahir tidak valid";
-  }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  if (umur < 5) {
-    return "Usia minimal Muda-Mudi adalah 5 tahun";
+    if (birthDate > today) {
+      return "Tanggal lahir tidak boleh di masa depan";
+    }
   }
 
   return null;
 }
 
-function normalizeForCompare(nama: string): string {
-  return nama.trim().toLowerCase();
+function normalizeForCompare(value: string | null | undefined): string {
+  return (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+/**
+ * Kunci pembanding duplikat untuk data import.
+ */
+function createDuplicateKey(row: {
+  nama: string;
+  desa: string | null;
+  kelas: string | null;
+  kelompok: string | null;
+}): string {
+  return [
+    normalizeForCompare(row.nama),
+    normalizeForCompare(row.desa),
+    normalizeForCompare(row.kelas),
+    normalizeForCompare(row.kelompok),
+  ].join("|");
+}
+
+/**
+ * Mengubah hasil parser Excel menjadi format untuk Supabase.
+ *
+ * Aturan import tetap mengikuti parseImportExcel().
+ */
 function mapImportRow(row: ImportRow) {
   return {
     nama: toTitleCase(row.nama.trim()),
@@ -172,7 +167,7 @@ function mapImportRow(row: ImportRow) {
     jenis_kelamin: row.jenis_kelamin.trim(),
     tempat_lahir: row.tempat_lahir?.trim() || null,
     tanggal_lahir: row.tanggal_lahir || null,
-    umur: row.umur !== null ? row.umur : null,
+    umur: row.umur ?? null,
     no_hp: row.no_hp?.trim() || null,
     pekerjaan: row.pekerjaan?.trim() || null,
     kelas: row.kelas?.trim() || null,
@@ -183,23 +178,46 @@ function mapImportRow(row: ImportRow) {
   };
 }
 
+/**
+ * Membaca field opsional dari form.
+ *
+ * Nilai kosong diubah menjadi null agar sesuai dengan kolom
+ * database yang mengizinkan NULL.
+ */
+function readOptionalFields(formData: FormData) {
+  const kelasRaw = String(formData.get("kelas") ?? "").trim();
+  const umurRaw = String(formData.get("umur") ?? "").trim();
+  const tanggalLahir = String(formData.get("tanggal_lahir") ?? "").trim();
+
+  return {
+    kelas: kelasRaw || null,
+    umur: umurRaw === "" ? null : Number(umurRaw),
+    umurRaw,
+    tanggalLahir: tanggalLahir || null,
+  };
+}
+
+/* =========================================================
+   ADD MUDAMUDI
+========================================================= */
+
 export async function addMudamudi(formData: FormData): Promise<ActionResult> {
   const { desa: adminDesa, isSuperAdmin } = await requireAdmin();
-
   const supabase = await createClient();
 
   const namaRaw = String(formData.get("nama") ?? "").trim();
   const requestedDesa = String(formData.get("desa") ?? "").trim();
   const kelompok = String(formData.get("kelompok") ?? "").trim();
   const jenisKelamin = String(formData.get("jenis_kelamin") ?? "").trim();
-  const tanggalLahir = String(formData.get("tanggal_lahir") ?? "").trim();
 
+  const optionalFields = readOptionalFields(formData);
+  const { kelas, umur, umurRaw, tanggalLahir } = optionalFields;
+
+  // Admin desa tidak boleh menentukan desa di luar wilayahnya.
   const desa = isSuperAdmin ? requestedDesa : (adminDesa ?? "");
 
   if (!isSuperAdmin && !adminDesa) {
-    return {
-      error: "Desa admin tidak valid",
-    };
+    return { error: "Desa admin tidak valid" };
   }
 
   const validationError = validate(
@@ -207,44 +225,38 @@ export async function addMudamudi(formData: FormData): Promise<ActionResult> {
     desa,
     kelompok,
     jenisKelamin,
-    tanggalLahir,
+    kelas ?? "",
+    umurRaw,
+    tanggalLahir ?? "",
   );
 
   if (validationError) {
-    return {
-      error: validationError,
-    };
+    return { error: validationError };
   }
 
   const nama = toTitleCase(namaRaw);
 
-  const umur = calculateAge(tanggalLahir);
-
-  const kelas = calculatekelas(umur);
-
-  if (!kelas) {
-    return {
-      error: "Kelas tidak dapat ditentukan dari usia",
-    };
-  }
-
+  // Cari kandidat pada desa dan kelompok yang sama.
+  // Kelas tidak difilter di query karena boleh bernilai NULL.
   const { data: candidates, error: candidateError } = await supabase
     .from("mudamudi")
-    .select("id, nama")
-    .eq("kelas", kelas)
+    .select("id, nama, kelas")
     .eq("kelompok", kelompok)
     .eq("desa", desa);
 
   if (candidateError) {
-    return {
-      error: candidateError.message,
-    };
+    console.error("addMudamudi candidate query error:", candidateError);
+    return { error: "Gagal memeriksa duplikasi data Muda-Mudi" };
   }
+
+  const normalizedNama = normalizeForCompare(nama);
+  const normalizedKelas = normalizeForCompare(kelas);
 
   const isDuplicate =
     candidates?.some(
       (candidate) =>
-        normalizeForCompare(candidate.nama) === normalizeForCompare(nama),
+        normalizeForCompare(candidate.nama) === normalizedNama &&
+        normalizeForCompare(candidate.kelas) === normalizedKelas,
     ) ?? false;
 
   if (isDuplicate) {
@@ -271,49 +283,53 @@ export async function addMudamudi(formData: FormData): Promise<ActionResult> {
   });
 
   if (error) {
+    console.error("addMudamudi insert error:", error);
+
     if (error.code === "23505") {
+      return { error: "Data dengan kombinasi ini sudah ada" };
+    }
+
+    if (error.code === "23502") {
       return {
-        error: "Data dengan kombinasi ini sudah ada",
+        error:
+          "Penyimpanan gagal karena ada kolom wajib database yang kosong. Periksa pengaturan kolom di Supabase.",
       };
     }
 
-    return {
-      error: error.message,
-    };
+    return { error: "Gagal menyimpan data Muda-Mudi. Periksa log server." };
   }
 
   revalidatePath("/admin/mudamudi");
 
-  return {
-    success: true,
-  };
+  return { success: true };
 }
+
+/* =========================================================
+   UPDATE MUDAMUDI
+========================================================= */
 
 export async function updateMudamudi(
   id: number,
   formData: FormData,
 ): Promise<ActionResult> {
   const { desa: adminDesa, isSuperAdmin } = await requireAdmin();
-
   const supabase = await createClient();
 
   if (!Number.isInteger(id) || id <= 0) {
-    return {
-      error: "ID Muda-Mudi tidak valid",
-    };
+    return { error: "ID Muda-Mudi tidak valid" };
   }
 
   if (!isSuperAdmin && !adminDesa) {
-    return {
-      error: "Desa admin tidak valid",
-    };
+    return { error: "Desa admin tidak valid" };
   }
 
   const namaRaw = String(formData.get("nama") ?? "").trim();
   const requestedDesa = String(formData.get("desa") ?? "").trim();
   const kelompok = String(formData.get("kelompok") ?? "").trim();
   const jenisKelamin = String(formData.get("jenis_kelamin") ?? "").trim();
-  const tanggalLahir = String(formData.get("tanggal_lahir") ?? "").trim();
+
+  const optionalFields = readOptionalFields(formData);
+  const { kelas, umur, umurRaw, tanggalLahir } = optionalFields;
 
   const desa = isSuperAdmin ? requestedDesa : (adminDesa ?? "");
 
@@ -322,13 +338,13 @@ export async function updateMudamudi(
     desa,
     kelompok,
     jenisKelamin,
-    tanggalLahir,
+    kelas ?? "",
+    umurRaw,
+    tanggalLahir ?? "",
   );
 
   if (validationError) {
-    return {
-      error: validationError,
-    };
+    return { error: validationError };
   }
 
   let existingQuery = supabase.from("mudamudi").select("id, desa").eq("id", id);
@@ -341,9 +357,8 @@ export async function updateMudamudi(
     await existingQuery.maybeSingle();
 
   if (existingError) {
-    return {
-      error: existingError.message,
-    };
+    console.error("updateMudamudi existing query error:", existingError);
+    return { error: "Gagal memeriksa data Muda-Mudi" };
   }
 
   if (!existing) {
@@ -360,34 +375,28 @@ export async function updateMudamudi(
 
   const nama = toTitleCase(namaRaw);
 
-  const umur = calculateAge(tanggalLahir);
-
-  const kelas = calculatekelas(umur);
-
-  if (!kelas) {
-    return {
-      error: "Kelas tidak dapat ditentukan dari usia",
-    };
-  }
-
+  // Kelas dapat NULL, sehingga pemeriksaan duplikat dilakukan
+  // dengan mengambil kandidat berdasarkan desa dan kelompok.
   const { data: candidates, error: candidateError } = await supabase
     .from("mudamudi")
-    .select("id, nama")
-    .eq("kelas", kelas)
+    .select("id, nama, kelas")
     .eq("kelompok", kelompok)
     .eq("desa", desa)
     .neq("id", id);
 
   if (candidateError) {
-    return {
-      error: candidateError.message,
-    };
+    console.error("updateMudamudi candidate query error:", candidateError);
+    return { error: "Gagal memeriksa duplikasi data Muda-Mudi" };
   }
+
+  const normalizedNama = normalizeForCompare(nama);
+  const normalizedKelas = normalizeForCompare(kelas);
 
   const isDuplicate =
     candidates?.some(
       (candidate) =>
-        normalizeForCompare(candidate.nama) === normalizeForCompare(nama),
+        normalizeForCompare(candidate.nama) === normalizedNama &&
+        normalizeForCompare(candidate.kelas) === normalizedKelas,
     ) ?? false;
 
   if (isDuplicate) {
@@ -417,39 +426,41 @@ export async function updateMudamudi(
     .eq("id", id);
 
   if (error) {
+    console.error("updateMudamudi update error:", error);
+
     if (error.code === "23505") {
+      return { error: "Data dengan kombinasi ini sudah ada" };
+    }
+
+    if (error.code === "23502") {
       return {
-        error: "Data dengan kombinasi ini sudah ada",
+        error:
+          "Pembaruan gagal karena ada kolom wajib database yang kosong. Periksa pengaturan kolom di Supabase.",
       };
     }
 
-    return {
-      error: error.message,
-    };
+    return { error: "Gagal memperbarui data Muda-Mudi. Periksa log server." };
   }
 
   revalidatePath("/admin/mudamudi");
 
-  return {
-    success: true,
-  };
+  return { success: true };
 }
+
+/* =========================================================
+   DELETE MUDAMUDI
+========================================================= */
 
 export async function deleteMudamudi(id: number): Promise<ActionResult> {
   const { desa: adminDesa, isSuperAdmin } = await requireAdmin();
-
   const supabase = await createClient();
 
   if (!Number.isInteger(id) || id <= 0) {
-    return {
-      error: "ID Muda-Mudi tidak valid",
-    };
+    return { error: "ID Muda-Mudi tidak valid" };
   }
 
   if (!isSuperAdmin && !adminDesa) {
-    return {
-      error: "Desa admin tidak valid",
-    };
+    return { error: "Desa admin tidak valid" };
   }
 
   let query = supabase.from("mudamudi").delete().eq("id", id);
@@ -461,9 +472,8 @@ export async function deleteMudamudi(id: number): Promise<ActionResult> {
   const { data, error } = await query.select("id");
 
   if (error) {
-    return {
-      error: error.message,
-    };
+    console.error("deleteMudamudi error:", error);
+    return { error: "Gagal menghapus data Muda-Mudi" };
   }
 
   if (!data || data.length === 0) {
@@ -474,21 +484,19 @@ export async function deleteMudamudi(id: number): Promise<ActionResult> {
 
   revalidatePath("/admin/mudamudi");
 
-  return {
-    success: true,
-  };
+  return { success: true };
 }
+
+/* =========================================================
+   GET MUDAMUDI
+========================================================= */
 
 export async function getMudamudi() {
   const { desa: adminDesa, isSuperAdmin } = await requireAdmin();
-
   const supabase = await createClient();
 
   if (!isSuperAdmin && !adminDesa) {
-    return {
-      data: [],
-      error: "Desa admin tidak valid",
-    };
+    return { data: [], error: "Desa admin tidak valid" };
   }
 
   let query = supabase.from("mudamudi").select("*");
@@ -502,16 +510,11 @@ export async function getMudamudi() {
   });
 
   if (error) {
-    return {
-      data: [],
-      error: error.message,
-    };
+    console.error("getMudamudi error:", error);
+    return { data: [], error: "Gagal mengambil data Muda-Mudi" };
   }
 
-  return {
-    data: data ?? [],
-    error: null,
-  };
+  return { data: data ?? [], error: null };
 }
 
 /* =========================================================
@@ -520,23 +523,16 @@ export async function getMudamudi() {
 
 export async function searchMudamudiNames(query: string) {
   const { desa: adminDesa, isSuperAdmin } = await requireAdmin();
-
   const supabase = await createClient();
 
   const keyword = query.trim();
 
   if (!keyword) {
-    return {
-      data: [],
-      error: null,
-    };
+    return { data: [], error: null };
   }
 
   if (!isSuperAdmin && !adminDesa) {
-    return {
-      data: [],
-      error: "Desa admin tidak valid",
-    };
+    return { data: [], error: "Desa admin tidak valid" };
   }
 
   let searchQuery = supabase
@@ -549,24 +545,15 @@ export async function searchMudamudiNames(query: string) {
   }
 
   const { data, error } = await searchQuery
-    .order("nama", {
-      ascending: true,
-    })
+    .order("nama", { ascending: true })
     .limit(5);
 
   if (error) {
-    console.error("searchMudamudiNames:", error);
-
-    return {
-      data: [],
-      error: "Gagal mencari nama Muda-Mudi",
-    };
+    console.error("searchMudamudiNames error:", error);
+    return { data: [], error: "Gagal mencari nama Muda-Mudi" };
   }
 
-  return {
-    data: data ?? [],
-    error: null,
-  };
+  return { data: data ?? [], error: null };
 }
 
 /* =========================================================
@@ -577,7 +564,6 @@ export async function previewImportMudamudi(
   formData: FormData,
 ): Promise<ImportPreviewResult> {
   const { desa: adminDesa, isSuperAdmin } = await requireAdmin();
-
   const file = formData.get("file");
 
   if (!(file instanceof File)) {
@@ -625,11 +611,11 @@ export async function previewImportMudamudi(
     const scopedData: ImportRow[] = [];
     const scopedErrors = [...result.errors];
 
-    for (const [index, row] of result.data.entries()) {
+    for (const row of result.data) {
       if (row.desa.trim() !== adminDesa) {
         scopedErrors.push({
-          rowNumber: index + 2,
-          message: `Desa harus ${adminDesa}`,
+          rowNumber: 0,
+          message: `Desa harus ${adminDesa}. Data "${row.nama}" tidak dapat dipratinjau oleh admin desa ini.`,
         });
 
         continue;
@@ -670,27 +656,19 @@ export async function importMudamudi(formData: FormData): Promise<
   }
 > {
   const { desa: adminDesa, isSuperAdmin } = await requireAdmin();
-
   const supabase = await createClient();
-
   const file = formData.get("file");
 
   if (!(file instanceof File)) {
-    return {
-      error: "File Excel belum dipilih",
-    };
+    return { error: "File Excel belum dipilih" };
   }
 
   if (!file.name.toLowerCase().endsWith(".xlsx")) {
-    return {
-      error: "Format file harus .xlsx",
-    };
+    return { error: "Format file harus .xlsx" };
   }
 
   if (!isSuperAdmin && !adminDesa) {
-    return {
-      error: "Desa admin tidak valid",
-    };
+    return { error: "Desa admin tidak valid" };
   }
 
   try {
@@ -700,7 +678,7 @@ export async function importMudamudi(formData: FormData): Promise<
       if (result.errors.length > 0) {
         return {
           error:
-            "Tidak ada data yang dapat diimpor. Semua baris memiliki masalah pada kolom wajib.",
+            "Tidak ada data yang dapat diimpor. Semua baris memiliki masalah pada kolom wajib atau duplikat dalam file.",
           imported: 0,
           skipped: result.errors.length,
           warnings: result.warnings,
@@ -719,19 +697,20 @@ export async function importMudamudi(formData: FormData): Promise<
 
     if (!isSuperAdmin) {
       scopedRows = result.data.filter((row) => row.desa.trim() === adminDesa);
-
-      const unauthorizedRows = result.data.length - scopedRows.length;
-
-      if (scopedRows.length === 0) {
-        return {
-          error: `Tidak ada data ${adminDesa} yang dapat diimpor.`,
-          imported: 0,
-          skipped: result.errors.length + unauthorizedRows,
-          warnings: result.warnings,
-        };
-      }
     }
 
+    const unauthorizedCount = result.data.length - scopedRows.length;
+
+    if (scopedRows.length === 0) {
+      return {
+        error: `Tidak ada data ${adminDesa} yang dapat diimpor.`,
+        imported: 0,
+        skipped: result.errors.length + unauthorizedCount,
+        warnings: result.warnings,
+      };
+    }
+
+    // Import tetap mengikuti hasil parser Excel.
     const rows = scopedRows.map(mapImportRow);
 
     let existingQuery = supabase
@@ -745,53 +724,50 @@ export async function importMudamudi(formData: FormData): Promise<
     const { data: existingData, error: existingError } = await existingQuery;
 
     if (existingError) {
-      return {
-        error: existingError.message,
-      };
+      console.error("importMudamudi existing query error:", existingError);
+      return { error: "Gagal memeriksa data yang sudah terdaftar" };
     }
 
     const existingKeys = new Set<string>();
 
     for (const item of existingData ?? []) {
-      const key = [
-        normalizeForCompare(item.nama),
-        item.desa?.toLowerCase() ?? "",
-        item.kelas?.toLowerCase() ?? "",
-        item.kelompok?.toLowerCase() ?? "",
-      ].join("|");
-
-      existingKeys.add(key);
+      existingKeys.add(
+        createDuplicateKey({
+          nama: item.nama,
+          desa: item.desa,
+          kelas: item.kelas,
+          kelompok: item.kelompok,
+        }),
+      );
     }
 
-    const rowsToInsert = rows.filter((row) => {
-      const key = [
-        normalizeForCompare(row.nama),
-        row.desa?.toLowerCase() ?? "",
-        row.kelas?.toLowerCase() ?? "",
-        row.kelompok?.toLowerCase() ?? "",
-      ].join("|");
+    const rowsToInsert: ReturnType<typeof mapImportRow>[] = [];
+    let duplicateCount = 0;
+
+    for (const row of rows) {
+      const key = createDuplicateKey({
+        nama: row.nama,
+        desa: row.desa,
+        kelas: row.kelas,
+        kelompok: row.kelompok,
+      });
 
       if (existingKeys.has(key)) {
-        return false;
+        duplicateCount++;
+        continue;
       }
 
+      // Mencegah duplikat antarbari​​s dalam file yang sama.
       existingKeys.add(key);
-
-      return true;
-    });
-
-    const duplicateCount = rows.length - rowsToInsert.length;
-
-    const unauthorizedCount = isSuperAdmin
-      ? 0
-      : result.data.length - scopedRows.length;
+      rowsToInsert.push(row);
+    }
 
     const skipped = result.errors.length + duplicateCount + unauthorizedCount;
 
     if (rowsToInsert.length === 0) {
       return {
         error:
-          "Semua data dalam file sudah terdaftar, berada di desa lain, atau tidak memenuhi kolom wajib.",
+          "Semua data sudah terdaftar, berasal dari desa lain, atau tidak memenuhi validasi.",
         imported: 0,
         skipped,
         warnings: result.warnings,
@@ -799,7 +775,6 @@ export async function importMudamudi(formData: FormData): Promise<
     }
 
     const batchSize = 100;
-
     let imported = 0;
 
     for (let index = 0; index < rowsToInsert.length; index += batchSize) {
@@ -812,15 +787,13 @@ export async function importMudamudi(formData: FormData): Promise<
 
         return {
           error:
-            error.code === "23505"
-              ? "Import gagal karena terdapat data duplikat."
-              : error.message,
+            error.code === "23502"
+              ? "Import gagal karena kolom wajib database masih bernilai NULL. Periksa kolom wajib di Supabase."
+              : error.code === "23505"
+                ? "Import gagal karena terdapat data duplikat."
+                : "Import gagal menyimpan data. Periksa log server.",
           imported,
-          skipped:
-            result.errors.length +
-            duplicateCount +
-            unauthorizedCount +
-            (rowsToInsert.length - imported - batch.length),
+          skipped: skipped + (rowsToInsert.length - imported - batch.length),
           warnings: result.warnings,
         };
       }

@@ -7,22 +7,22 @@ const poppins = localFont({
   variable: "--font-poppins",
   src: [
     {
-      path: "../public/fonts/Poppins-Regular.tff",
+      path: "../public/fonts/Poppins-Regular.ttf",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../public/fonts/Poppins-Medium.tff",
+      path: "../public/fonts/Poppins-Medium.ttf",
       weight: "500",
       style: "normal",
     },
     {
-      path: "../public/fonts/Poppins-SemiBold.tff",
+      path: "../public/fonts/Poppins-SemiBold.ttf",
       weight: "600",
       style: "normal",
     },
     {
-      path: "../public/fonts/Poppins-Bold.tff",
+      path: "../public/fonts/Poppins-Bold.ttf",
       weight: "700",
       style: "normal",
     },

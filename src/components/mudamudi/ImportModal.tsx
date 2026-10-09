@@ -50,14 +50,18 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState<"upload" | "preview">("upload");
+  const [previewReady, setPreviewReady] = useState(false);
 
   function resetFile() {
+    if (loading) return;
+
     setFile(null);
     setPreviewData([]);
     setErrors([]);
     setWarnings([]);
     setStep("upload");
     setError("");
+    setPreviewReady(false);
 
     if (inputRef.current) {
       inputRef.current.value = "";
@@ -65,24 +69,25 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (loading) return;
+
     const selectedFile = e.target.files?.[0] ?? null;
 
     setError("");
     setPreviewData([]);
     setErrors([]);
     setWarnings([]);
+    setStep("upload");
+    setPreviewReady(false);
 
     if (!selectedFile) {
       setFile(null);
       return;
     }
 
-    const fileName = selectedFile.name.toLowerCase();
-
-    if (!fileName.endsWith(".xlsx") && !fileName.endsWith(".csv")) {
+    if (!selectedFile.name.toLowerCase().endsWith(".xlsx")) {
       setFile(null);
-      setError("File harus berformat .xlsx atau .csv");
-
+      setError("File harus berformat .xlsx.");
       e.target.value = "";
       return;
     }
@@ -91,47 +96,72 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
   }
 
   async function handlePreview() {
+    if (loading) return;
+
     if (!file) {
-      setError("Pilih file Excel atau CSV terlebih dahulu.");
+      setError("Pilih file Excel terlebih dahulu.");
       return;
     }
 
     setLoading(true);
     setError("");
+    setPreviewData([]);
+    setErrors([]);
+    setWarnings([]);
+    setPreviewReady(false);
 
     try {
       const formData = new FormData();
-
-      formData.append("file", file);
+      formData.append("file", file, file.name);
 
       const result = await previewImportMudamudi(formData);
 
-      if (!result.success && result.error) {
-        setError(result.error);
+      if (!result.success) {
+        setError(result.error || "Gagal memeriksa file Excel.");
+        setStep("upload");
         return;
       }
 
-      setPreviewData(result.data as PreviewRow[]);
+      const data = result.data ?? [];
+      const importErrors = result.errors ?? [];
+      const importWarnings = result.warnings ?? [];
 
-      setErrors(result.errors ?? []);
-
-      setWarnings(result.warnings ?? []);
-
-      if (result.data.length === 0 && result.errors.length === 0) {
-        setError("Tidak ada data yang ditemukan di file.");
-        return;
-      }
-
+      setPreviewData(data);
+      setErrors(importErrors);
+      setWarnings(importWarnings);
       setStep("preview");
-    } catch {
-      setError("Gagal membaca file.");
+      setPreviewReady(true);
+
+      if (data.length === 0) {
+        setError(
+          importErrors.length > 0
+            ? "Tidak ada data yang lolos validasi. Periksa rincian kesalahan di bawah."
+            : "Tidak ada data yang ditemukan di file Excel.",
+        );
+      }
+    } catch (err) {
+      console.error("Gagal memeriksa file Muda-Mudi:", err);
+
+      setError(
+        err instanceof Error
+          ? `Gagal membaca file: ${err.message}`
+          : "Gagal membaca file Excel. Silakan coba lagi.",
+      );
     } finally {
       setLoading(false);
     }
   }
 
   async function handleImport() {
-    if (!file || previewData.length === 0) {
+    if (loading) return;
+
+    if (!file) {
+      setError("Pilih file Excel terlebih dahulu.");
+      return;
+    }
+
+    if (!previewReady || previewData.length === 0) {
+      setError("Periksa file terlebih dahulu dan pastikan ada data valid.");
       return;
     }
 
@@ -140,27 +170,49 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
 
     try {
       const formData = new FormData();
-
-      formData.append("file", file);
+      formData.append("file", file, file.name);
 
       const result = await importMudamudi(formData);
 
       if (result.error) {
-        setError(result.error);
+        const importedCount = result.imported ?? 0;
+        const skippedCount = result.skipped ?? 0;
+
+        if (importedCount > 0) {
+          setError(
+            `${result.error} Sebagian data mungkin sudah tersimpan: ${importedCount} data berhasil diimpor dan ${skippedCount} dilewati. Periksa data sebelum mengulangi impor.`,
+          );
+
+          onSuccess();
+        } else {
+          setError(result.error);
+        }
+
+        return;
+      }
+
+      if (!result.success) {
+        setError("Server tidak mengonfirmasi keberhasilan impor.");
         return;
       }
 
       onSuccess();
       onClose();
-    } catch {
-      setError("Terjadi kesalahan saat melakukan import.");
+    } catch (err) {
+      console.error("Gagal mengimpor data Muda-Mudi:", err);
+
+      setError(
+        err instanceof Error
+          ? `Terjadi kesalahan saat impor: ${err.message}`
+          : "Terjadi kesalahan saat mengimpor data. Silakan coba lagi.",
+      );
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <ModalWrapper onClose={onClose}>
+    <ModalWrapper onClose={loading ? () => {} : onClose}>
       <div className="w-full max-w-150 overflow-hidden rounded-2xl bg-white shadow-xl">
         {/* HEADER */}
         <div className="flex items-start justify-between border-b border-gray-100 px-5 py-4">
@@ -175,7 +227,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
               </h2>
 
               <p className="mt-0.5 text-[10px] leading-4 text-gray-400">
-                Masukkan data anggota dari file Excel atau CSV
+                Masukkan data anggota dari file Excel
               </p>
             </div>
           </div>
@@ -183,8 +235,9 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
           <button
             type="button"
             onClick={onClose}
+            disabled={loading}
             aria-label="Tutup"
-            className="ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            className="ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -206,7 +259,10 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
         {/* BODY */}
         <div className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-5">
           {error && (
-            <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -216,7 +272,6 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                 className="mt-0.5 h-4 w-4 shrink-0 text-red-500"
               >
                 <circle cx="12" cy="12" r="9" />
-
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -232,8 +287,9 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
             <>
               <button
                 type="button"
+                disabled={loading}
                 onClick={() => inputRef.current?.click()}
-                className="flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 px-5 py-8 text-center transition hover:border-teal-400 hover:bg-teal-50/30"
+                className="flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 px-5 py-8 text-center transition hover:border-teal-400 hover:bg-teal-50/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-teal-600 shadow-sm ring-1 ring-gray-100">
                   <svg
@@ -249,13 +305,11 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                       strokeLinejoin="round"
                       d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z"
                     />
-
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       d="M14 2v6h6"
                     />
-
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -264,20 +318,21 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                   </svg>
                 </div>
 
-                <p className="mt-3 text-[11px] font-medium text-gray-700">
-                  {file ? file.name : "Pilih file Excel atau CSV"}
+                <p className="mt-3 break-all text-[11px] font-medium text-gray-700">
+                  {file ? file.name : "Pilih file Excel"}
                 </p>
 
                 <p className="mt-1 text-[10px] text-gray-400">
-                  Format yang didukung: .xlsx dan .csv
+                  Format yang didukung: .xlsx
                 </p>
               </button>
 
               <input
                 ref={inputRef}
                 type="file"
-                accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 onChange={handleFileChange}
+                disabled={loading}
                 className="hidden"
               />
 
@@ -301,6 +356,12 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                   Kolom NO dari file Export tidak diperlukan untuk proses
                   import.
                 </p>
+
+                <p className="mt-2 text-[9px] leading-4 text-amber-700">
+                  Tanggal lahir yang kosong atau tidak valid akan diberi
+                  peringatan. Data tetap dapat diimpor, tetapi umur tidak
+                  dihitung dari tanggal lahir tersebut.
+                </p>
               </div>
             </>
           )}
@@ -311,7 +372,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
               <div className="grid grid-cols-3 gap-2">
                 <div className="rounded-lg border border-teal-100 bg-teal-50 px-3 py-2.5">
                   <p className="text-[9px] font-medium uppercase tracking-wide text-teal-600">
-                    Siap diimport
+                    Siap diimpor
                   </p>
 
                   <p className="mt-0.5 text-lg font-semibold text-teal-700">
@@ -399,7 +460,6 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                       className="mt-0.5 h-4 w-4 shrink-0 text-gray-500"
                     >
                       <circle cx="12" cy="12" r="9" />
-
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -409,12 +469,13 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
 
                     <div>
                       <p className="text-[10px] font-medium text-gray-700">
-                        Data tetap dapat diimport
+                        Periksa hasil validasi
                       </p>
 
                       <p className="mt-0.5 text-[9px] leading-4 text-gray-500">
-                        Baris yang gagal akan dilewati. Field yang memiliki
-                        peringatan tetap diimport dengan nilai kosong.
+                        Baris dengan kolom wajib yang tidak valid tidak diimpor.
+                        Peringatan kuning tidak otomatis menggagalkan impor,
+                        tetapi perlu diperiksa.
                       </p>
                     </div>
                   </div>
@@ -434,7 +495,6 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                       className="mt-0.5 h-4 w-4 shrink-0 text-red-500"
                     >
                       <circle cx="12" cy="12" r="9" />
-
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -444,12 +504,11 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
 
                     <div className="min-w-0">
                       <p className="text-[10px] font-semibold text-red-700">
-                        Baris tidak dapat diimport
+                        Baris tidak dapat diimpor
                       </p>
 
                       <p className="mt-0.5 text-[9px] leading-4 text-red-600">
-                        Nama Lengkap, Desa, Kelompok, dan Jenis Kelamin wajib
-                        diisi dengan benar.
+                        Periksa nilai kolom wajib sesuai keterangan kesalahan.
                       </p>
                     </div>
                   </div>
@@ -488,7 +547,6 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                         strokeLinejoin="round"
                         d="M10.3 3.5 2.9 16.3A2 2 0 0 0 4.6 19.3h14.8a2 2 0 0 0 1.7-3L13.7 3.5a2 2 0 0 0-3.4 0Z"
                       />
-
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -502,8 +560,9 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                       </p>
 
                       <p className="mt-0.5 text-[9px] leading-4 text-amber-600">
-                        Data tetap akan diimport. Field yang kosong atau
-                        formatnya tidak sesuai akan disimpan sebagai kosong.
+                        Data ini masih dapat diimpor. Umur hanya dapat dihitung
+                        jika tanggal lahir valid. Kelas manual tetap digunakan
+                        apabila diisi dengan nilai yang valid.
                       </p>
                     </div>
                   </div>
@@ -536,7 +595,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                         </p>
 
                         <p className="mt-0.5 text-[9px] text-gray-400">
-                          Data yang ditampilkan sudah lolos validasi kolom
+                          Data yang ditampilkan telah lolos validasi kolom
                           wajib.
                         </p>
                       </div>
@@ -552,16 +611,15 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                       <thead className="bg-white text-gray-400">
                         <tr>
                           <th className="px-3 py-2 font-medium">#</th>
-
                           <th className="px-3 py-2 font-medium">Nama</th>
-
                           <th className="px-3 py-2 font-medium">Desa</th>
-
                           <th className="px-3 py-2 font-medium">Kelompok</th>
-
                           <th className="px-3 py-2 font-medium">JK</th>
-
+                          <th className="px-3 py-2 font-medium">Umur</th>
                           <th className="px-3 py-2 font-medium">Kelas</th>
+                          <th className="px-3 py-2 font-medium">
+                            Tanggal Lahir
+                          </th>
                         </tr>
                       </thead>
 
@@ -586,8 +644,20 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                             <td className="px-3 py-2">{item.jenis_kelamin}</td>
 
                             <td className="px-3 py-2">
+                              {item.umur ?? (
+                                <span className="text-amber-600">Kosong</span>
+                              )}
+                            </td>
+
+                            <td className="px-3 py-2">
                               {item.kelas ?? (
-                                <span className="text-gray-300">Kosong</span>
+                                <span className="text-amber-600">Kosong</span>
+                              )}
+                            </td>
+
+                            <td className="px-3 py-2">
+                              {item.tanggal_lahir ?? (
+                                <span className="text-amber-600">Kosong</span>
                               )}
                             </td>
                           </tr>
@@ -599,7 +669,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                   {previewData.length > 8 && (
                     <div className="border-t border-gray-100 px-3 py-2 text-[9px] text-gray-400">
                       Menampilkan 8 dari {previewData.length} data yang siap
-                      diimport.
+                      diimpor.
                     </div>
                   )}
                 </div>
@@ -632,10 +702,10 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
             <button
               type="button"
               onClick={handleImport}
-              disabled={loading || previewData.length === 0}
+              disabled={loading || !previewReady || previewData.length === 0}
               className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-[#171717] px-5 text-[11px] font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? "Mengimport..." : `Import ${previewData.length} Data`}
+              {loading ? "Mengimpor..." : `Import ${previewData.length} Data`}
             </button>
           )}
         </div>

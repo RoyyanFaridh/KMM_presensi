@@ -15,10 +15,11 @@ export default function DeleteConfirmModal({
   onClose,
 }: Props) {
   return (
-    <ModalWrapper onClose={onClose}>
-      <div className="w-full max-w-100 overflow-hidden rounded-2xl bg-white shadow-xl">
+    <ModalWrapper onClose={onClose} size="sm">
+      <div className="w-full overflow-hidden bg-white">
+        {/* HEADER */}
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <h2 className="text-[15px] font-semibold text-gray-800">
+          <h2 className="text-[14px] font-semibold text-gray-800">
             Hapus Data Mudamudi
           </h2>
 
@@ -45,16 +46,17 @@ export default function DeleteConfirmModal({
           </button>
         </div>
 
-        <div className="px-5 py-5">
+        {/* CONTENT */}
+        <div className="px-5 py-6">
           <div className="mb-4 flex justify-center">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.8"
-                className="h-5 w-5 text-red-500"
+                className="h-6 w-6 text-red-500"
               >
                 <path
                   strokeLinecap="round"
@@ -76,19 +78,22 @@ export default function DeleteConfirmModal({
           </div>
 
           <div className="text-center">
-            <h3 className="text-[13px] font-medium text-gray-800">
+            <h3 className="text-[13px] font-semibold text-gray-800">
               Yakin ingin menghapus data ini?
             </h3>
 
-            <p className="mt-1.5 text-[11px] leading-5 text-gray-500">
+            <p className="mt-2 break-words text-[11px] leading-5 text-gray-500">
               Data{" "}
-              <span className="font-medium text-gray-700">{data.nama}</span>{" "}
-              akan dihapus secara permanen.
+              <span className="font-semibold text-gray-700">{data.nama}</span>{" "}
+              akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.
             </p>
           </div>
 
           {error && (
-            <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
+            <div
+              role="alert"
+              className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -110,11 +115,12 @@ export default function DeleteConfirmModal({
           )}
         </div>
 
+        {/* FOOTER */}
         <div className="flex items-center justify-end gap-2 border-t border-gray-100 bg-gray-50/50 px-5 py-3.5">
           <button
             type="button"
             onClick={onClose}
-            className="h-9 rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-medium text-gray-600 transition hover:bg-gray-50"
+            className="h-9 rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-medium text-gray-600 transition hover:bg-gray-50 active:scale-[0.98]"
           >
             Batal
           </button>
@@ -122,7 +128,7 @@ export default function DeleteConfirmModal({
           <button
             type="button"
             onClick={onConfirm}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-red-500 px-4 text-[11px] font-medium text-white transition hover:bg-red-600 active:scale-[0.98]"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-red-500 px-4 text-[11px] font-medium text-white transition hover:bg-red-600 active:scale-[0.98]"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
