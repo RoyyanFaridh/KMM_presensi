@@ -18,11 +18,11 @@ export default function ModalWrapper({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm sm:px-6 sm:py-10"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-4 py-4 backdrop-blur-sm sm:px-6"
       onClick={onClose}
     >
       <div
-        className={`w-full min-w-0 ${sizeClass} max-h-[82dvh] overflow-hidden rounded-xl bg-white shadow-2xl`}
+        className={`my-auto flex max-h-[calc(100dvh-2rem)] w-full min-w-0 flex-col ${sizeClass} overflow-hidden rounded-xl bg-white shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
