@@ -1,16 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   addKegiatan,
   deleteKegiatan,
   updateKegiatan,
+  getKegiatan,
 } from "../../backend/kegiatan/actions";
 
 import { getKegiatanStatus } from "../../backend/kegiatan/format";
 
-import {
+import type {
   FieldErrors,
   Kegiatan,
   ModalState,
@@ -28,7 +30,9 @@ type Props = {
 };
 
 export default function KegiatanTable({ initialData }: Props) {
-  const [data, setData] = useState(initialData);
+  const router = useRouter();
+
+  const [data, setData] = useState<Kegiatan[]>(initialData);
   const [modal, setModal] = useState<ModalState>(null);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -44,7 +48,7 @@ export default function KegiatanTable({ initialData }: Props) {
       const matchesSearch =
         !keyword ||
         item.nama.toLowerCase().includes(keyword) ||
-        item.lokasi.toLowerCase().includes(keyword);
+        (item.lokasi ?? "").toLowerCase().includes(keyword);
 
       const matchesStatus =
         !filterStatus ||
@@ -63,9 +67,11 @@ export default function KegiatanTable({ initialData }: Props) {
         const aValue = a[sortConfig.key];
         const bValue = b[sortConfig.key];
 
-        const comparison = String(aValue).localeCompare(String(bValue), "id", {
-          numeric: true,
-        });
+        const comparison = String(aValue ?? "").localeCompare(
+          String(bValue ?? ""),
+          "id",
+          { numeric: true },
+        );
 
         return sortConfig.direction === "asc" ? comparison : -comparison;
       });
@@ -77,6 +83,11 @@ export default function KegiatanTable({ initialData }: Props) {
   const hasActiveFilters =
     Boolean(search.trim()) || Boolean(filterStatus) || Boolean(sortConfig);
 
+  function clearMessages() {
+    setError("");
+    setFieldErrors({});
+  }
+
   function handleReset() {
     setSearch("");
     setFilterStatus("");
@@ -84,9 +95,7 @@ export default function KegiatanTable({ initialData }: Props) {
   }
 
   function handleSort(key: SortKey) {
-    if (loading) {
-      return;
-    }
+    if (loading) return;
 
     setSortConfig((current) => {
       if (!current || current.key !== key) {
@@ -108,22 +117,16 @@ export default function KegiatanTable({ initialData }: Props) {
   }
 
   function openAdd() {
-    if (loading) {
-      return;
-    }
+    if (loading) return;
 
-    setError("");
-    setFieldErrors({});
+    clearMessages();
     setModal({ type: "add" });
   }
 
   function openEdit(kegiatan: Kegiatan) {
-    if (loading) {
-      return;
-    }
+    if (loading) return;
 
-    setError("");
-    setFieldErrors({});
+    clearMessages();
 
     setModal({
       type: "edit",
@@ -132,12 +135,9 @@ export default function KegiatanTable({ initialData }: Props) {
   }
 
   function openDelete(kegiatan: Kegiatan) {
-    if (loading) {
-      return;
-    }
+    if (loading) return;
 
-    setError("");
-    setFieldErrors({});
+    clearMessages();
 
     setModal({
       type: "delete",
@@ -146,9 +146,7 @@ export default function KegiatanTable({ initialData }: Props) {
   }
 
   function handleScanQR(kegiatan: Kegiatan) {
-    if (loading) {
-      return;
-    }
+    if (loading) return;
 
     window.location.href = `/admin/presensi/scan/${kegiatan.id}`;
   }
@@ -156,20 +154,29 @@ export default function KegiatanTable({ initialData }: Props) {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (loading) {
+    if (loading) return;
+
+    // Simpan referensi modal saat submit dimulai.
+    const currentModal = modal;
+
+    if (
+      !currentModal ||
+      (currentModal.type !== "add" && currentModal.type !== "edit")
+    ) {
+      setError("Form kegiatan tidak valid. Silakan buka kembali modal.");
       return;
     }
 
-    setLoading(true);
-    setError("");
-    setFieldErrors({});
-
+    // Ambil semua nilai sebelum mengubah state loading.
     const formData = new FormData(event.currentTarget);
+
+    setLoading(true);
+    clearMessages();
 
     try {
       const result =
-        modal?.type === "edit"
-          ? await updateKegiatan(modal.data.id, formData)
+        currentModal.type === "edit"
+          ? await updateKegiatan(currentModal.data.id, formData)
           : await addKegiatan(formData);
 
       if (result?.error) {
@@ -177,77 +184,82 @@ export default function KegiatanTable({ initialData }: Props) {
         return;
       }
 
-      const desa = formData
-        .getAll("desa")
-        .map((value) => String(value).trim())
-        .filter(Boolean);
-
-      const kelas = formData
-        .getAll("kelas")
-        .map((value) => String(value).trim())
-        .filter(Boolean);
-
-      const jenisKelamin = String(formData.get("jenis_kelamin") ?? "").trim();
-
-      if (modal?.type === "edit") {
-        setData((current) =>
-          current.map((item) =>
-            item.id === modal.data.id
-              ? {
-                  ...item,
-                  nama: String(formData.get("nama") ?? "").trim(),
-                  tanggal_mulai: String(formData.get("tanggal_mulai") ?? ""),
-                  tanggal_selesai: String(
-                    formData.get("tanggal_selesai") ?? "",
-                  ),
-                  jam_mulai: String(formData.get("jam_mulai") ?? ""),
-                  jam_selesai: String(formData.get("jam_selesai") ?? ""),
-                  lokasi: String(formData.get("lokasi") ?? "").trim(),
-                  desa: desa.length > 0 ? desa : null,
-                  kelas: kelas.length > 0 ? kelas : null,
-                  jenis_kelamin: jenisKelamin || null,
-                }
-              : item,
-          ),
-        );
-
-        setModal(null);
+      if (!result?.success) {
+        setError("Penyimpanan belum berhasil. Silakan coba lagi.");
         return;
       }
 
-      window.location.reload();
-    } catch (error) {
-      console.error("Gagal menyimpan kegiatan:", error);
+      // Perbarui daftar dari database sebelum menutup modal.
+      // Jika pembacaan ulang gagal, data tetap dapat diperbarui
+      // melalui refresh halaman setelah modal ditutup.
+      let refreshedData: Kegiatan[] | null = null;
 
-      setError("Terjadi kesalahan saat menyimpan kegiatan.");
+      try {
+        refreshedData = (await getKegiatan()) as Kegiatan[];
+      } catch (refreshError) {
+        console.error(
+          "Kegiatan tersimpan, tetapi daftar gagal dimuat ulang:",
+          refreshError,
+        );
+      }
+
+      if (refreshedData) {
+        setData(refreshedData);
+      }
+
+      setModal(null);
+      clearMessages();
+
+      // Sinkronkan data server dan halaman.
+      router.refresh();
+    } catch (submitError) {
+      console.error("Gagal menyimpan kegiatan:", submitError);
+
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Terjadi kesalahan saat menyimpan kegiatan.",
+      );
     } finally {
       setLoading(false);
     }
   }
 
   async function handleDelete() {
-    if (modal?.type !== "delete" || loading) {
-      return;
-    }
+    if (modal?.type !== "delete" || loading) return;
+
+    const kegiatanId = modal.data.id;
 
     setLoading(true);
     setError("");
 
     try {
-      const result = await deleteKegiatan(modal.data.id);
+      const result = await deleteKegiatan(kegiatanId);
 
       if (result?.error) {
         setError(result.error);
         return;
       }
 
-      setData((current) => current.filter((item) => item.id !== modal.data.id));
+      if (!result?.success) {
+        setError("Kegiatan belum berhasil dihapus. Silakan coba lagi.");
+        return;
+      }
+
+      setData((current) => current.filter((item) => item.id !== kegiatanId));
 
       setModal(null);
-    } catch (error) {
-      console.error("Gagal menghapus kegiatan:", error);
+      clearMessages();
 
-      setError("Terjadi kesalahan saat menghapus kegiatan.");
+      router.refresh();
+    } catch (deleteError) {
+      console.error("Gagal menghapus kegiatan:", deleteError);
+
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Terjadi kesalahan saat menghapus kegiatan.",
+      );
     } finally {
       setLoading(false);
     }
@@ -281,7 +293,6 @@ export default function KegiatanTable({ initialData }: Props) {
               className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-lg font-medium leading-none text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-auto sm:px-4 sm:text-[11px]"
             >
               <span className="sm:hidden">+</span>
-
               <span className="hidden sm:inline">+ Tambah Kegiatan</span>
             </button>
           </div>
@@ -318,6 +329,7 @@ export default function KegiatanTable({ initialData }: Props) {
           onClose={() => {
             if (!loading) {
               setModal(null);
+              clearMessages();
             }
           }}
         />
@@ -334,6 +346,7 @@ export default function KegiatanTable({ initialData }: Props) {
           onClose={() => {
             if (!loading) {
               setModal(null);
+              clearMessages();
             }
           }}
         />
@@ -347,6 +360,7 @@ export default function KegiatanTable({ initialData }: Props) {
           onClose={() => {
             if (!loading) {
               setModal(null);
+              clearMessages();
             }
           }}
         />

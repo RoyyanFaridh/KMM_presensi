@@ -82,7 +82,7 @@ export default function DeleteConfirmModal({
               Yakin ingin menghapus data ini?
             </h3>
 
-            <p className="mt-2 break-words text-[11px] leading-5 text-gray-500">
+            <p className="mt-2 wrap-break-word text-[11px] leading-5 text-gray-500">
               Data{" "}
               <span className="font-semibold text-gray-700">{data.nama}</span>{" "}
               akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.

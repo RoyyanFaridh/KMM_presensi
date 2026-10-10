@@ -213,7 +213,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
 
   return (
     <ModalWrapper onClose={loading ? () => {} : onClose}>
-      <div className="w-full max-w-150 overflow-hidden rounded-2xl bg-white shadow-xl">
+      <div className="flex max-h-[90dvh] w-full max-w-150 flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
         {/* HEADER */}
         <div className="flex items-start justify-between border-b border-gray-100 px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
@@ -257,7 +257,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
         </div>
 
         {/* BODY */}
-        <div className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-5">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5">
           {error && (
             <div
               role="alert"
@@ -679,7 +679,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
         </div>
 
         {/* FOOTER */}
-        <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50/50 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-end">
+        <div className="relative z-10 flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 bg-white px-5 py-3.5 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
             onClick={step === "preview" ? resetFile : onClose}
