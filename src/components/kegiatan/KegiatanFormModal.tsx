@@ -43,13 +43,13 @@ const styles = {
   description: "text-[10px] leading-4 text-gray-500",
   label: "mb-1.5 block text-[11px] font-medium text-gray-700",
   input:
-    "h-9.5 w-full rounded-lg border border-gray-200 bg-white px-3 text-[11px] text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-50 disabled:cursor-not-allowed disabled:bg-gray-50",
+    "h-9.5 w-full min-w-0 rounded-lg border border-gray-200 bg-white px-3 text-[11px] text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-50 disabled:cursor-not-allowed disabled:bg-gray-50",
   option:
-    "flex min-h-9 cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 transition",
-  optionText: "text-[11px] leading-4 text-gray-700",
+    "flex min-h-9 min-w-0 cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 transition",
+  optionText: "min-w-0 wrap-break-word text-[11px] leading-4 text-gray-700",
   subheading: "text-[11px] font-semibold text-gray-800",
   action:
-    "text-[10px] font-semibold text-teal-700 transition hover:text-teal-800 disabled:cursor-not-allowed disabled:opacity-50",
+    "shrink-0 text-[10px] font-semibold text-teal-700 transition hover:text-teal-800 disabled:cursor-not-allowed disabled:opacity-50",
   button:
     "inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
 };
@@ -357,7 +357,7 @@ export default function KegiatanFormModal({
   }
 
   function modeCardClass(checked: boolean) {
-    return `flex min-h-[60px] cursor-pointer items-start gap-2.5 rounded-lg border p-3 text-left transition ${
+    return `flex min-h-[60px] min-w-0 cursor-pointer items-start gap-2.5 rounded-lg border p-3 text-left transition ${
       checked
         ? "border-teal-600 bg-teal-50/60"
         : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
@@ -399,8 +399,13 @@ export default function KegiatanFormModal({
   }
 
   function goToStep(nextStep: number) {
-    if (loading || submitLockRef.current || navigationLockRef.current) return;
-    if (nextStep < 1 || nextStep > 3 || nextStep === currentStep) return;
+    if (loading || submitLockRef.current || navigationLockRef.current) {
+      return;
+    }
+
+    if (nextStep < 1 || nextStep > 3 || nextStep === currentStep) {
+      return;
+    }
 
     navigationLockRef.current = true;
     setCurrentStep(nextStep);
@@ -433,10 +438,8 @@ export default function KegiatanFormModal({
   }
 
   async function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
-    // Mencegah submit bawaan browser dalam semua kondisi.
     event.preventDefault();
 
-    // Hanya langkah konfirmasi yang boleh menyimpan data.
     if (
       currentStep !== 3 ||
       loading ||
@@ -446,7 +449,6 @@ export default function KegiatanFormModal({
       return;
     }
 
-    // Validasi ulang seluruh informasi sebelum penyimpanan.
     const errors = validateActivity(activity);
     setClientErrors(errors);
 
@@ -490,7 +492,7 @@ export default function KegiatanFormModal({
         className="flex max-h-[82dvh] min-h-0 w-full flex-col overflow-hidden bg-white"
       >
         {/* Header */}
-        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-5 py-3">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 sm:px-5">
           <div className="flex min-w-0 items-center gap-2.5">
             <div
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
@@ -547,14 +549,14 @@ export default function KegiatanFormModal({
             onClick={onClose}
             disabled={loading}
             aria-label="Tutup formulir"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 disabled:opacity-50"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 disabled:opacity-50"
           >
             <svg
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="1.8"
-              className="h-3.5 w-3.5"
+              className="h-4 w-4"
               aria-hidden="true"
             >
               <path
@@ -567,7 +569,7 @@ export default function KegiatanFormModal({
         </header>
 
         {/* Step indicator */}
-        <div className="shrink-0 border-b border-gray-100 px-5 py-3">
+        <div className="shrink-0 border-b border-gray-100 px-4 py-3 sm:px-5">
           <div className="grid grid-cols-3 gap-2">
             {STEPS.map((step) => {
               const active = currentStep === step.number;
@@ -596,7 +598,7 @@ export default function KegiatanFormModal({
                     }`}
                   />
 
-                  <div className="flex items-start gap-1.5">
+                  <div className="flex min-w-0 items-start gap-1.5">
                     <span
                       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold ${
                         active || completed
@@ -626,7 +628,7 @@ export default function KegiatanFormModal({
 
                     <span className="min-w-0">
                       <span
-                        className={`block text-[10px] font-semibold leading-4 ${
+                        className={`block wrap-break-word text-[10px] font-semibold leading-4 ${
                           active ? "text-teal-800" : "text-gray-700"
                         }`}
                       >
@@ -644,7 +646,7 @@ export default function KegiatanFormModal({
         </div>
 
         {/* Form content */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
           {/* Step 1 */}
           <section hidden={currentStep !== 1}>
             <div className="mb-4">
@@ -680,8 +682,9 @@ export default function KegiatanFormModal({
                 <div id="nama-error">{renderError(getFieldError("nama"))}</div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
+              {/* Tanggal: sejajar pada desktop, bertumpuk pada layar kecil */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="min-w-0">
                   <label htmlFor="tanggal_mulai" className={styles.label}>
                     Tanggal mulai <span className="text-red-600">*</span>
                   </label>
@@ -701,7 +704,7 @@ export default function KegiatanFormModal({
                   {renderError(getFieldError("tanggal_mulai"))}
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <label htmlFor="tanggal_selesai" className={styles.label}>
                     Tanggal selesai <span className="text-red-600">*</span>
                   </label>
@@ -721,8 +724,11 @@ export default function KegiatanFormModal({
                   />
                   {renderError(getFieldError("tanggal_selesai"))}
                 </div>
+              </div>
 
-                <div>
+              {/* Jam: sejajar pada desktop, bertumpuk pada layar kecil */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="min-w-0">
                   <label htmlFor="jam_mulai" className={styles.label}>
                     Jam mulai <span className="text-red-600">*</span>
                   </label>
@@ -742,7 +748,7 @@ export default function KegiatanFormModal({
                   {renderError(getFieldError("jam_mulai"))}
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <label htmlFor="jam_selesai" className={styles.label}>
                     Jam selesai <span className="text-red-600">*</span>
                   </label>
@@ -799,10 +805,11 @@ export default function KegiatanFormModal({
             <div className="space-y-5">
               {/* Desa */}
               <div>
-                <div className="mb-2.5 flex items-center justify-between gap-3">
+                <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
                   <h4 className={styles.subheading}>
                     Desa <span className="text-red-600">*</span>
                   </h4>
+
                   {isSuperAdmin && (
                     <span className="text-[10px] tabular-nums text-gray-500">
                       {selectedDesa.length} dipilih
@@ -832,7 +839,7 @@ export default function KegiatanFormModal({
                     })}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2.5 rounded-lg border border-teal-200 bg-teal-50/60 p-2.5">
+                  <div className="flex min-w-0 items-center gap-2.5 rounded-lg border border-teal-200 bg-teal-50/60 p-2.5">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-teal-700">
                       <svg
                         viewBox="0 0 24 24"
@@ -850,8 +857,9 @@ export default function KegiatanFormModal({
                         <circle cx="12" cy="10" r="2.5" />
                       </svg>
                     </div>
+
                     <div className="min-w-0">
-                      <p className="text-[11px] font-semibold text-gray-900">
+                      <p className="wrap-break-word text-[11px] font-semibold text-gray-900">
                         {desaAdmin || "Desa belum ditetapkan"}
                       </p>
                       <p className="mt-0.5 text-[10px] leading-4 text-gray-500">
@@ -919,8 +927,9 @@ export default function KegiatanFormModal({
                                 <span className="h-1.5 w-1.5 rounded-full bg-teal-700" />
                               )}
                             </span>
+
                             <span className="min-w-0">
-                              <span className="block text-[11px] font-semibold text-gray-800">
+                              <span className="block wrap-break-word text-[11px] font-semibold text-gray-800">
                                 {item.title}
                               </span>
                               <span className="mt-1 block text-[10px] leading-4 text-gray-500">
@@ -935,7 +944,7 @@ export default function KegiatanFormModal({
                     {groupMode === "specific" && (
                       <div className="mt-3 rounded-lg border border-gray-200 p-3">
                         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                          <div>
+                          <div className="min-w-0">
                             <p className="text-[11px] font-semibold text-gray-800">
                               Pilih kelompok
                             </p>
@@ -973,7 +982,7 @@ export default function KegiatanFormModal({
                                 key={desa}
                                 className="border-t border-gray-100 pt-3 first:border-0 first:pt-0"
                               >
-                                <div className="mb-2.5 flex items-center justify-between gap-3">
+                                <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
                                   <h5 className="text-[11px] font-semibold text-gray-800">
                                     {desa}
                                   </h5>
@@ -1033,20 +1042,21 @@ export default function KegiatanFormModal({
 
               {/* Kelas */}
               <div>
-                <div className="mb-2.5 flex items-start justify-between gap-3">
-                  <div>
+                <div className="mb-2.5 flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <h4 className={styles.subheading}>Kelas peserta</h4>
                     <p className={`mt-1 ${styles.description}`}>
                       Kosongkan pilihan untuk menyertakan semua kelas.
                     </p>
                   </div>
+
                   <span className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-[9px] font-medium text-gray-600">
                     {kelasLabel}
                   </span>
                 </div>
 
                 <div className="rounded-lg border border-gray-200 p-3">
-                  <div className="mb-2.5 flex items-center justify-between gap-3">
+                  <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
                     <p className="text-[11px] font-medium text-gray-700">
                       Pilih kelas
                     </p>
@@ -1087,13 +1097,14 @@ export default function KegiatanFormModal({
 
               {/* Jenis kelamin */}
               <div>
-                <div className="mb-2.5 flex items-center justify-between gap-3">
-                  <div>
+                <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+                  <div className="min-w-0">
                     <h4 className={styles.subheading}>Jenis kelamin</h4>
                     <p className={`mt-1 ${styles.description}`}>
                       Tentukan peserta berdasarkan jenis kelamin.
                     </p>
                   </div>
+
                   <span className="shrink-0 text-[10px] text-gray-500">
                     {jenisKelaminLabel}
                   </span>
@@ -1107,7 +1118,7 @@ export default function KegiatanFormModal({
                       return (
                         <label
                           key={option || "semua"}
-                          className={`flex min-h-9 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition ${
+                          className={`flex min-h-9 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition ${
                             checked
                               ? "border-teal-600 bg-teal-50/70 text-teal-900"
                               : "border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
@@ -1125,7 +1136,7 @@ export default function KegiatanFormModal({
                             disabled={loading}
                             className="h-3.5 w-3.5 shrink-0 accent-teal-700"
                           />
-                          <span className="text-[11px] font-medium">
+                          <span className="wrap-break-word text-center text-[11px] font-medium">
                             {option || "Semua"}
                           </span>
                         </label>
@@ -1151,7 +1162,7 @@ export default function KegiatanFormModal({
             <div className="space-y-3">
               {/* Ringkasan informasi kegiatan */}
               <div className="rounded-lg border border-gray-200 p-3">
-                <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <h4 className={styles.subheading}>Informasi Kegiatan</h4>
                   <button
                     type="button"
@@ -1172,27 +1183,30 @@ export default function KegiatanFormModal({
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-[10px] text-gray-500">Tanggal mulai</p>
-                      <p className="mt-0.5 text-[11px] font-medium leading-4 text-gray-800">
+                      <p className="mt-0.5 wrap-break-word text-[11px] font-medium leading-4 text-gray-800">
                         {formatDate(activity.tanggal_mulai)}
                       </p>
                     </div>
-                    <div>
+
+                    <div className="min-w-0">
                       <p className="text-[10px] text-gray-500">
                         Tanggal selesai
                       </p>
-                      <p className="mt-0.5 text-[11px] font-medium leading-4 text-gray-800">
+                      <p className="mt-0.5 wrap-break-word text-[11px] font-medium leading-4 text-gray-800">
                         {formatDate(activity.tanggal_selesai)}
                       </p>
                     </div>
-                    <div>
+
+                    <div className="min-w-0">
                       <p className="text-[10px] text-gray-500">Jam mulai</p>
                       <p className="mt-0.5 text-[11px] font-medium text-gray-800">
                         {formatTime(activity.jam_mulai)}
                       </p>
                     </div>
-                    <div>
+
+                    <div className="min-w-0">
                       <p className="text-[10px] text-gray-500">Jam selesai</p>
                       <p className="mt-0.5 text-[11px] font-medium text-gray-800">
                         {formatTime(activity.jam_selesai)}
@@ -1211,7 +1225,7 @@ export default function KegiatanFormModal({
 
               {/* Ringkasan sasaran peserta */}
               <div className="rounded-lg border border-gray-200 p-3">
-                <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <h4 className={styles.subheading}>Sasaran Peserta</h4>
                   <button
                     type="button"
@@ -1225,7 +1239,7 @@ export default function KegiatanFormModal({
 
                 <div className="space-y-3">
                   <div>
-                    <div className="mb-1.5 flex items-center justify-between gap-3">
+                    <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                       <p className="text-[11px] font-medium text-gray-700">
                         Desa
                       </p>
@@ -1239,7 +1253,7 @@ export default function KegiatanFormModal({
                         {selectedDesa.map((desa) => (
                           <span
                             key={desa}
-                            className="rounded-md bg-teal-50 px-2 py-1 text-[10px] font-medium text-teal-800"
+                            className="max-w-full wrap-break-word rounded-md bg-teal-50 px-2 py-1 text-[10px] font-medium text-teal-800"
                           >
                             {desa}
                           </span>
@@ -1253,7 +1267,7 @@ export default function KegiatanFormModal({
                   </div>
 
                   <div className="border-t border-gray-100 pt-3">
-                    <div className="mb-1.5 flex items-center justify-between gap-3">
+                    <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                       <p className="text-[11px] font-medium text-gray-700">
                         Kelompok
                       </p>
@@ -1275,12 +1289,13 @@ export default function KegiatanFormModal({
                             <p className="mb-1 text-[10px] font-medium text-gray-500">
                               {desa}
                             </p>
+
                             {kelompok.length > 0 ? (
                               <div className="flex flex-wrap gap-1.5">
                                 {kelompok.map((namaKelompok) => (
                                   <span
                                     key={`${desa}-${namaKelompok}`}
-                                    className="rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-700"
+                                    className="max-w-full wrap-break-word rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-700"
                                   >
                                     {namaKelompok}
                                   </span>
@@ -1298,7 +1313,7 @@ export default function KegiatanFormModal({
                   </div>
 
                   <div className="border-t border-gray-100 pt-3">
-                    <div className="mb-1.5 flex items-center justify-between gap-3">
+                    <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                       <p className="text-[11px] font-medium text-gray-700">
                         Kelas peserta
                       </p>
@@ -1312,7 +1327,7 @@ export default function KegiatanFormModal({
                         {selectedKelasForSummary.map((kelas) => (
                           <span
                             key={kelas}
-                            className="rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-700"
+                            className="max-w-full wrap-break-word rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-700"
                           >
                             {kelas}
                           </span>
@@ -1352,6 +1367,7 @@ export default function KegiatanFormModal({
                     d="M12 9v3m0 4h.01M10.3 3.86 1.82 18.5A2 2 0 0 0 3.55 21h16.9a2 2 0 0 0 1.73-2.5L13.7 3.86a2 2 0 0 0-3.4 0Z"
                   />
                 </svg>
+
                 <p className="text-[10px] leading-4 text-teal-900">
                   Pastikan informasi dan sasaran sudah sesuai. Data hanya
                   dikirim setelah kamu menekan tombol simpan.
@@ -1371,7 +1387,7 @@ export default function KegiatanFormModal({
         </div>
 
         {/* Footer */}
-        <footer className="flex shrink-0 flex-col gap-2.5 border-t border-gray-100 bg-white px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <footer className="flex shrink-0 flex-col gap-2.5 border-t border-gray-100 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <p className="text-[10px] leading-4 text-gray-500">
             {currentStep < 3 ? (
               <>
@@ -1387,7 +1403,7 @@ export default function KegiatanFormModal({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className={`${styles.button} border border-gray-200 bg-white text-gray-700 hover:bg-gray-50`}
+              className={`${styles.button} w-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 sm:w-auto`}
             >
               Batal
             </button>
@@ -1397,7 +1413,7 @@ export default function KegiatanFormModal({
                 type="button"
                 onClick={() => goToStep(currentStep - 1)}
                 disabled={loading || navigationLockRef.current}
-                className={`${styles.button} border border-gray-200 bg-white text-gray-700 hover:bg-gray-50`}
+                className={`${styles.button} w-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 sm:w-auto`}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -1422,7 +1438,7 @@ export default function KegiatanFormModal({
                 type="button"
                 onClick={handleNext}
                 disabled={loading || navigationLockRef.current}
-                className={`${styles.button} bg-teal-700 text-white hover:bg-teal-800`}
+                className={`${styles.button} w-full bg-teal-700 text-white hover:bg-teal-800 sm:w-auto`}
               >
                 Lanjut
                 <svg
@@ -1449,7 +1465,7 @@ export default function KegiatanFormModal({
                   selectedDesa.length === 0 ||
                   (groupMode === "specific" && effectiveKelompok.length === 0)
                 }
-                className={`${styles.button} min-w-36 bg-teal-700 text-white hover:bg-teal-800`}
+                className={`${styles.button} w-full bg-teal-700 text-white hover:bg-teal-800 sm:min-w-36 sm:w-auto`}
               >
                 {loading ? (
                   <>

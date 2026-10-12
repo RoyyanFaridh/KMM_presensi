@@ -64,34 +64,146 @@ function QrIcon() {
   );
 }
 
+function CalendarIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      className="h-3 w-3 shrink-0"
+    >
+      <rect
+        x="3"
+        y="4.5"
+        width="14"
+        height="12.5"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <path
+        d="M6.5 2.8v3.4M13.5 2.8v3.4M3.5 8h13"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      className="h-3 w-3 shrink-0"
+    >
+      <circle
+        cx="10"
+        cy="10"
+        r="7"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <path
+        d="M10 6v4.3l2.8 1.7"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function LocationIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      className="h-3 w-3 shrink-0"
+    >
+      <path
+        d="M16 8.2c0 4.2-6 9-6 9s-6-4.8-6-9a6 6 0 1 1 12 0Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <circle
+        cx="10"
+        cy="8"
+        r="2"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+    </svg>
+  );
+}
+
 function CreatorInfo({ kegiatan }: { kegiatan: Kegiatan }) {
-  const label = kegiatan.creator_label || "Belum tercatat";
-  const nama = kegiatan.creator_nama;
+  const label = kegiatan.creator_label?.trim() || "Belum tercatat";
+  const creatorRecorded = Boolean(kegiatan.created_by);
 
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
-      <span className="text-[10px] font-medium text-gray-400">
-        Dibuat oleh:
+    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+      <span className="shrink-0 text-[9px] text-gray-400">
+        Dibuat oleh
       </span>
 
       <span
+        title={label}
         className={[
-          "inline-flex max-w-full items-center rounded-md px-2 py-0.5",
-          "text-[9px] font-medium leading-4",
-          kegiatan.created_by
+          "inline-flex max-w-full items-center rounded px-1.5 py-0.5",
+          "text-[9px] font-medium leading-3.5 wrap-break-word",
+          creatorRecorded
             ? "bg-teal-50 text-teal-700"
             : "bg-gray-100 text-gray-500",
         ].join(" ")}
       >
-        <span className="wrap-break-word">{label}</span>
+        {label}
       </span>
-
-      {nama && nama !== label && (
-        <span className="max-w-full wrap-break-word text-[10px] leading-4 text-gray-500">
-          {nama}
-        </span>
-      )}
     </div>
+  );
+}
+
+function ActionButton({
+  label,
+  onClick,
+  children,
+  variant = "neutral",
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+  variant?: "primary" | "neutral" | "danger";
+}) {
+  const variantClass = {
+    primary:
+      "border-teal-700 bg-teal-700 text-white hover:bg-teal-800 active:bg-teal-900",
+    neutral:
+      "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 active:bg-gray-100",
+    danger:
+      "border-gray-200 bg-white text-gray-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:bg-red-100",
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className={[
+        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border",
+        "transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2",
+        "focus-visible:ring-teal-600 focus-visible:ring-offset-1",
+        variantClass[variant],
+      ].join(" ")}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -103,12 +215,16 @@ export default function MobileList({
 }: Props) {
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white px-4 py-8 text-center md:hidden">
-        <p className="text-[11px] font-medium text-gray-500">
-          Tidak ada data kegiatan.
+      <div className="rounded-lg border border-gray-200 bg-white px-4 py-8 text-center md:hidden">
+        <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-gray-50 text-gray-400">
+          <CalendarIcon />
+        </div>
+
+        <p className="mt-2.5 text-[11px] font-semibold text-gray-700">
+          Tidak ada data kegiatan
         </p>
 
-        <p className="mt-1 text-[9px] leading-4 text-gray-400">
+        <p className="mt-1 text-[10px] leading-4 text-gray-400">
           Coba ubah pencarian atau filter yang digunakan.
         </p>
       </div>
@@ -116,7 +232,7 @@ export default function MobileList({
   }
 
   return (
-    <div className="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white md:hidden">
+    <div className="space-y-2.5 md:hidden">
       {data.map((item, index) => {
         const itemStatus = getKegiatanStatus(
           item.tanggal_mulai,
@@ -127,10 +243,10 @@ export default function MobileList({
 
         const statusClass =
           itemStatus === "sedang_berlangsung"
-            ? "bg-emerald-50 text-emerald-700"
+            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
             : itemStatus === "akan_berlangsung"
-              ? "bg-amber-50 text-amber-700"
-              : "bg-gray-100 text-gray-600";
+              ? "border-amber-200 bg-amber-50 text-amber-700"
+              : "border-gray-200 bg-gray-100 text-gray-600";
 
         const tanggalMulai = formatTanggal(item.tanggal_mulai);
         const tanggalSelesai =
@@ -141,28 +257,32 @@ export default function MobileList({
         return (
           <article
             key={item.id}
-            className="px-3 py-3 transition-colors hover:bg-gray-50/70"
+            className={[
+              "rounded-lg border border-gray-200 bg-white",
+              "px-3 py-3",
+              "transition-colors hover:border-gray-300 hover:bg-gray-50/30",
+            ].join(" ")}
           >
+            {/* Nama kegiatan dan status */}
             <div className="flex items-start gap-2">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-start gap-1.5">
-                  <span className="mt-0.5 shrink-0 text-[9px] font-medium tabular-nums text-gray-400">
-                    #{index + 1}
-                  </span>
+              <span className="mt-0.5 flex h-5 min-w-5 shrink-0 items-center justify-center rounded bg-gray-50 px-1 text-[9px] font-medium tabular-nums text-gray-400">
+                {index + 1}
+              </span>
 
-                  <h3
-                    className="min-w-0 wrap-break-word text-[11px] font-semibold leading-4 text-gray-900"
-                    title={item.nama}
-                  >
-                    {item.nama}
-                  </h3>
-                </div>
+              <div className="min-w-0 flex-1">
+                <h3
+                  className="wrap-break-word text-xs font-semibold leading-4.5 text-gray-900"
+                  title={item.nama}
+                >
+                  {item.nama}
+                </h3>
               </div>
 
               <span
                 className={[
-                  "mt-0.5 inline-flex shrink-0 items-center rounded-full px-2 py-0.5",
-                  "text-[9px] font-medium leading-4",
+                  "inline-flex max-w-27 shrink-0 items-center justify-center",
+                  "rounded border px-1.5 py-1 text-center",
+                  "text-[9px] font-medium leading-3",
                   statusClass,
                 ].join(" ")}
               >
@@ -170,87 +290,76 @@ export default function MobileList({
               </span>
             </div>
 
-            <div className="mt-2 space-y-1 pl-5">
-              <p className="flex flex-wrap items-center gap-x-1.5 text-[10px] leading-4 text-gray-500">
-                <span>
+            {/* Detail kegiatan */}
+            <div className="ml-7 mt-2.5 space-y-1.5">
+              <div className="flex items-start gap-1.5 text-[10px] leading-4 text-gray-600">
+                <span className="mt-0.5 text-gray-400">
+                  <CalendarIcon />
+                </span>
+
+                <span className="min-w-0 wrap-break-word">
                   {tanggalMulai}
                   {tanggalSelesai && ` - ${tanggalSelesai}`}
                 </span>
+              </div>
 
-                <span aria-hidden="true" className="text-gray-300">
-                  •
+              <div className="flex items-center gap-1.5 text-[10px] leading-4 text-gray-600">
+                <span className="text-gray-400">
+                  <ClockIcon />
                 </span>
 
                 <span className="tabular-nums">
-                  {formatJam(item.jam_mulai)} - {formatJam(item.jam_selesai)}
+                  {formatJam(item.jam_mulai)} -{" "}
+                  {formatJam(item.jam_selesai)}
                 </span>
-              </p>
+              </div>
 
-              <p
-                className="wrap-break-word text-[10px] leading-4 text-gray-500"
-                title={item.lokasi || undefined}
-              >
-                <span className="font-medium text-gray-400">Lokasi: </span>
-                {item.lokasi || "Belum ditentukan"}
-              </p>
+              <div className="flex items-start gap-1.5 text-[10px] leading-4 text-gray-600">
+                <span className="mt-0.5 text-gray-400">
+                  <LocationIcon />
+                </span>
 
-              <div className="border-t border-gray-100 pt-2">
-                <CreatorInfo kegiatan={item} />
+                <span
+                  className="min-w-0 wrap-break-word"
+                  title={item.lokasi || undefined}
+                >
+                  {item.lokasi || "Belum ditentukan"}
+                </span>
               </div>
             </div>
 
-            <div className="mt-2.5 flex items-center justify-end gap-1">
-              <button
-                type="button"
-                onClick={() => onScanQR(item)}
-                aria-label={`Scan QR untuk ${item.nama}`}
-                title="Scan QR"
-                className={[
-                  "inline-flex h-7 w-7 items-center justify-center rounded-md",
-                  "bg-teal-700 text-white transition-colors",
-                  "hover:bg-teal-800 active:bg-teal-900",
-                  "focus-visible:outline-none focus-visible:ring-2",
-                  "focus-visible:ring-teal-600 focus-visible:ring-offset-1",
-                ].join(" ")}
-              >
-                <QrIcon />
-              </button>
+            {/* Pembuat dan aksi */}
+            <div className="ml-7 mt-2.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-2 border-t border-gray-100 pt-2.5">
+              <CreatorInfo kegiatan={item} />
 
-              <button
-                type="button"
-                onClick={() => onEdit(item)}
-                className={[
-                  "inline-flex h-7 w-7 items-center justify-center rounded-md",
-                  "text-gray-500 transition-colors hover:bg-gray-100",
-                  "hover:text-gray-900 active:bg-gray-200",
-                  "focus-visible:outline-none focus-visible:ring-2",
-                  "focus-visible:ring-teal-600 focus-visible:ring-offset-1",
-                ].join(" ")}
-                aria-label={`Edit ${item.nama}`}
-                title="Edit kegiatan"
-              >
-                <span className="flex h-3.5 w-3.5 items-center justify-center [&>svg]:h-full [&>svg]:w-full">
-                  <EditIcon />
-                </span>
-              </button>
+              <div className="ml-auto flex shrink-0 items-center gap-1">
+                <ActionButton
+                  label={`Scan QR untuk ${item.nama}`}
+                  onClick={() => onScanQR(item)}
+                  variant="primary"
+                >
+                  <QrIcon />
+                </ActionButton>
 
-              <button
-                type="button"
-                onClick={() => onDelete(item)}
-                className={[
-                  "inline-flex h-7 w-7 items-center justify-center rounded-md",
-                  "text-gray-500 transition-colors hover:bg-red-50",
-                  "hover:text-red-600 active:bg-red-100",
-                  "focus-visible:outline-none focus-visible:ring-2",
-                  "focus-visible:ring-red-500 focus-visible:ring-offset-1",
-                ].join(" ")}
-                aria-label={`Hapus ${item.nama}`}
-                title="Hapus kegiatan"
-              >
-                <span className="flex h-3.5 w-3.5 items-center justify-center [&>svg]:h-full [&>svg]:w-full">
-                  <DeleteIcon />
-                </span>
-              </button>
+                <ActionButton
+                  label={`Edit ${item.nama}`}
+                  onClick={() => onEdit(item)}
+                >
+                  <span className="flex h-3.5 w-3.5 items-center justify-center [&>svg]:h-full [&>svg]:w-full">
+                    <EditIcon />
+                  </span>
+                </ActionButton>
+
+                <ActionButton
+                  label={`Hapus ${item.nama}`}
+                  onClick={() => onDelete(item)}
+                  variant="danger"
+                >
+                  <span className="flex h-3.5 w-3.5 items-center justify-center [&>svg]:h-full [&>svg]:w-full">
+                    <DeleteIcon />
+                  </span>
+                </ActionButton>
+              </div>
             </div>
           </article>
         );

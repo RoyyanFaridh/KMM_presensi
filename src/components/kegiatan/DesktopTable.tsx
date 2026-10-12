@@ -273,28 +273,24 @@ function ActionIconButton({
 }
 
 function CreatorInfo({ kegiatan }: { kegiatan: Kegiatan }) {
-  const label = kegiatan.creator_label || "Belum tercatat";
-  const nama = kegiatan.creator_nama;
+  const label = kegiatan.creator_label?.trim() || "Belum tercatat";
+  const creatorRecorded = Boolean(kegiatan.created_by);
 
   return (
-    <div className="flex min-w-0 flex-col items-center gap-1">
+    <div className="flex min-w-0 items-center justify-center">
       <span
+        title={label}
         className={[
           "inline-flex max-w-full items-center justify-center rounded-md px-2 py-1",
           "text-[10px] font-medium leading-4",
-          kegiatan.created_by
-            ? "bg-teal-50 text-teal-700"
+          "wrap-break-word",
+          creatorRecorded
+            ? "bg-orange-50 text-orange-700"
             : "bg-gray-100 text-gray-500",
         ].join(" ")}
       >
-        <span className="wrap-break-word">{label}</span>
+        {label}
       </span>
-
-      {nama && nama !== label && (
-        <span className="max-w-full wrap-break-word text-[10px] leading-4 text-gray-500">
-          {nama}
-        </span>
-      )}
     </div>
   );
 }
