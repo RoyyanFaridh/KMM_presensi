@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -8,6 +8,7 @@ import {
   deleteKegiatan,
   updateKegiatan,
   getKegiatan,
+  getKegiatanFormContext,
 } from "../../backend/kegiatan/actions";
 
 import { getKegiatanStatus } from "../../backend/kegiatan/format";
@@ -25,6 +26,11 @@ import KegiatanFormModal from "./KegiatanFormModal";
 import KegiatanTableView from "./KegiatanTableView";
 import SearchFilterBar from "./SearchFilterBar";
 
+type FormContext = {
+  desaAdmin: string | null;
+  isSuperAdmin: boolean;
+};
+
 type Props = {
   initialData: Kegiatan[];
 };
@@ -37,9 +43,40 @@ export default function KegiatanTable({ initialData }: Props) {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
+  const [formContext, setFormContext] = useState<FormContext | null>(null);
+  const [contextError, setContextError] = useState("");
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadContext() {
+      try {
+        const context = await getKegiatanFormContext();
+
+        if (active) {
+          setFormContext(context);
+          setContextError("");
+        }
+      } catch (err) {
+        if (active) {
+          setContextError(
+            err instanceof Error
+              ? err.message
+              : "Gagal memuat kewenangan admin.",
+          );
+        }
+      }
+    }
+
+    void loadContext();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filteredData = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -64,11 +101,8 @@ export default function KegiatanTable({ initialData }: Props) {
 
     if (sortConfig) {
       result.sort((a, b) => {
-        const aValue = a[sortConfig.key];
-        const bValue = b[sortConfig.key];
-
-        const comparison = String(aValue ?? "").localeCompare(
-          String(bValue ?? ""),
+        const comparison = String(a[sortConfig.key] ?? "").localeCompare(
+          String(b[sortConfig.key] ?? ""),
           "id",
           { numeric: true },
         );
@@ -99,17 +133,11 @@ export default function KegiatanTable({ initialData }: Props) {
 
     setSortConfig((current) => {
       if (!current || current.key !== key) {
-        return {
-          key,
-          direction: "asc",
-        };
+        return { key, direction: "asc" };
       }
 
       if (current.direction === "asc") {
-        return {
-          key,
-          direction: "desc",
-        };
+        return { key, direction: "desc" };
       }
 
       return null;
@@ -117,32 +145,24 @@ export default function KegiatanTable({ initialData }: Props) {
   }
 
   function openAdd() {
-    if (loading) return;
+    if (loading || !formContext) return;
 
     clearMessages();
     setModal({ type: "add" });
   }
 
   function openEdit(kegiatan: Kegiatan) {
-    if (loading) return;
+    if (loading || !formContext) return;
 
     clearMessages();
-
-    setModal({
-      type: "edit",
-      data: kegiatan,
-    });
+    setModal({ type: "edit", data: kegiatan });
   }
 
   function openDelete(kegiatan: Kegiatan) {
     if (loading) return;
 
     clearMessages();
-
-    setModal({
-      type: "delete",
-      data: kegiatan,
-    });
+    setModal({ type: "delete", data: kegiatan });
   }
 
   function handleScanQR(kegiatan: Kegiatan) {
@@ -156,7 +176,6 @@ export default function KegiatanTable({ initialData }: Props) {
 
     if (loading) return;
 
-    // Simpan referensi modal saat submit dimulai.
     const currentModal = modal;
 
     if (
@@ -167,7 +186,6 @@ export default function KegiatanTable({ initialData }: Props) {
       return;
     }
 
-    // Ambil semua nilai sebelum mengubah state loading.
     const formData = new FormData(event.currentTarget);
 
     setLoading(true);
@@ -189,13 +207,9 @@ export default function KegiatanTable({ initialData }: Props) {
         return;
       }
 
-      // Perbarui daftar dari database sebelum menutup modal.
-      // Jika pembacaan ulang gagal, data tetap dapat diperbarui
-      // melalui refresh halaman setelah modal ditutup.
-      let refreshedData: Kegiatan[] | null = null;
-
       try {
-        refreshedData = (await getKegiatan()) as Kegiatan[];
+        const refreshedData = (await getKegiatan()) as Kegiatan[];
+        setData(refreshedData);
       } catch (refreshError) {
         console.error(
           "Kegiatan tersimpan, tetapi daftar gagal dimuat ulang:",
@@ -203,14 +217,8 @@ export default function KegiatanTable({ initialData }: Props) {
         );
       }
 
-      if (refreshedData) {
-        setData(refreshedData);
-      }
-
       setModal(null);
       clearMessages();
-
-      // Sinkronkan data server dan halaman.
       router.refresh();
     } catch (submitError) {
       console.error("Gagal menyimpan kegiatan:", submitError);
@@ -250,7 +258,6 @@ export default function KegiatanTable({ initialData }: Props) {
 
       setModal(null);
       clearMessages();
-
       router.refresh();
     } catch (deleteError) {
       console.error("Gagal menghapus kegiatan:", deleteError);
@@ -282,12 +289,18 @@ export default function KegiatanTable({ initialData }: Props) {
               <p className="mt-1 max-w-xs text-[10px] leading-4 text-gray-500 sm:max-w-none sm:text-xs">
                 Kelola kegiatan yang digunakan untuk presensi.
               </p>
+
+              {contextError && (
+                <p role="alert" className="mt-2 text-xs text-red-600">
+                  {contextError}
+                </p>
+              )}
             </div>
 
             <button
               type="button"
               onClick={openAdd}
-              disabled={loading}
+              disabled={loading || !formContext}
               aria-label="Tambah kegiatan"
               title="Tambah kegiatan"
               className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-lg font-medium leading-none text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-auto sm:px-4 sm:text-[11px]"
@@ -319,26 +332,13 @@ export default function KegiatanTable({ initialData }: Props) {
         />
       </div>
 
-      {modal?.type === "add" && (
+      {formContext && (modal?.type === "add" || modal?.type === "edit") && (
         <KegiatanFormModal
-          mode="add"
-          fieldErrors={fieldErrors}
-          error={error}
-          loading={loading}
-          onSubmit={handleSubmit}
-          onClose={() => {
-            if (!loading) {
-              setModal(null);
-              clearMessages();
-            }
-          }}
-        />
-      )}
-
-      {modal?.type === "edit" && (
-        <KegiatanFormModal
-          mode="edit"
-          initialData={modal.data}
+          key={modal.type === "edit" ? `edit-${modal.data.id}` : "add"}
+          mode={modal.type}
+          initialData={modal.type === "edit" ? modal.data : undefined}
+          desaAdmin={formContext.desaAdmin}
+          isSuperAdmin={formContext.isSuperAdmin}
           fieldErrors={fieldErrors}
           error={error}
           loading={loading}

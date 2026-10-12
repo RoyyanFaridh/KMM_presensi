@@ -1,26 +1,13 @@
 "use server";
 
 import { createAdminClient } from "../supabase/admin";
+import { requireAdmin } from "../auth/admin";
 import { isKegiatanAktif, buildDateTime } from "./helpers";
-
-import {
-  createDeviceToken as createDeviceTokenLegacy,
-  getDeviceByToken,
-  updateDeviceLastUsed,
-} from "./device";
-
 import { isMudamudiTargeted } from "./target";
-
 import type { PresensiStatus, PresensiMetode } from "./types";
 
 const HADIR_TOLERANCE_MINUTES = 10;
-
 const MUDA_MUDI_QR_PREFIX = "SIKEMA:MUDA_MUDI:";
-
-type Identity = {
-  nama: string;
-  tanggalLahir: string;
-};
 
 type Kegiatan = {
   id: number;
@@ -66,6 +53,7 @@ export type ScanMudamudiQRResult =
         | "kegiatan_inactive"
         | "not_target"
         | "already_present"
+        | "not_authorized"
         | "database_error";
       message: string;
       mudamudi?: Mudamudi;
@@ -80,10 +68,6 @@ function parseMudamudiQR(qrText: string): string | null {
   }
 
   const qrId = value.slice(MUDA_MUDI_QR_PREFIX.length).trim();
-
-  if (!qrId) {
-    return null;
-  }
 
   const uuidRegex =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -109,9 +93,42 @@ function determinePresensiStatus(
   return waktuCheckin.getTime() <= batasHadir.getTime() ? "hadir" : "terlambat";
 }
 
-export async function getKegiatanById(
+function canAccessKegiatan(
+  kegiatan: Kegiatan,
+  desaAdmin: string | null,
+  isSuperAdmin: boolean,
+): boolean {
+  if (isSuperAdmin) {
+    return true;
+  }
+
+  if (!desaAdmin || !Array.isArray(kegiatan.desa)) {
+    return false;
+  }
+
+  return (
+    kegiatan.desa.length > 0 &&
+    kegiatan.desa.every(
+      (desa) => typeof desa === "string" && desa === desaAdmin,
+    )
+  );
+}
+
+function canAccessMudamudi(
+  mudamudi: Pick<Mudamudi, "desa">,
+  desaAdmin: string | null,
+  isSuperAdmin: boolean,
+): boolean {
+  return isSuperAdmin || (!!desaAdmin && mudamudi.desa === desaAdmin);
+}
+
+async function getKegiatanByIdInternal(
   kegiatanId: number,
 ): Promise<Kegiatan | null> {
+  if (!Number.isInteger(kegiatanId) || kegiatanId <= 0) {
+    return null;
+  }
+
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
@@ -134,24 +151,38 @@ export async function getKegiatanById(
     .maybeSingle();
 
   if (error) {
-    console.error("[getKegiatanById] Database error:", error);
+    console.error("[getKegiatanByIdInternal] Database error:", error);
     return null;
   }
 
   return data as Kegiatan | null;
 }
 
-/*
- * ============================================
- * NEW QR MUDAMUDI FLOW
- * ============================================
- */
+export async function getKegiatanById(
+  kegiatanId: number,
+): Promise<Kegiatan | null> {
+  const { profile, isSuperAdmin } = await requireAdmin();
+
+  const kegiatan = await getKegiatanByIdInternal(kegiatanId);
+
+  if (!kegiatan) {
+    return null;
+  }
+
+  if (!canAccessKegiatan(kegiatan, profile.desa, isSuperAdmin)) {
+    return null;
+  }
+
+  return kegiatan;
+}
 
 export async function scanMudamudiQR(
   qrText: string,
   kegiatanId: number,
 ): Promise<ScanMudamudiQRResult> {
-  if (!qrText?.trim()) {
+  const { profile, isSuperAdmin } = await requireAdmin();
+
+  if (typeof qrText !== "string" || !qrText.trim()) {
     return {
       success: false,
       type: "invalid_qr",
@@ -178,6 +209,53 @@ export async function scanMudamudiQR(
   }
 
   const supabase = createAdminClient();
+
+  const { data: kegiatanData, error: kegiatanError } = await supabase
+    .from("kegiatan")
+    .select(
+      `
+        id,
+        nama,
+        tanggal_mulai,
+        tanggal_selesai,
+        jam_mulai,
+        jam_selesai,
+        lokasi,
+        desa,
+        kelas,
+        jenis_kelamin
+      `,
+    )
+    .eq("id", kegiatanId)
+    .maybeSingle();
+
+  if (kegiatanError) {
+    console.error("[scanMudamudiQR] Kegiatan lookup error:", kegiatanError);
+
+    return {
+      success: false,
+      type: "database_error",
+      message: "Terjadi kesalahan saat mencari kegiatan.",
+    };
+  }
+
+  if (!kegiatanData) {
+    return {
+      success: false,
+      type: "kegiatan_not_found",
+      message: "Kegiatan tidak ditemukan.",
+    };
+  }
+
+  const kegiatan = kegiatanData as Kegiatan;
+
+  if (!canAccessKegiatan(kegiatan, profile.desa, isSuperAdmin)) {
+    return {
+      success: false,
+      type: "not_authorized",
+      message: "Kamu tidak memiliki akses untuk presensi kegiatan ini.",
+    };
+  }
 
   const { data: mudamudiData, error: mudamudiError } = await supabase
     .from("mudamudi")
@@ -215,55 +293,22 @@ export async function scanMudamudiQR(
 
   const mudamudi = mudamudiData as Mudamudi;
 
-  const { data: kegiatanData, error: kegiatanError } = await supabase
-    .from("kegiatan")
-    .select(
-      `
-        id,
-        nama,
-        tanggal_mulai,
-        tanggal_selesai,
-        jam_mulai,
-        jam_selesai,
-        lokasi,
-        desa,
-        kelas,
-        jenis_kelamin
-      `,
+  if (!canAccessMudamudi(mudamudi, profile.desa, isSuperAdmin)) {
+    return {
+      success: false,
+      type: "not_authorized",
+      message: "Kamu tidak memiliki akses untuk memproses peserta ini.",
+    };
+  }
+
+  if (
+    !isKegiatanAktif(
+      kegiatan.tanggal_mulai,
+      kegiatan.tanggal_selesai,
+      kegiatan.jam_mulai,
+      kegiatan.jam_selesai,
     )
-    .eq("id", kegiatanId)
-    .maybeSingle();
-
-  if (kegiatanError) {
-    console.error("[scanMudamudiQR] Kegiatan lookup error:", kegiatanError);
-
-    return {
-      success: false,
-      type: "database_error",
-      message: "Terjadi kesalahan saat mencari kegiatan.",
-      mudamudi,
-    };
-  }
-
-  if (!kegiatanData) {
-    return {
-      success: false,
-      type: "kegiatan_not_found",
-      message: "Kegiatan tidak ditemukan.",
-      mudamudi,
-    };
-  }
-
-  const kegiatan = kegiatanData as Kegiatan;
-
-  const kegiatanAktif = isKegiatanAktif(
-    kegiatan.tanggal_mulai,
-    kegiatan.tanggal_selesai,
-    kegiatan.jam_mulai,
-    kegiatan.jam_selesai,
-  );
-
-  if (!kegiatanAktif) {
+  ) {
     return {
       success: false,
       type: "kegiatan_inactive",
@@ -285,7 +330,7 @@ export async function scanMudamudiQR(
 
   const { data: existingPresensi, error: existingError } = await supabase
     .from("presensi")
-    .select("id, status, waktu_checkin")
+    .select("id")
     .eq("kegiatan_id", kegiatanId)
     .eq("mudamudi_id", mudamudi.id)
     .maybeSingle();
@@ -369,367 +414,6 @@ export async function scanMudamudiQR(
     waktuCheckin: waktuCheckin.toISOString(),
     status,
     metode: "qr",
-    kegiatan,
-    mudamudi,
-  };
-}
-
-/*
- * ============================================
- * LEGACY DEVICE FLOW
- * ============================================
- */
-
-export async function getDeviceStatus(deviceToken: string | null) {
-  if (!deviceToken?.trim()) {
-    return {
-      registered: false,
-      mudamudi: null,
-    };
-  }
-
-  const device = await getDeviceByToken(deviceToken);
-
-  if (device.error || !device.data) {
-    return {
-      registered: false,
-      mudamudi: null,
-    };
-  }
-
-  const supabase = createAdminClient();
-
-  const { data: mudamudi, error } = await supabase
-    .from("mudamudi")
-    .select("id, nama")
-    .eq("id", device.data.mudamudiId)
-    .maybeSingle();
-
-  if (error || !mudamudi) {
-    return {
-      registered: false,
-      mudamudi: null,
-    };
-  }
-
-  return {
-    registered: true,
-    mudamudi: {
-      id: mudamudi.id,
-      nama: mudamudi.nama,
-    },
-  };
-}
-
-export async function verifyIdentity(identity: Identity) {
-  const supabase = createAdminClient();
-
-  const nama = identity.nama.trim();
-
-  if (!nama || !identity.tanggalLahir) {
-    return {
-      success: false,
-      mudamudi: null,
-      message: "Nama dan tanggal lahir wajib diisi.",
-    };
-  }
-
-  const { data, error } = await supabase
-    .from("mudamudi")
-    .select(
-      `
-        id,
-        nama,
-        desa,
-        kelompok,
-        kelas,
-        jenis_kelamin,
-        tanggal_lahir
-      `,
-    )
-    .ilike("nama", nama)
-    .eq("tanggal_lahir", identity.tanggalLahir)
-    .maybeSingle();
-
-  if (error) {
-    console.error("[verifyIdentity] Database error:", error);
-
-    return {
-      success: false,
-      mudamudi: null,
-      message: "Terjadi kesalahan saat memverifikasi identitas.",
-    };
-  }
-
-  if (!data) {
-    return {
-      success: false,
-      mudamudi: null,
-      message: "Data Muda-Mudi tidak ditemukan.",
-    };
-  }
-
-  return {
-    success: true,
-    mudamudi: data,
-    message: "Identitas berhasil diverifikasi.",
-  };
-}
-
-export async function registerDevice(mudamudiId: number) {
-  const result = await createDeviceTokenLegacy(mudamudiId);
-
-  if (!result.success) {
-    return {
-      success: false,
-      deviceToken: null,
-      mudamudi: null,
-      message: result.error,
-    };
-  }
-
-  return {
-    success: true,
-    deviceToken: result.deviceToken,
-    mudamudi: result.mudamudi,
-    message: "Device berhasil didaftarkan.",
-  };
-}
-
-export async function changeDeviceAccount(
-  deviceToken: string,
-  mudamudiId: number,
-) {
-  const supabase = createAdminClient();
-
-  const token = deviceToken.trim();
-
-  if (!token) {
-    return {
-      success: false,
-      mudamudi: null,
-      message: "Device token tidak valid.",
-    };
-  }
-
-  if (!Number.isInteger(mudamudiId) || mudamudiId <= 0) {
-    return {
-      success: false,
-      mudamudi: null,
-      message: "Data Muda-Mudi tidak valid.",
-    };
-  }
-
-  const { data: mudamudi, error: mudamudiError } = await supabase
-    .from("mudamudi")
-    .select("id, nama")
-    .eq("id", mudamudiId)
-    .maybeSingle();
-
-  if (mudamudiError || !mudamudi) {
-    return {
-      success: false,
-      mudamudi: null,
-      message: "Data Muda-Mudi tidak ditemukan.",
-    };
-  }
-
-  const { data: device, error: deviceError } = await supabase
-    .from("presensi_device")
-    .select("id")
-    .eq("device_token", token)
-    .maybeSingle();
-
-  if (deviceError) {
-    console.error("[changeDeviceAccount] Device lookup error:", deviceError);
-
-    return {
-      success: false,
-      mudamudi: null,
-      message: "Gagal memeriksa perangkat.",
-    };
-  }
-
-  if (!device) {
-    return {
-      success: false,
-      mudamudi: null,
-      message: "Perangkat belum terdaftar.",
-    };
-  }
-
-  const { error: updateError } = await supabase
-    .from("presensi_device")
-    .update({
-      mudamudi_id: mudamudi.id,
-      last_used_at: new Date().toISOString(),
-    })
-    .eq("id", device.id);
-
-  if (updateError) {
-    console.error("[changeDeviceAccount] Update error:", updateError);
-
-    return {
-      success: false,
-      mudamudi: null,
-      message: "Akun device gagal diperbarui.",
-    };
-  }
-
-  return {
-    success: true,
-    mudamudi,
-    message: "Akun device berhasil diperbarui.",
-  };
-}
-
-export async function submitPresensi(
-  deviceToken: string | null,
-  kegiatanId: number,
-  identity?: Identity,
-) {
-  const supabase = createAdminClient();
-
-  const kegiatan = await getKegiatanById(kegiatanId);
-
-  if (!kegiatan) {
-    return {
-      success: false,
-      message: "Kegiatan tidak ditemukan.",
-    };
-  }
-
-  const kegiatanAktif = isKegiatanAktif(
-    kegiatan.tanggal_mulai,
-    kegiatan.tanggal_selesai,
-    kegiatan.jam_mulai,
-    kegiatan.jam_selesai,
-  );
-
-  if (!kegiatanAktif) {
-    return {
-      success: false,
-      message: "Kegiatan belum dimulai atau sudah selesai.",
-    };
-  }
-
-  let mudamudi: Mudamudi | null = null;
-
-  if (deviceToken?.trim()) {
-    const device = await getDeviceByToken(deviceToken);
-
-    if (!device.error && device.data) {
-      const { data: deviceMudamudi, error: mudamudiError } = await supabase
-        .from("mudamudi")
-        .select(
-          `
-              id,
-              nama,
-              desa,
-              kelompok,
-              kelas,
-              jenis_kelamin,
-              tanggal_lahir
-            `,
-        )
-        .eq("id", device.data.mudamudiId)
-        .maybeSingle();
-
-      if (!mudamudiError && deviceMudamudi) {
-        mudamudi = deviceMudamudi as Mudamudi;
-      }
-    }
-  }
-
-  if (!mudamudi && identity) {
-    const identityResult = await verifyIdentity(identity);
-
-    if (identityResult.success && identityResult.mudamudi) {
-      mudamudi = identityResult.mudamudi as Mudamudi;
-    }
-  }
-
-  if (!mudamudi) {
-    return {
-      success: false,
-      message: "Data Muda-Mudi tidak dapat ditemukan.",
-    };
-  }
-
-  if (!isMudamudiTargeted(kegiatan, mudamudi)) {
-    return {
-      success: false,
-      message: "Muda-Mudi tidak termasuk sasaran kegiatan.",
-    };
-  }
-
-  const { data: existing } = await supabase
-    .from("presensi")
-    .select("id")
-    .eq("kegiatan_id", kegiatanId)
-    .eq("mudamudi_id", mudamudi.id)
-    .maybeSingle();
-
-  if (existing) {
-    return {
-      success: false,
-      message: "Muda-Mudi sudah melakukan presensi.",
-    };
-  }
-
-  const waktuCheckin = new Date();
-
-  const status = determinePresensiStatus(
-    kegiatan.tanggal_mulai,
-    kegiatan.jam_mulai,
-    waktuCheckin,
-  );
-
-  const { data, error } = await supabase
-    .from("presensi")
-    .insert({
-      kegiatan_id: kegiatanId,
-      mudamudi_id: mudamudi.id,
-      waktu_checkin: waktuCheckin.toISOString(),
-      status,
-      metode: "qr",
-      keterangan: null,
-    })
-    .select("id")
-    .single();
-
-  if (error) {
-    if (error.code === "23505") {
-      return {
-        success: false,
-        message: "Muda-Mudi sudah melakukan presensi.",
-      };
-    }
-
-    console.error("[submitPresensi] Database error:", error);
-
-    return {
-      success: false,
-      message: "Presensi gagal disimpan.",
-    };
-  }
-
-  if (deviceToken?.trim()) {
-    try {
-      await updateDeviceLastUsed(deviceToken);
-    } catch (error) {
-      console.error("[submitPresensi] Failed to update device:", error);
-    }
-  }
-
-  return {
-    success: true,
-    presensiId: data.id,
-    waktuCheckin: waktuCheckin.toISOString(),
-    status,
-    metode: "qr",
-    keterangan: null,
-    deviceToken,
     kegiatan,
     mudamudi,
   };

@@ -127,9 +127,6 @@ export type RekapitulasiPresensi = {
   kehadiran: RekapitulasiKehadiran[];
 };
 
-/**
- * Hasil pemeriksaan device token.
- */
 export type DeviceCheckResult =
   | {
       status: "known";

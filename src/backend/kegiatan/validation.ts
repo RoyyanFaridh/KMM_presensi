@@ -13,29 +13,36 @@ export function validateClient(
 ): FieldErrors {
   const errors: FieldErrors = {};
 
+  // Validasi nama kegiatan
   if (!nama.trim()) {
-    errors.nama = "Nama kegiatan wajib diisi";
+    errors.nama = "Nama kegiatan wajib diisi.";
   }
 
+  // Validasi tanggal
   if (!tanggalMulai) {
-    errors.tanggal_mulai = "Tanggal mulai wajib diisi";
+    errors.tanggal_mulai = "Tanggal mulai wajib diisi.";
   }
 
   if (!tanggalSelesai) {
-    errors.tanggal_selesai = "Tanggal selesai wajib diisi";
+    errors.tanggal_selesai = "Tanggal selesai wajib diisi.";
   }
 
-  if (tanggalMulai && tanggalSelesai && tanggalSelesai < tanggalMulai) {
+  if (
+    tanggalMulai &&
+    tanggalSelesai &&
+    tanggalSelesai < tanggalMulai
+  ) {
     errors.tanggal_selesai =
-      "Tanggal selesai harus setelah atau sama dengan tanggal mulai";
+      "Tanggal selesai harus setelah atau sama dengan tanggal mulai.";
   }
 
+  // Validasi jam
   if (!jamMulai) {
-    errors.jam_mulai = "Jam mulai wajib diisi";
+    errors.jam_mulai = "Jam mulai wajib diisi.";
   }
 
   if (!jamSelesai) {
-    errors.jam_selesai = "Jam selesai wajib diisi";
+    errors.jam_selesai = "Jam selesai wajib diisi.";
   }
 
   if (
@@ -46,23 +53,33 @@ export function validateClient(
     jamSelesai &&
     jamSelesai <= jamMulai
   ) {
-    errors.jam_selesai = "Jam selesai harus setelah jam mulai";
+    errors.jam_selesai =
+      "Jam selesai harus setelah jam mulai.";
   }
 
+  // Validasi lokasi
   if (!lokasi.trim()) {
-    errors.lokasi = "Lokasi wajib diisi";
+    errors.lokasi = "Lokasi kegiatan wajib diisi.";
   }
 
+  // Validasi desa sasaran
   if (!Array.isArray(desa)) {
-    errors.desa = "Desa tidak valid";
+    errors.desa = "Data desa tidak valid.";
+  } else if (desa.length === 0) {
+    errors.desa = "Pilih minimal satu desa.";
   }
 
+  // Validasi kelas sasaran
   if (!Array.isArray(kelas)) {
-    errors.kelas = "Kelas tidak valid";
+    errors.kelas = "Data kelas tidak valid.";
   }
 
-  if (jenisKelamin !== "" && !jenisKelamin) {
-    errors.jenis_kelamin = "Jenis kelamin tidak valid";
+  // Validasi jenis kelamin
+  if (
+    typeof jenisKelamin !== "string" ||
+    !["", "Laki-laki", "Perempuan"].includes(jenisKelamin)
+  ) {
+    errors.jenis_kelamin = "Pilihan jenis kelamin tidak valid.";
   }
 
   return errors;

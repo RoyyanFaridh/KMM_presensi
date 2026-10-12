@@ -127,11 +127,11 @@ export default function ExportModal({ allData, adminDesa, onClose }: Props) {
 
             <div className="min-w-0">
               <h2 className="text-[14px] font-semibold leading-5 text-gray-800">
-                Export Data
+                Export Data Muda-Mudi
               </h2>
 
               <p className="mt-0.5 text-[10px] leading-4 text-gray-400">
-                Pilih data yang ingin diexport ke Excel
+                Pilih data yang ingin diekspor ke Excel
               </p>
             </div>
           </div>
@@ -178,7 +178,7 @@ export default function ExportModal({ allData, adminDesa, onClose }: Props) {
 
           <FilterCheckboxGroup
             label="Jenis Kelamin"
-            options={JENIS_KELAMIN_OPTIONS}
+            options={[...JENIS_KELAMIN_OPTIONS]}
             selected={selectedJenisKelamin}
             onChange={setSelectedJenisKelamin}
             colorClass="border-violet-400 bg-violet-50 text-violet-700"
@@ -186,7 +186,7 @@ export default function ExportModal({ allData, adminDesa, onClose }: Props) {
 
           <FilterCheckboxGroup
             label="Kelas"
-            options={KELAS_OPTIONS}
+            options={[...KELAS_OPTIONS]}
             selected={selectedKelas}
             onChange={setSelectedKelas}
             colorClass="border-orange-400 bg-orange-50 text-orange-700"
@@ -206,6 +206,7 @@ export default function ExportModal({ allData, adminDesa, onClose }: Props) {
             type="submit"
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-[#171717] px-5 text-[11px] font-medium text-white transition hover:bg-gray-800 active:scale-[0.98]"
           >
+            <DownloadIcon className="h-3.5 w-3.5" />
             Export Excel
           </button>
         </div>

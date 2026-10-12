@@ -50,7 +50,7 @@ export default function SearchFilterBar({
             placeholder="Cari kegiatan..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9.5 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-[12px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-gray-300 focus:ring-1 focus:ring-gray-200"
+            className="h-9.5 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-[10px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-gray-300 focus:ring-1 focus:ring-gray-200"
           />
         </div>
 
@@ -59,7 +59,7 @@ export default function SearchFilterBar({
           onClick={() => setShowFilter((prev) => !prev)}
           className={`
             flex h-9.5 items-center justify-center gap-1.5
-            rounded-lg border px-3 text-[12px]
+            rounded-lg border px-3 text-[10px]
             transition
             ${
               showFilter || hasActiveFilters
@@ -82,7 +82,7 @@ export default function SearchFilterBar({
           </svg>
           Filter
           {activeFilterCount > 0 && (
-            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-teal-700 px-1 text-[9px] font-medium text-white">
+            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-teal-700 px-1 text-[8px] font-medium text-white">
               {activeFilterCount}
             </span>
           )}
@@ -93,11 +93,11 @@ export default function SearchFilterBar({
         <div className="mt-2.5 rounded-xl border border-gray-200 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h3 className="text-[12px] font-semibold text-gray-800">
+              <h3 className="text-[10px] font-semibold text-gray-800">
                 Filter Data
               </h3>
 
-              <p className="mt-0.5 text-[10px] text-gray-400">
+              <p className="mt-0.5 text-[9px] text-gray-400">
                 Pilih kriteria untuk menyaring data
               </p>
             </div>
@@ -124,12 +124,12 @@ export default function SearchFilterBar({
 
           <div className="grid gap-4 md:grid-cols-2 md:gap-6">
             <div>
-              <p className="mb-2 text-[11px] font-medium text-gray-600">
+              <p className="mb-2 text-[10px] font-medium text-gray-600">
                 Urutkan
               </p>
 
               <div className="flex flex-wrap gap-x-4 gap-y-2">
-                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
                   <input
                     type="radio"
                     name="sort"
@@ -148,7 +148,7 @@ export default function SearchFilterBar({
                   Terbaru
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
                   <input
                     type="radio"
                     name="sort"
@@ -167,7 +167,7 @@ export default function SearchFilterBar({
                   Tanggal terdekat
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
                   <input
                     type="radio"
                     name="sort"
@@ -186,7 +186,7 @@ export default function SearchFilterBar({
                   Nama A - Z
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
                   <input
                     type="radio"
                     name="sort"
@@ -208,12 +208,12 @@ export default function SearchFilterBar({
             </div>
 
             <div className="border-t border-gray-100 pt-4 md:border-l md:border-t-0 md:pl-6 md:pt-0">
-              <p className="mb-2 text-[11px] font-medium text-gray-600">
+              <p className="mb-2 text-[10px] font-medium text-gray-600">
                 Status
               </p>
 
               <div className="flex flex-wrap gap-x-4 gap-y-2">
-                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
                   <input
                     type="radio"
                     name="status"
@@ -225,7 +225,7 @@ export default function SearchFilterBar({
                   Semua
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
                   <input
                     type="radio"
                     name="status"
@@ -237,7 +237,7 @@ export default function SearchFilterBar({
                   Akan berlangsung
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
                   <input
                     type="radio"
                     name="status"
@@ -249,7 +249,7 @@ export default function SearchFilterBar({
                   Sedang berlangsung
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
                   <input
                     type="radio"
                     name="status"
@@ -268,7 +268,7 @@ export default function SearchFilterBar({
             <button
               type="button"
               onClick={onReset}
-              className="text-[11px] text-gray-500 underline underline-offset-2 transition hover:text-gray-700"
+              className="text-[10px] text-gray-500 underline underline-offset-2 transition hover:text-gray-700"
             >
               Reset filter
             </button>
@@ -276,7 +276,7 @@ export default function SearchFilterBar({
             <button
               type="button"
               onClick={() => setShowFilter(false)}
-              className="rounded-lg bg-teal-700 px-3.5 py-2 text-[11px] font-medium text-white transition hover:bg-teal-800"
+              className="rounded-lg bg-teal-700 px-3.5 py-2 text-[10px] font-medium text-white transition hover:bg-teal-800"
             >
               Selesai
             </button>

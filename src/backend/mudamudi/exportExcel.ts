@@ -14,18 +14,20 @@ function getKelompokIndex(desa: string, kelompok: string): number {
   return kelompokOptions ? kelompokOptions.indexOf(kelompok as never) : -1;
 }
 
+function getDesaIndex(desa: string): number {
+  return (DESA_OPTIONS as readonly string[]).indexOf(desa);
+}
+
 function sortByDesaThenKelompokThenNama(data: Mudamudi[]): Mudamudi[] {
   return [...data].sort((a, b) => {
-    const desaIndexA = DESA_OPTIONS.indexOf(a.desa);
-
-    const desaIndexB = DESA_OPTIONS.indexOf(b.desa);
+    const desaIndexA = getDesaIndex(a.desa);
+    const desaIndexB = getDesaIndex(b.desa);
 
     if (desaIndexA !== desaIndexB) {
       return desaIndexA - desaIndexB;
     }
 
     const kelompokIndexA = getKelompokIndex(a.desa, a.kelompok);
-
     const kelompokIndexB = getKelompokIndex(b.desa, b.kelompok);
 
     if (kelompokIndexA !== kelompokIndexB) {
@@ -121,7 +123,6 @@ export async function exportPresensiExcel({ data, adminDesa }: ExportOptions) {
   ];
 
   const workbook = new ExcelJS.Workbook();
-
   const sheet = workbook.addWorksheet("Data Muda Mudi");
 
   sheet.columns = [
@@ -156,18 +157,10 @@ export async function exportPresensiExcel({ data, adminDesa }: ExportOptions) {
     };
 
     cell.border = {
-      top: {
-        style: "thin",
-      },
-      bottom: {
-        style: "thin",
-      },
-      left: {
-        style: "thin",
-      },
-      right: {
-        style: "thin",
-      },
+      top: { style: "thin" },
+      bottom: { style: "thin" },
+      left: { style: "thin" },
+      right: { style: "thin" },
     };
 
     cell.fill = {
@@ -202,18 +195,10 @@ export async function exportPresensiExcel({ data, adminDesa }: ExportOptions) {
 
     row.eachCell((cell, colNumber) => {
       cell.border = {
-        top: {
-          style: "thin",
-        },
-        bottom: {
-          style: "thin",
-        },
-        left: {
-          style: "thin",
-        },
-        right: {
-          style: "thin",
-        },
+        top: { style: "thin" },
+        bottom: { style: "thin" },
+        left: { style: "thin" },
+        right: { style: "thin" },
       };
 
       cell.alignment = {
@@ -246,7 +231,6 @@ export async function exportPresensiExcel({ data, adminDesa }: ExportOptions) {
   });
 
   const url = URL.createObjectURL(blob);
-
   const link = document.createElement("a");
 
   link.href = url;

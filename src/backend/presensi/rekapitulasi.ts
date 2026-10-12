@@ -1,14 +1,13 @@
 "use server";
 
+import { requireAdmin } from "../auth/admin";
 import { createClient } from "../supabase/server";
-
-import {
+import { isMudamudiTargeted } from "./target";
+import type {
   PresensiMetode,
   PresensiStatus,
   RekapitulasiPresensi,
 } from "./types";
-
-import { isMudamudiTargeted } from "./target";
 
 type GetRekapitulasiParams = {
   page: number;
@@ -26,6 +25,7 @@ type KegiatanRekap = {
   nama: string;
   tanggal_mulai: string;
   tanggal_selesai: string;
+  jam_mulai: string;
   lokasi: string;
   desa: string[] | null;
   kelas: string[] | null;
@@ -63,16 +63,31 @@ function emptyResult(
       kegiatan: [],
       kehadiran: [],
     } as RekapitulasiPresensi,
-
     pagination: {
       page,
       itemsPerPage,
       totalItems,
       totalPages,
     },
-
     error,
   };
+}
+
+function canAccessKegiatan(
+  kegiatan: KegiatanRekap,
+  adminDesa: string | null,
+  isSuperAdmin: boolean,
+) {
+  if (isSuperAdmin) return true;
+
+  return (
+    adminDesa !== null &&
+    Array.isArray(kegiatan.desa) &&
+    kegiatan.desa.length > 0 &&
+    kegiatan.desa.every(
+      (desa) => typeof desa === "string" && desa === adminDesa,
+    )
+  );
 }
 
 export async function getRekapitulasiPresensi({
@@ -85,114 +100,94 @@ export async function getRekapitulasiPresensi({
   kelompok,
   kelas,
 }: GetRekapitulasiParams) {
+  const admin = await requireAdmin();
   const supabase = await createClient();
 
-  const safePage = Math.max(1, Math.floor(page));
-  const safeItemsPerPage = Math.min(
-    100,
-    Math.max(1, Math.floor(itemsPerPage)),
-  );
+  const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
 
-  /*
-   * ============================================================
-   * 1. QUERY KEGIATAN
-   * ============================================================
-   *
-   * Hanya mengambil kolom yang memang dibutuhkan Rekapitulasi.
-   */
+  const safeItemsPerPage =
+    Number.isFinite(itemsPerPage) && itemsPerPage > 0
+      ? Math.min(100, Math.floor(itemsPerPage))
+      : 10;
+
+  if (
+    kegiatanId !== undefined &&
+    (!Number.isInteger(kegiatanId) || kegiatanId <= 0)
+  ) {
+    return emptyResult(safePage, safeItemsPerPage, "Kegiatan tidak valid.");
+  }
+
+  if (
+    !admin.isSuperAdmin &&
+    admin.desa !== null &&
+    desa &&
+    desa !== admin.desa
+  ) {
+    return emptyResult(
+      safePage,
+      safeItemsPerPage,
+      "Kamu tidak memiliki akses ke data desa tersebut.",
+    );
+  }
 
   let kegiatanQuery = supabase
     .from("kegiatan")
     .select(
-      `
-        id,
-        nama,
-        tanggal_mulai,
-        tanggal_selesai,
-        lokasi,
-        desa,
-        kelas,
-        jenis_kelamin
-      `,
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, lokasi, desa, kelas, jenis_kelamin",
     )
-    .order("tanggal_mulai", {
-      ascending: false,
-    })
-    .order("jam_mulai", {
-      ascending: false,
-    });
+    .order("tanggal_mulai", { ascending: false })
+    .order("jam_mulai", { ascending: false });
 
   if (bulan) {
-    const [year, month] = bulan.split("-").map(Number);
+    const match = /^(\d{4})-(\d{2})$/.exec(bulan);
 
-    if (
-      Number.isInteger(year) &&
-      Number.isInteger(month) &&
-      month >= 1 &&
-      month <= 12
-    ) {
-      const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-
-      const nextMonth = new Date(Date.UTC(year, month, 1));
-
-      const endDate = nextMonth.toISOString().slice(0, 10);
-
-      kegiatanQuery = kegiatanQuery
-        .gte("tanggal_mulai", startDate)
-        .lt("tanggal_mulai", endDate);
-    }
-  }
-
-  if (kegiatanId !== undefined) {
-    if (!Number.isInteger(kegiatanId) || kegiatanId <= 0) {
+    if (!match) {
       return emptyResult(
         safePage,
         safeItemsPerPage,
-        "Kegiatan tidak valid",
+        "Format bulan tidak valid.",
       );
     }
 
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+
+    if (month < 1 || month > 12) {
+      return emptyResult(
+        safePage,
+        safeItemsPerPage,
+        "Format bulan tidak valid.",
+      );
+    }
+
+    const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+    const endDate = new Date(Date.UTC(year, month, 1))
+      .toISOString()
+      .slice(0, 10);
+
+    kegiatanQuery = kegiatanQuery
+      .gte("tanggal_mulai", startDate)
+      .lt("tanggal_mulai", endDate);
+  }
+
+  if (kegiatanId !== undefined) {
     kegiatanQuery = kegiatanQuery.eq("id", kegiatanId);
   }
 
-  /*
-   * ============================================================
-   * 2. QUERY MUDA-MUDI
-   * ============================================================
-   *
-   * Search, desa, kelompok, dan kelas semuanya diterapkan
-   * langsung di Supabase.
-   *
-   * Jadi Vercel tidak perlu menerima data yang tidak sesuai
-   * filter tersebut.
-   */
-
   let mudamudiQuery = supabase
     .from("mudamudi")
-    .select(
-      `
-        id,
-        nama,
-        desa,
-        kelompok,
-        kelas,
-        jenis_kelamin
-      `,
-    )
-    .order("nama", {
-      ascending: true,
-    });
+    .select("id, nama, desa, kelompok, kelas, jenis_kelamin")
+    .order("nama", { ascending: true });
 
   const keyword = search.trim();
 
   if (keyword) {
-    mudamudiQuery = mudamudiQuery.ilike(
-      "nama",
-      `%${keyword}%`,
-    );
+    mudamudiQuery = mudamudiQuery.ilike("nama", `%${keyword}%`);
   }
 
-  if (desa) {
+  if (!admin.isSuperAdmin && admin.desa !== null) {
+    mudamudiQuery = mudamudiQuery.eq("desa", admin.desa);
+  } else if (desa) {
     mudamudiQuery = mudamudiQuery.eq("desa", desa);
   }
 
@@ -204,61 +199,38 @@ export async function getRekapitulasiPresensi({
     mudamudiQuery = mudamudiQuery.eq("kelas", kelas);
   }
 
-  /*
-   * Kegiatan dan Muda-Mudi bisa diambil bersamaan.
-   *
-   * Ini tetap dua query Supabase, tetapi berjalan paralel
-   * sehingga tidak menunggu query pertama selesai dahulu.
-   */
-
   const [mudamudiResult, kegiatanResult] = await Promise.all([
     mudamudiQuery,
     kegiatanQuery,
   ]);
 
   if (mudamudiResult.error) {
-    console.error(
-      "Gagal mengambil data Muda-Mudi:",
-      mudamudiResult.error,
-    );
+    console.error("Gagal mengambil data Muda-Mudi:", mudamudiResult.error);
 
     return emptyResult(
       safePage,
       safeItemsPerPage,
-      "Gagal mengambil data Muda-Mudi",
+      "Gagal mengambil data Muda-Mudi.",
     );
   }
 
   if (kegiatanResult.error) {
-    console.error(
-      "Gagal mengambil data kegiatan:",
-      kegiatanResult.error,
-    );
+    console.error("Gagal mengambil data kegiatan:", kegiatanResult.error);
 
     return emptyResult(
       safePage,
       safeItemsPerPage,
-      "Gagal mengambil data kegiatan",
+      "Gagal mengambil data kegiatan.",
     );
   }
 
-  const kegiatanData = (kegiatanResult.data ??
-    []) as KegiatanRekap[];
+  const semuaKegiatan = (kegiatanResult.data ?? []) as KegiatanRekap[];
 
-  const mudamudiData = (mudamudiResult.data ??
-    []) as MudamudiRekap[];
+  const kegiatanData = semuaKegiatan.filter((kegiatan) =>
+    canAccessKegiatan(kegiatan, admin.desa, admin.isSuperAdmin),
+  );
 
-  /*
-   * ============================================================
-   * 3. TENTUKAN PESERTA SASARAN
-   * ============================================================
-   *
-   * Seseorang hanya masuk Rekapitulasi jika menjadi sasaran
-   * minimal pada salah satu kegiatan yang sedang ditampilkan.
-   *
-   * Target tetap menggunakan satu sumber kebenaran:
-   * isMudamudiTargeted().
-   */
+  const mudamudiData = (mudamudiResult.data ?? []) as MudamudiRekap[];
 
   const pesertaSasaran =
     kegiatanData.length === 0
@@ -269,100 +241,42 @@ export async function getRekapitulasiPresensi({
           ),
         );
 
-  /*
-   * ============================================================
-   * 4. PAGINATION
-   * ============================================================
-   *
-   * Pagination dilakukan setelah peserta sasaran diketahui.
-   *
-   * Ini sengaja dipertahankan karena target kegiatan bersifat
-   * dinamis berdasarkan desa, kelas, dan jenis kelamin.
-   */
-
   const totalItems = pesertaSasaran.length;
-
   const totalPages =
-    totalItems === 0
-      ? 0
-      : Math.ceil(totalItems / safeItemsPerPage);
+    totalItems === 0 ? 0 : Math.ceil(totalItems / safeItemsPerPage);
 
   const from = (safePage - 1) * safeItemsPerPage;
   const to = from + safeItemsPerPage;
+  const mudamudiDataPaginated = pesertaSasaran.slice(from, to);
 
-  const mudamudiDataPaginated = pesertaSasaran.slice(
-    from,
-    to,
-  );
-
-  const mudamudiIds = mudamudiDataPaginated.map(
-    (item) => item.id,
-  );
-
-  const kegiatanIds = kegiatanData.map(
-    (item) => item.id,
-  );
-
-  /*
-   * ============================================================
-   * 5. QUERY PRESENSI
-   * ============================================================
-   *
-   * Hanya mengambil presensi:
-   * - Muda-Mudi yang ada pada halaman aktif
-   * - Kegiatan yang sedang ditampilkan
-   *
-   * Tidak mengambil seluruh tabel presensi.
-   *
-   * Tidak menggunakan ORDER BY karena pasangan
-   * (kegiatan_id, mudamudi_id) sudah UNIQUE.
-   */
+  const mudamudiIds = mudamudiDataPaginated.map((item) => item.id);
+  const kegiatanIds = kegiatanData.map((item) => item.id);
 
   let presensiData: PresensiRekap[] = [];
 
-  if (
-    mudamudiIds.length > 0 &&
-    kegiatanIds.length > 0
-  ) {
+  if (mudamudiIds.length > 0 && kegiatanIds.length > 0) {
     const presensiResult = await supabase
       .from("presensi")
       .select(
-        `
-          kegiatan_id,
-          mudamudi_id,
-          status,
-          metode,
-          waktu_checkin,
-          keterangan
-        `,
+        "kegiatan_id, mudamudi_id, status, metode, waktu_checkin, keterangan",
       )
       .in("mudamudi_id", mudamudiIds)
       .in("kegiatan_id", kegiatanIds);
 
     if (presensiResult.error) {
-      console.error(
-        "Gagal mengambil data presensi:",
-        presensiResult.error,
-      );
+      console.error("Gagal mengambil data presensi:", presensiResult.error);
 
       return emptyResult(
         safePage,
         safeItemsPerPage,
-        "Gagal mengambil data presensi",
+        "Gagal mengambil data presensi.",
         totalItems,
         totalPages,
       );
     }
 
-    presensiData =
-      (presensiResult.data ?? []) as PresensiRekap[];
+    presensiData = (presensiResult.data ?? []) as PresensiRekap[];
   }
-
-  /*
-   * ============================================================
-   * 6. BENTUK RESPONSE
-   * ============================================================
-   */
 
   const result: RekapitulasiPresensi = {
     mudamudi: mudamudiDataPaginated.map((item) => ({
@@ -373,7 +287,6 @@ export async function getRekapitulasiPresensi({
       kelas: item.kelas,
       jenis_kelamin: item.jenis_kelamin,
     })),
-
     kegiatan: kegiatanData.map((item) => ({
       id: item.id,
       nama: item.nama,
@@ -384,7 +297,6 @@ export async function getRekapitulasiPresensi({
       kelas: item.kelas,
       jenis_kelamin: item.jenis_kelamin,
     })),
-
     kehadiran: presensiData.map((item) => ({
       kegiatan_id: item.kegiatan_id,
       mudamudi_id: item.mudamudi_id,
@@ -397,7 +309,6 @@ export async function getRekapitulasiPresensi({
 
   return {
     data: result,
-
     pagination: {
       page: safePage,
       itemsPerPage: safeItemsPerPage,

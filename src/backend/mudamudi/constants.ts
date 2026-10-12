@@ -4,7 +4,8 @@ export const KELAS_OPTIONS = [
   "Pra Remaja",
   "Remaja",
   "Usia Nikah",
-];
+  "MT",
+] as const;
 
 export const DESA_OPTIONS = [
   "Kranggan",
@@ -12,11 +13,10 @@ export const DESA_OPTIONS = [
   "Pandak",
   "Piring",
   "Srandakan",
-];
+] as const;
 
 export const KELOMPOK_BY_DESA = {
   Kranggan: ["Kleyodan", "Kranggan 1", "Kranggan 2", "Ngentak", "Tegesan"],
-
   Kretek: [
     "Geger",
     "Kretek",
@@ -25,7 +25,6 @@ export const KELOMPOK_BY_DESA = {
     "Pundong",
     "Tamberan",
   ],
-
   Pandak: [
     "Carikan",
     "Pandak 1",
@@ -34,9 +33,7 @@ export const KELOMPOK_BY_DESA = {
     "Pandak 4",
     "Payungan",
   ],
-
   Piring: ["Baran", "Dagan", "Peciro", "Piring", "Selo"],
-
   Srandakan: [
     "Bibis",
     "Bunder",
@@ -50,4 +47,4 @@ export const KELOMPOK_BY_DESA = {
 
 export const KELOMPOK_OPTIONS = Object.values(KELOMPOK_BY_DESA).flat();
 
-export const JENIS_KELAMIN_OPTIONS = ["Laki-laki", "Perempuan"];
+export const JENIS_KELAMIN_OPTIONS = ["Laki-laki", "Perempuan"] as const;

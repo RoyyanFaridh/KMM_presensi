@@ -6,6 +6,22 @@ import {
   KELAS_OPTIONS,
 } from "./constants";
 
+export type ImportField =
+  | "desa"
+  | "kelompok"
+  | "nama"
+  | "jenis_kelamin"
+  | "tempat_lahir"
+  | "tanggal_lahir"
+  | "umur"
+  | "no_hp"
+  | "pekerjaan"
+  | "kelas"
+  | "nama_ayah"
+  | "nama_ibu"
+  | "no_hp_ortu"
+  | "alamat";
+
 export type ImportRow = {
   desa: string;
   kelompok: string;
@@ -21,6 +37,7 @@ export type ImportRow = {
   nama_ibu: string | null;
   no_hp_ortu: string | null;
   alamat: string | null;
+  presentFields: ImportField[];
 };
 
 export type ImportError = {
@@ -45,7 +62,24 @@ function normalizeHeader(value: unknown): string {
   return String(value ?? "")
     .replace(/^\uFEFF/, "")
     .trim()
-    .toUpperCase();
+    .toUpperCase()
+    .replace(/\s+/g, " ");
+}
+
+function normalizeText(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function createIdentityKey(
+  nama: string,
+  desa: string,
+  kelompok: string,
+): string {
+  return [
+    normalizeText(nama),
+    normalizeText(desa),
+    normalizeText(kelompok),
+  ].join("|");
 }
 
 function formatDateToISO(date: Date): string {
@@ -101,8 +135,6 @@ function parseDate(value: unknown): string | null {
   }
 
   if (typeof value === "number" && Number.isFinite(value)) {
-    // Excel menyimpan tanggal sebagai nomor serial.
-    // Sistem tanggal Excel menggunakan basis 1899-12-30.
     if (value < 1 || value > 2958465) {
       return null;
     }
@@ -130,26 +162,24 @@ function parseDate(value: unknown): string | null {
     return null;
   }
 
-  // DD-MM-YYYY atau DD/MM/YYYY.
   const dayFirst = /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/.exec(raw);
 
   if (dayFirst) {
-    const day = Number(dayFirst[1]);
-    const month = Number(dayFirst[2]);
-    const year = Number(dayFirst[3]);
-
-    return buildValidISODate(year, month, day);
+    return buildValidISODate(
+      Number(dayFirst[3]),
+      Number(dayFirst[2]),
+      Number(dayFirst[1]),
+    );
   }
 
-  // YYYY-MM-DD.
   const yearFirst = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(raw);
 
   if (yearFirst) {
-    const year = Number(yearFirst[1]);
-    const month = Number(yearFirst[2]);
-    const day = Number(yearFirst[3]);
-
-    return buildValidISODate(year, month, day);
+    return buildValidISODate(
+      Number(yearFirst[1]),
+      Number(yearFirst[2]),
+      Number(yearFirst[3]),
+    );
   }
 
   return null;
@@ -191,7 +221,6 @@ function buildValidISODate(
 
 function isValidDateNotFuture(tanggalLahir: string): boolean {
   const [year, month, day] = tanggalLahir.split("-").map(Number);
-
   const date = new Date(year, month - 1, day);
 
   if (
@@ -215,7 +244,6 @@ function calculateAge(tanggalLahir: string | null): number | null {
   }
 
   const [year, month, day] = tanggalLahir.split("-").map(Number);
-
   const birthDate = new Date(year, month - 1, day);
 
   if (
@@ -228,7 +256,6 @@ function calculateAge(tanggalLahir: string | null): number | null {
   }
 
   const today = new Date();
-
   let age = today.getFullYear() - year;
 
   if (
@@ -284,21 +311,17 @@ function isValidKelompok(desa: string, kelompok: string): boolean {
 }
 
 function isValidKelas(kelas: string): boolean {
-  return KELAS_OPTIONS.includes(kelas);
+  return (KELAS_OPTIONS as readonly string[]).includes(kelas);
 }
 
 function normalizeJenisKelamin(value: string): string {
-  const normalized = value.trim().toLowerCase();
+  const normalized = normalizeText(value);
 
   const matchedOption = JENIS_KELAMIN_OPTIONS.find(
-    (option) => option.trim().toLowerCase() === normalized,
+    (option) => normalizeText(option) === normalized,
   );
 
   return matchedOption ?? "";
-}
-
-function normalizeName(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 function normalizePhone(value: string): string {
@@ -341,6 +364,22 @@ type HeaderPresence = {
   alamat: boolean;
 };
 
+function getPresentFields(headers: HeaderPresence): ImportField[] {
+  const fields: ImportField[] = ["desa", "kelompok", "nama", "jenis_kelamin"];
+
+  if (headers.tempatLahir) fields.push("tempat_lahir");
+  if (headers.tanggalLahir) fields.push("tanggal_lahir");
+  if (headers.noHp) fields.push("no_hp");
+  if (headers.pekerjaan) fields.push("pekerjaan");
+  if (headers.kelas) fields.push("kelas");
+  if (headers.namaAyah) fields.push("nama_ayah");
+  if (headers.namaIbu) fields.push("nama_ibu");
+  if (headers.noHpOrtu) fields.push("no_hp_ortu");
+  if (headers.alamat) fields.push("alamat");
+
+  return fields;
+}
+
 function validateRow(
   rowNumber: number,
   values: ValidateValues,
@@ -370,28 +409,24 @@ function validateRow(
   const rowErrors: string[] = [];
   const rowWarnings: string[] = [];
 
-  // Kolom wajib: nama lengkap.
   if (!nama) {
     rowErrors.push("Nama Lengkap wajib diisi");
   } else if (/\d/.test(nama)) {
     rowErrors.push("Nama Lengkap tidak boleh mengandung angka");
   }
 
-  // Kolom wajib: desa.
   if (!desa) {
     rowErrors.push("Desa wajib diisi");
   } else if (!isValidDesa(desa)) {
     rowErrors.push("Desa tidak valid");
   }
 
-  // Kolom wajib: kelompok.
   if (!kelompok) {
     rowErrors.push("Kelompok wajib diisi");
   } else if (!isValidKelompok(desa, kelompok)) {
     rowErrors.push("Kelompok tidak sesuai dengan desa");
   }
 
-  // Kolom wajib: jenis kelamin.
   const normalizedJenisKelamin = normalizeJenisKelamin(jenisKelamin);
 
   if (!jenisKelamin) {
@@ -400,7 +435,6 @@ function validateRow(
     rowErrors.push("Jenis Kelamin tidak valid");
   }
 
-  // Kolom wajib tidak valid: baris tidak diimpor.
   if (rowErrors.length > 0) {
     return {
       data: null,
@@ -412,15 +446,11 @@ function validateRow(
     };
   }
 
-  // Tempat lahir.
   if (headers.tempatLahir && !tempatLahir) {
     rowWarnings.push("Tempat Lahir kosong");
   }
 
-  // Tanggal lahir. Tanggal yang kosong atau tidak valid
-  // menjadi peringatan, bukan error yang menolak baris.
   const tanggalLahir = parseDate(tanggalLahirRaw);
-
   let tanggalLahirFinal: string | null = null;
 
   if (!tanggalLahirRaw) {
@@ -435,11 +465,8 @@ function validateRow(
     tanggalLahirFinal = tanggalLahir;
   }
 
-  // Umur dihitung dari tanggal lahir yang valid.
-  // Kolom UMUR pada Excel tidak dijadikan sumber umur.
   const umur = calculateAge(tanggalLahirFinal);
 
-  // Nomor HP.
   if (headers.noHp) {
     if (!noHp) {
       rowWarnings.push("No HP kosong");
@@ -450,13 +477,10 @@ function validateRow(
 
   const noHpFinal = noHp && isValidPhone(noHp) ? normalizePhone(noHp) : null;
 
-  // Pekerjaan.
   if (headers.pekerjaan && !pekerjaan) {
     rowWarnings.push("Pekerjaan kosong");
   }
 
-  // Kelas: pertahankan kelas manual yang valid.
-  // Jika kosong, gunakan hasil perhitungan berdasarkan umur.
   let kelasFinal: string | null = null;
 
   if (kelas.trim()) {
@@ -475,7 +499,6 @@ function validateRow(
     }
   }
 
-  // Nama orang tua.
   if (headers.namaAyah && !namaAyah) {
     rowWarnings.push("Nama Ayah kosong");
   }
@@ -484,7 +507,6 @@ function validateRow(
     rowWarnings.push("Nama Ibu kosong");
   }
 
-  // Nomor HP orang tua.
   if (headers.noHpOrtu) {
     if (!noHpOrtu) {
       rowWarnings.push("No HP Orangtua kosong");
@@ -496,18 +518,11 @@ function validateRow(
   const noHpOrtuFinal =
     noHpOrtu && isValidPhone(noHpOrtu) ? normalizePhone(noHpOrtu) : null;
 
-  // Alamat.
   if (headers.alamat && !alamat) {
     rowWarnings.push("Alamat kosong");
   }
 
-  // Cegah duplikat dalam file.
-  const duplicateKey = [
-    normalizeName(nama),
-    desa.trim().toLowerCase(),
-    kelasFinal?.toLowerCase() ?? "",
-    kelompok.trim().toLowerCase(),
-  ].join("|");
+  const duplicateKey = createIdentityKey(nama, desa, kelompok);
 
   if (seenKeys.has(duplicateKey)) {
     return {
@@ -515,7 +530,7 @@ function validateRow(
       error: {
         rowNumber,
         message:
-          "Data duplikat dengan baris lain dalam file berdasarkan nama, desa, kelas, dan kelompok",
+          "Data duplikat dengan baris lain dalam file berdasarkan nama lengkap, desa, dan kelompok",
       },
       warnings: rowWarnings.map((message) => ({
         rowNumber,
@@ -542,6 +557,7 @@ function validateRow(
       nama_ibu: emptyToNull(namaIbu),
       no_hp_ortu: noHpOrtuFinal,
       alamat: emptyToNull(alamat),
+      presentFields: getPresentFields(headers),
     },
     error: null,
     warnings: rowWarnings.map((message) => ({
@@ -559,7 +575,6 @@ function getExcelDateValue(cell: ExcelJS.Cell): string {
   }
 
   if (typeof value === "number" && cell.numFmt) {
-    // Jika sel memiliki format tanggal, konversikan serial Excel.
     const dateFormat = /[dmy]/i.test(cell.numFmt);
 
     if (dateFormat) {
@@ -568,6 +583,20 @@ function getExcelDateValue(cell: ExcelJS.Cell): string {
   }
 
   return getCellValue(cell);
+}
+
+function getHeaderPresence(headerMap: Map<string, number>): HeaderPresence {
+  return {
+    tempatLahir: headerMap.has("TEMPAT"),
+    tanggalLahir: headerMap.has("TANGGAL LAHIR"),
+    noHp: headerMap.has("NO HP"),
+    pekerjaan: headerMap.has("PEKERJAAN"),
+    kelas: headerMap.has("KELAS"),
+    namaAyah: headerMap.has("NAMA AYAH"),
+    namaIbu: headerMap.has("NAMA IBU"),
+    noHpOrtu: headerMap.has("NO HP ORANGTUA"),
+    alamat: headerMap.has("ALAMAT"),
+  };
 }
 
 async function parseXlsx(file: File): Promise<ImportParseResult> {
@@ -608,6 +637,7 @@ async function parseXlsx(file: File): Promise<ImportParseResult> {
   const errors: ImportError[] = [];
   const warnings: ImportWarning[] = [];
   const seenKeys = new Set<string>();
+  const headers = getHeaderPresence(headerMap);
 
   for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
     const row = worksheet.getRow(rowNumber);
@@ -648,22 +678,7 @@ async function parseXlsx(file: File): Promise<ImportParseResult> {
       continue;
     }
 
-    const result = validateRow(
-      rowNumber,
-      values,
-      {
-        tempatLahir: headerMap.has("TEMPAT"),
-        tanggalLahir: headerMap.has("TANGGAL LAHIR"),
-        noHp: headerMap.has("NO HP"),
-        pekerjaan: headerMap.has("PEKERJAAN"),
-        kelas: headerMap.has("KELAS"),
-        namaAyah: headerMap.has("NAMA AYAH"),
-        namaIbu: headerMap.has("NAMA IBU"),
-        noHpOrtu: headerMap.has("NO HP ORANGTUA"),
-        alamat: headerMap.has("ALAMAT"),
-      },
-      seenKeys,
-    );
+    const result = validateRow(rowNumber, values, headers, seenKeys);
 
     if (result.error) {
       errors.push(result.error);
@@ -807,6 +822,7 @@ async function parseCsv(file: File): Promise<ImportParseResult> {
   const errors: ImportError[] = [];
   const warnings: ImportWarning[] = [];
   const seenKeys = new Set<string>();
+  const headers = getHeaderPresence(headerMap);
 
   for (let index = 1; index < rows.length; index++) {
     const row = rows[index];
@@ -841,24 +857,7 @@ async function parseCsv(file: File): Promise<ImportParseResult> {
       continue;
     }
 
-    const rowNumber = index + 1;
-
-    const result = validateRow(
-      rowNumber,
-      values,
-      {
-        tempatLahir: headerMap.has("TEMPAT"),
-        tanggalLahir: headerMap.has("TANGGAL LAHIR"),
-        noHp: headerMap.has("NO HP"),
-        pekerjaan: headerMap.has("PEKERJAAN"),
-        kelas: headerMap.has("KELAS"),
-        namaAyah: headerMap.has("NAMA AYAH"),
-        namaIbu: headerMap.has("NAMA IBU"),
-        noHpOrtu: headerMap.has("NO HP ORANGTUA"),
-        alamat: headerMap.has("ALAMAT"),
-      },
-      seenKeys,
-    );
+    const result = validateRow(index + 1, values, headers, seenKeys);
 
     if (result.error) {
       errors.push(result.error);

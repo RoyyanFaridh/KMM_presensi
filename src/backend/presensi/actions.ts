@@ -1,15 +1,6 @@
 "use server";
 
 import {
-  getKegiatanById as getKegiatanByIdPublic,
-  submitPresensi as submitPresensiPublic,
-  getDeviceStatus as getDeviceStatusPublic,
-  verifyIdentity as verifyIdentityPublic,
-  registerDevice as registerDevicePublic,
-  changeDeviceAccount as changeDeviceAccountPublic,
-} from "./public";
-
-import {
   getPresensiSummary as getPresensiSummaryDashboard,
   getKegiatanPresensi as getKegiatanPresensiDashboard,
   getPresensiTerbaru as getPresensiTerbaruDashboard,
@@ -17,49 +8,9 @@ import {
 
 import { getMonitoringPresensi as getMonitoringPresensiAdmin } from "./monitoring";
 import { getRekapitulasiPresensi as getRekapitulasiPresensiAdmin } from "./rekapitulasi";
-
 import { createManualPresensi as createManualPresensiAdmin } from "./manual";
-
 import { updatePresensiStatus as updatePresensiStatusAdmin } from "./update";
-
 import { PresensiStatus } from "./types";
-
-export async function getKegiatanById(kegiatanId: number) {
-  return getKegiatanByIdPublic(kegiatanId);
-}
-
-export async function getDeviceStatus(deviceToken: string | null) {
-  return getDeviceStatusPublic(deviceToken);
-}
-
-export async function verifyIdentity(identity: {
-  nama: string;
-  tanggalLahir: string;
-}) {
-  return verifyIdentityPublic(identity);
-}
-
-export async function registerDevice(mudamudiId: number) {
-  return registerDevicePublic(mudamudiId);
-}
-
-export async function changeDeviceAccount(
-  deviceToken: string,
-  mudamudiId: number,
-) {
-  return changeDeviceAccountPublic(deviceToken, mudamudiId);
-}
-
-export async function submitPresensi(
-  deviceToken: string | null,
-  kegiatanId: number,
-  identity?: {
-    nama: string;
-    tanggalLahir: string;
-  },
-) {
-  return submitPresensiPublic(deviceToken, kegiatanId, identity);
-}
 
 export async function getPresensiSummary() {
   return getPresensiSummaryDashboard();

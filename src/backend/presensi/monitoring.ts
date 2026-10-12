@@ -1,8 +1,8 @@
 "use server";
 
+import { requireAdmin } from "../auth/admin";
 import { createClient } from "../supabase/server";
-
-import {
+import type {
   MonitoringPeserta,
   MonitoringPresensi,
   PresensiMetode,
@@ -38,70 +38,62 @@ function emptyResult(error: string) {
   };
 }
 
+function canAccessKegiatan(
+  kegiatan: KegiatanMonitoring,
+  adminDesa: string | null,
+  isSuperAdmin: boolean,
+) {
+  if (isSuperAdmin) return true;
+
+  return (
+    adminDesa !== null &&
+    Array.isArray(kegiatan.desa) &&
+    kegiatan.desa.length > 0 &&
+    kegiatan.desa.every(
+      (desa) => typeof desa === "string" && desa === adminDesa,
+    )
+  );
+}
+
 export async function getMonitoringPresensi(kegiatanId: number) {
+  const admin = await requireAdmin();
   const supabase = await createClient();
 
   if (!Number.isInteger(kegiatanId) || kegiatanId <= 0) {
-    return emptyResult("Kegiatan tidak valid");
+    return emptyResult("Kegiatan tidak valid.");
   }
 
-  /*
-   * Ambil hanya data kegiatan yang benar-benar diperlukan.
-   */
   const { data: kegiatan, error: kegiatanError } = await supabase
     .from("kegiatan")
     .select(
-      `
-        id,
-        nama,
-        tanggal_mulai,
-        tanggal_selesai,
-        jam_mulai,
-        jam_selesai,
-        lokasi,
-        desa,
-        kelas,
-        jenis_kelamin
-      `,
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelas, jenis_kelamin",
     )
     .eq("id", kegiatanId)
     .maybeSingle();
 
   if (kegiatanError) {
     console.error("Gagal mengambil kegiatan:", kegiatanError);
-
-    return emptyResult("Gagal mengambil data kegiatan");
+    return emptyResult("Gagal mengambil data kegiatan.");
   }
 
   if (!kegiatan) {
-    return emptyResult("Kegiatan tidak ditemukan");
+    return emptyResult("Kegiatan tidak ditemukan atau tidak memiliki akses.");
   }
 
   const kegiatanMonitoring = kegiatan as KegiatanMonitoring;
 
-  /*
-   * Query Muda-Mudi langsung berdasarkan target kegiatan.
-   *
-   * NULL / array kosong = semua.
-   *
-   * Dengan begitu kita tidak perlu mengambil seluruh
-   * Muda-Mudi kemudian memfilter di server.
-   */
+  if (!canAccessKegiatan(kegiatanMonitoring, admin.desa, admin.isSuperAdmin)) {
+    return emptyResult("Kamu tidak memiliki akses ke kegiatan ini.");
+  }
+
   let mudamudiQuery = supabase
     .from("mudamudi")
-    .select(
-      `
-        id,
-        nama,
-        desa,
-        kelompok,
-        kelas,
-        jenis_kelamin
-      `,
-    )
-    .order("nama", {
-      ascending: true,
-    });
+    .select("id, nama, desa, kelompok, kelas, jenis_kelamin")
+    .order("nama", { ascending: true });
+
+  if (!admin.isSuperAdmin && admin.desa !== null) {
+    mudamudiQuery = mudamudiQuery.eq("desa", admin.desa);
+  }
 
   if (kegiatanMonitoring.desa?.length) {
     mudamudiQuery = mudamudiQuery.in("desa", kegiatanMonitoring.desa);
@@ -118,27 +110,11 @@ export async function getMonitoringPresensi(kegiatanId: number) {
     );
   }
 
-  /*
-   * Muda-Mudi dan presensi dapat diambil bersamaan.
-   *
-   * Presensi dibatasi hanya untuk kegiatan yang sedang
-   * dimonitor.
-   */
   const [mudamudiResult, presensiResult] = await Promise.all([
     mudamudiQuery,
-
     supabase
       .from("presensi")
-      .select(
-        `
-          id,
-          mudamudi_id,
-          waktu_checkin,
-          status,
-          metode,
-          keterangan
-        `,
-      )
+      .select("id, mudamudi_id, waktu_checkin, status, metode, keterangan")
       .eq("kegiatan_id", kegiatanId)
       .order("waktu_checkin", {
         ascending: true,
@@ -148,25 +124,16 @@ export async function getMonitoringPresensi(kegiatanId: number) {
 
   if (mudamudiResult.error) {
     console.error("Gagal mengambil Muda-Mudi:", mudamudiResult.error);
-
-    return emptyResult("Gagal mengambil data Muda-Mudi");
+    return emptyResult("Gagal mengambil data Muda-Mudi.");
   }
 
   if (presensiResult.error) {
     console.error("Gagal mengambil presensi:", presensiResult.error);
-
-    return emptyResult("Gagal mengambil data presensi");
+    return emptyResult("Gagal mengambil data presensi.");
   }
 
   const mudamudiSasaran = (mudamudiResult.data ?? []) as MudamudiMonitoring[];
 
-  /*
-   * Buat map presensi berdasarkan ID Muda-Mudi.
-   *
-   * Karena database memiliki UNIQUE(kegiatan_id, mudamudi_id),
-   * satu Muda-Mudi maksimal memiliki satu presensi
-   * untuk satu kegiatan.
-   */
   const presensiMap = new Map<
     number,
     {
@@ -188,51 +155,24 @@ export async function getMonitoringPresensi(kegiatanId: number) {
     });
   }
 
-  /*
-   * Gabungkan peserta target dengan data presensinya.
-   *
-   * Tidak ada presensi = Belum Hadir.
-   */
   const peserta: MonitoringPeserta[] = mudamudiSasaran.map((item) => {
     const presensi = presensiMap.get(item.id);
 
-    if (!presensi) {
-      return {
-        presensi_id: null,
-        mudamudi_id: item.id,
-        nama: item.nama,
-        desa: item.desa,
-        kelompok: item.kelompok,
-        kelas: item.kelas,
-        jenis_kelamin: item.jenis_kelamin,
-        waktu_checkin: null,
-        status: null,
-        metode: null,
-        keterangan: null,
-      };
-    }
-
     return {
-      presensi_id: presensi.presensi_id,
+      presensi_id: presensi?.presensi_id ?? null,
       mudamudi_id: item.id,
       nama: item.nama,
       desa: item.desa,
       kelompok: item.kelompok,
       kelas: item.kelas,
       jenis_kelamin: item.jenis_kelamin,
-      waktu_checkin: presensi.waktu_checkin,
-      status: presensi.status,
-      metode: presensi.metode,
-      keterangan: presensi.keterangan,
+      waktu_checkin: presensi?.waktu_checkin ?? null,
+      status: presensi?.status ?? null,
+      metode: presensi?.metode ?? null,
+      keterangan: presensi?.keterangan ?? null,
     };
   });
 
-  /*
-   * Hitung summary dalam satu loop.
-   *
-   * Lebih hemat CPU daripada melakukan 6x filter()
-   * terhadap array peserta.
-   */
   let totalHadir = 0;
   let totalTerlambat = 0;
   let totalIzin = 0;
@@ -245,23 +185,18 @@ export async function getMonitoringPresensi(kegiatanId: number) {
       case "hadir":
         totalHadir++;
         break;
-
       case "terlambat":
         totalTerlambat++;
         break;
-
       case "izin":
         totalIzin++;
         break;
-
       case "sakit":
         totalSakit++;
         break;
-
       case "alpa":
         totalAlpa++;
         break;
-
       default:
         totalBelumHadir++;
         break;
