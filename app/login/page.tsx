@@ -128,7 +128,7 @@ export default function LoginPage() {
                     setEmail(event.target.value)
                   }
                   autoComplete="email"
-                  className="h-9 w-full rounded-lg border border-white/80 bg-white/50 pl-9 pr-3 text-[11px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-teal-300 focus:bg-white/70 focus:ring-2 focus:ring-teal-500/10"
+                  className="h-9 w-full rounded-lg border border-gray-200/80 bg-white/60 pl-9 pr-9 text-[11px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-teal-300 focus:bg-white/80 focus:ring-2 focus:ring-teal-500/10"
                   required
                 />
               </div>

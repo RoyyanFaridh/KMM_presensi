@@ -3,11 +3,14 @@
 import { requireAdmin } from "../auth/admin";
 import { createClient } from "../supabase/server";
 import { isMudamudiTargeted } from "./target";
+
 import type {
   PresensiMetode,
   PresensiStatus,
   RekapitulasiPresensi,
 } from "./types";
+
+type FilterValue = string | string[];
 
 type GetRekapitulasiParams = {
   page: number;
@@ -15,9 +18,9 @@ type GetRekapitulasiParams = {
   search?: string;
   bulan?: string;
   kegiatanId?: number;
-  desa?: string;
-  kelompok?: string;
-  kelas?: string;
+  desa?: FilterValue;
+  kelompok?: FilterValue;
+  kelas?: FilterValue;
 };
 
 type KegiatanRekap = {
@@ -49,6 +52,20 @@ type PresensiRekap = {
   waktu_checkin: string | null;
   keterangan: string | null;
 };
+
+function normalizeFilter(value?: FilterValue): string[] {
+  if (Array.isArray(value)) {
+    return Array.from(
+      new Set(value.map((item) => item.trim()).filter(Boolean)),
+    );
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    return [value.trim()];
+  }
+
+  return [];
+}
 
 function emptyResult(
   page: number,
@@ -117,11 +134,14 @@ export async function getRekapitulasiPresensi({
     return emptyResult(safePage, safeItemsPerPage, "Kegiatan tidak valid.");
   }
 
+  const desaFilters = normalizeFilter(desa);
+  const kelompokFilters = normalizeFilter(kelompok);
+  const kelasFilters = normalizeFilter(kelas);
+
   if (
     !admin.isSuperAdmin &&
     admin.desa !== null &&
-    desa &&
-    desa !== admin.desa
+    desaFilters.some((item) => item !== admin.desa)
   ) {
     return emptyResult(
       safePage,
@@ -187,16 +207,22 @@ export async function getRekapitulasiPresensi({
 
   if (!admin.isSuperAdmin && admin.desa !== null) {
     mudamudiQuery = mudamudiQuery.eq("desa", admin.desa);
-  } else if (desa) {
-    mudamudiQuery = mudamudiQuery.eq("desa", desa);
+  } else if (desaFilters.length === 1) {
+    mudamudiQuery = mudamudiQuery.eq("desa", desaFilters[0]);
+  } else if (desaFilters.length > 1) {
+    mudamudiQuery = mudamudiQuery.in("desa", desaFilters);
   }
 
-  if (kelompok) {
-    mudamudiQuery = mudamudiQuery.eq("kelompok", kelompok);
+  if (kelompokFilters.length === 1) {
+    mudamudiQuery = mudamudiQuery.eq("kelompok", kelompokFilters[0]);
+  } else if (kelompokFilters.length > 1) {
+    mudamudiQuery = mudamudiQuery.in("kelompok", kelompokFilters);
   }
 
-  if (kelas) {
-    mudamudiQuery = mudamudiQuery.eq("kelas", kelas);
+  if (kelasFilters.length === 1) {
+    mudamudiQuery = mudamudiQuery.eq("kelas", kelasFilters[0]);
+  } else if (kelasFilters.length > 1) {
+    mudamudiQuery = mudamudiQuery.in("kelas", kelasFilters);
   }
 
   const [mudamudiResult, kegiatanResult] = await Promise.all([

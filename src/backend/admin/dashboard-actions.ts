@@ -5,6 +5,16 @@ import { createAdminClient } from "../supabase/admin";
 
 const WINDOW_BEFORE_MINUTES = 30;
 
+const STATUS_PRESENSI_TERCATAT = [
+  "Hadir",
+  "Terlambat",
+  "Izin",
+  "Sakit",
+  "Alpa",
+] as const;
+
+type StatusPresensi = (typeof STATUS_PRESENSI_TERCATAT)[number];
+
 function buildDateTime(tanggal: string, jam: string): Date {
   const normalizedJam = jam.length === 5 ? `${jam}:00` : jam;
 
@@ -17,9 +27,7 @@ export async function getDashboardData() {
 
   const now = new Date();
 
-  let anggotaQuery = supabase
-    .from("mudamudi")
-    .select("id", { count: "exact", head: true });
+  let anggotaQuery = supabase.from("mudamudi").select("id, desa, kelompok");
 
   if (!isSuperAdmin) {
     anggotaQuery = anggotaQuery.eq("desa", desa!);
@@ -42,48 +50,77 @@ export async function getDashboardData() {
       .order("jam_mulai", { ascending: true }),
   ]);
 
+  const anggotaData = anggotaResult.data ?? [];
   const kegiatanData = kegiatanDataResult.data ?? [];
   const kegiatanIds = kegiatanData.map((kegiatan) => kegiatan.id);
 
+  // desa -> (kelompok -> jumlah)
+  const anggotaPerDesaMap = new Map<string, Map<string, number>>();
+
+  anggotaData.forEach((anggota) => {
+    const desaLabel = anggota.desa?.trim() || "Desa belum diisi";
+    const kelompokLabel = anggota.kelompok?.trim() || "Kelompok belum diisi";
+
+    const kelompokMap =
+      anggotaPerDesaMap.get(desaLabel) ?? new Map<string, number>();
+
+    kelompokMap.set(kelompokLabel, (kelompokMap.get(kelompokLabel) ?? 0) + 1);
+    anggotaPerDesaMap.set(desaLabel, kelompokMap);
+  });
+
+  const anggotaDistribusi = Array.from(
+    anggotaPerDesaMap,
+    ([label, kelompokMap]) => {
+      const kelompok = Array.from(kelompokMap, ([kelompokLabel, jumlah]) => ({
+        label: kelompokLabel,
+        jumlah,
+      })).sort((a, b) =>
+        a.label.localeCompare(b.label, "id", { numeric: true }),
+      );
+
+      return {
+        label,
+        jumlah: kelompok.reduce((total, item) => total + item.jumlah, 0),
+        kelompok,
+      };
+    },
+  ).sort((a, b) => b.jumlah - a.jumlah);
+
+  const statusDistribusi: {
+    label: StatusPresensi;
+    jumlah: number;
+  }[] = STATUS_PRESENSI_TERCATAT.map((status) => ({
+    label: status,
+    jumlah: 0,
+  }));
+
   let presensiCount = 0;
-  let presensiTerbaru: {
-    id: number;
-    waktu_checkin: string | null;
-    mudamudi: { nama: string }[] | null;
-    kegiatan: { nama: string }[] | null;
-  }[] = [];
   let presensiError: string | null = null;
 
   if (kegiatanIds.length > 0) {
-    const [countResult, terbaruResult] = await Promise.all([
-      supabase
-        .from("presensi")
-        .select("id", { count: "exact", head: true })
-        .in("kegiatan_id", kegiatanIds),
+    const countResults = await Promise.all(
+      STATUS_PRESENSI_TERCATAT.map((status) =>
+        supabase
+          .from("presensi")
+          .select("id", { count: "exact", head: true })
+          .in("kegiatan_id", kegiatanIds)
+          .eq("status", status),
+      ),
+    );
 
-      supabase
-        .from("presensi")
-        .select(
-          `
-          id,
-          waktu_checkin,
-          mudamudi (
-            nama
-          ),
-          kegiatan (
-            nama
-          )
-        `,
-        )
-        .in("kegiatan_id", kegiatanIds)
-        .order("waktu_checkin", { ascending: false, nullsFirst: false })
-        .limit(5),
-    ]);
-
-    presensiCount = countResult.count ?? 0;
-    presensiTerbaru = terbaruResult.data ?? [];
     presensiError =
-      countResult.error?.message ?? terbaruResult.error?.message ?? null;
+      countResults.find((result) => result.error)?.error?.message ?? null;
+
+    if (!presensiError) {
+      countResults.forEach((result, index) => {
+        statusDistribusi[index].jumlah = result.count ?? 0;
+      });
+
+      presensiCount = statusDistribusi.reduce(
+        (total, item) => total + item.jumlah,
+        0,
+      );
+    }
   }
 
   const kegiatanAktif = kegiatanData.filter((kegiatan) => {
@@ -109,19 +146,20 @@ export async function getDashboardData() {
 
       return selesai >= now;
     })
-    .slice(0, 5);
+    .slice(0, 4);
 
   return {
-    totalAnggota: anggotaResult.count ?? 0,
+    totalAnggota: anggotaData.length,
     totalKegiatan: kegiatanData.length,
     totalPresensi: presensiCount,
     kegiatanAktif: kegiatanAktif.length,
     kegiatanTerdekat,
-    presensiTerbaru,
+    anggotaDistribusi,
+    statusDistribusi,
+    isSuperAdmin,
     error:
       anggotaResult.error?.message ??
       kegiatanDataResult.error?.message ??
-      presensiError ??
-      null,
+      presensiError,
   };
 }

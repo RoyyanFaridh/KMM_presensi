@@ -27,6 +27,32 @@ function formatWaktuCheckin(waktu: string | null) {
   }).format(new Date(waktu));
 }
 
+function getMetodeLabel(metode: string | null) {
+  switch (metode) {
+    case "qr":
+      return "QR";
+    case "manual":
+      return "Manual";
+    case "otomatis":
+      return "Otomatis";
+    default:
+      return "-";
+  }
+}
+
+function getMetodeClassName(metode: string | null) {
+  switch (metode) {
+    case "qr":
+      return "text-teal-700";
+    case "otomatis":
+      return "text-blue-700";
+    case "manual":
+      return "text-gray-600";
+    default:
+      return "text-gray-400";
+  }
+}
+
 export default function MonitoringTable({ peserta, onDetail, onEdit }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
@@ -58,7 +84,6 @@ export default function MonitoringTable({ peserta, onDetail, onEdit }: Props) {
   const paginatedPeserta = peserta.slice(startIndex, endIndex);
 
   const displayStart = peserta.length === 0 ? 0 : startIndex + 1;
-
   const displayEnd = Math.min(startIndex + itemsPerPage, peserta.length);
 
   function goToPage(page: number) {
@@ -82,7 +107,7 @@ export default function MonitoringTable({ peserta, onDetail, onEdit }: Props) {
         </p>
 
         <p className="mt-1 text-[11px] text-gray-500">
-          Coba gunakan kata kunci pencarian yang berbeda.
+          Coba gunakan kata kunci pencarian atau filter yang berbeda.
         </p>
       </div>
     );
@@ -170,17 +195,13 @@ export default function MonitoringTable({ peserta, onDetail, onEdit }: Props) {
                 </td>
 
                 <td className="px-4 py-3">
-                  {item.metode ? (
-                    <span
-                      className={`text-xs font-medium ${
-                        item.metode === "qr" ? "text-teal-700" : "text-gray-600"
-                      }`}
-                    >
-                      {item.metode === "qr" ? "QR" : "Manual"}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-gray-400">-</span>
-                  )}
+                  <span
+                    className={`text-xs font-medium ${getMetodeClassName(
+                      item.metode,
+                    )}`}
+                  >
+                    {getMetodeLabel(item.metode)}
+                  </span>
                 </td>
 
                 <td className="px-4 py-3 text-xs text-gray-600">
@@ -236,19 +257,11 @@ export default function MonitoringTable({ peserta, onDetail, onEdit }: Props) {
               <span className="shrink-0 text-[10px] text-gray-300">|</span>
 
               <span
-                className={`shrink-0 text-[10px] font-medium ${
-                  item.metode === "qr"
-                    ? "text-teal-700"
-                    : item.metode === "manual"
-                      ? "text-gray-500"
-                      : "text-gray-300"
-                }`}
+                className={`shrink-0 text-[10px] font-medium ${getMetodeClassName(
+                  item.metode,
+                )}`}
               >
-                {item.metode === "qr"
-                  ? "QR"
-                  : item.metode === "manual"
-                    ? "Manual"
-                    : "-"}
+                {getMetodeLabel(item.metode)}
               </span>
 
               <span className="shrink-0 text-[10px] text-gray-400">
