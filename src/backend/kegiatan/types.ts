@@ -12,7 +12,6 @@ export type Kegiatan = {
   jenis_kelamin: string | null;
   created_at: string | null;
 
-  // Identitas pembuat kegiatan
   created_by?: string | null;
   creator_nama?: string | null;
   creator_desa?: string | null;

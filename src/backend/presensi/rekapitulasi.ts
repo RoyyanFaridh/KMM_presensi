@@ -9,6 +9,7 @@ import type {
   PresensiStatus,
   RekapitulasiKegiatan,
   RekapitulasiPresensi,
+  RekapitulasiStatus,
 } from "./types";
 
 type FilterValue = string | string[];
@@ -33,6 +34,7 @@ type KegiatanRekap = {
   jam_selesai: string;
   lokasi: string;
   desa: string[] | null;
+  kelompok: string[] | null;
   kelas: string[] | null;
   jenis_kelamin: string | null;
 };
@@ -50,7 +52,7 @@ type PresensiRekap = {
   kegiatan_id: number;
   mudamudi_id: number;
   status: string;
-  metode: string;
+  metode: string | null;
   waktu_checkin: string | null;
   keterangan: string | null;
 };
@@ -119,9 +121,14 @@ function mapKegiatan(item: KegiatanRekap): RekapitulasiKegiatan {
     jam_selesai: item.jam_selesai,
     lokasi: item.lokasi,
     desa: item.desa,
+    kelompok: item.kelompok,
     kelas: item.kelas,
     jenis_kelamin: item.jenis_kelamin,
   };
+}
+
+function isTarget(kegiatan: KegiatanRekap, mudamudi: MudamudiRekap): boolean {
+  return isMudamudiTargeted(kegiatan, mudamudi);
 }
 
 export async function getRekapitulasiPresensi({
@@ -170,7 +177,7 @@ export async function getRekapitulasiPresensi({
   let kegiatanQuery = supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelas, jenis_kelamin",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenis_kelamin",
     )
     .order("tanggal_mulai", { ascending: false })
     .order("jam_mulai", { ascending: false });
@@ -273,24 +280,19 @@ export async function getRekapitulasiPresensi({
     canAccessKegiatan(kegiatan, admin.desa, admin.isSuperAdmin),
   );
 
+  // Rekapitulasi tetap menampilkan seluruh Muda-Mudi
+  // sesuai filter pencarian, desa, kelompok, dan kelas.
   const mudamudiData = (mudamudiResult.data ?? []) as MudamudiRekap[];
 
-  const pesertaSasaran =
-    kegiatanData.length === 0
-      ? []
-      : mudamudiData.filter((mudamudi) =>
-          kegiatanData.some((kegiatan) =>
-            isMudamudiTargeted(kegiatan, mudamudi),
-          ),
-        );
-
-  const totalItems = pesertaSasaran.length;
+  const totalItems = mudamudiData.length;
   const totalPages =
     totalItems === 0 ? 0 : Math.ceil(totalItems / safeItemsPerPage);
 
-  const from = (safePage - 1) * safeItemsPerPage;
+  const currentPage = totalPages > 0 ? Math.min(safePage, totalPages) : 1;
+
+  const from = (currentPage - 1) * safeItemsPerPage;
   const to = from + safeItemsPerPage;
-  const mudamudiDataPaginated = pesertaSasaran.slice(from, to);
+  const mudamudiDataPaginated = mudamudiData.slice(from, to);
 
   const mudamudiIds = mudamudiDataPaginated.map((item) => item.id);
   const kegiatanIds = kegiatanData.map((item) => item.id);
@@ -310,7 +312,7 @@ export async function getRekapitulasiPresensi({
       console.error("Gagal mengambil data presensi:", presensiResult.error);
 
       return emptyResult(
-        safePage,
+        currentPage,
         safeItemsPerPage,
         "Gagal mengambil data presensi.",
         totalItems,
@@ -320,6 +322,43 @@ export async function getRekapitulasiPresensi({
 
     presensiData = (presensiResult.data ?? []) as PresensiRekap[];
   }
+
+  const presensiMap = new Map<string, PresensiRekap>();
+
+  for (const item of presensiData) {
+    presensiMap.set(`${item.kegiatan_id}:${item.mudamudi_id}`, item);
+  }
+
+  // Hasil kehadiran dibuat untuk setiap kombinasi Muda-Mudi
+  // pada halaman aktif dan setiap kegiatan yang ditampilkan.
+  // Peserta yang bukan sasaran diberi status tidak_berlaku.
+  const kehadiran = kegiatanData.flatMap((kegiatan) =>
+    mudamudiDataPaginated.map((mudamudi) => {
+      const key = `${kegiatan.id}:${mudamudi.id}`;
+      const presensi = presensiMap.get(key);
+      const targeted = isTarget(kegiatan, mudamudi);
+
+      if (!targeted) {
+        return {
+          kegiatan_id: kegiatan.id,
+          mudamudi_id: mudamudi.id,
+          status: "tidak_berlaku" as RekapitulasiStatus,
+          metode: null,
+          waktu_checkin: null,
+          keterangan: null,
+        };
+      }
+
+      return {
+        kegiatan_id: kegiatan.id,
+        mudamudi_id: mudamudi.id,
+        status: (presensi?.status ?? "alpa") as RekapitulasiStatus,
+        metode: (presensi?.metode ?? null) as PresensiMetode | null,
+        waktu_checkin: presensi?.waktu_checkin ?? null,
+        keterangan: presensi?.keterangan ?? null,
+      };
+    }),
+  );
 
   const result: RekapitulasiPresensi = {
     mudamudi: mudamudiDataPaginated.map((item) => ({
@@ -331,20 +370,13 @@ export async function getRekapitulasiPresensi({
       jenis_kelamin: item.jenis_kelamin,
     })),
     kegiatan: kegiatanData.map(mapKegiatan),
-    kehadiran: presensiData.map((item) => ({
-      kegiatan_id: item.kegiatan_id,
-      mudamudi_id: item.mudamudi_id,
-      status: item.status as PresensiStatus,
-      metode: item.metode as PresensiMetode,
-      waktu_checkin: item.waktu_checkin,
-      keterangan: item.keterangan,
-    })),
+    kehadiran,
   };
 
   return {
     data: result,
     pagination: {
-      page: safePage,
+      page: currentPage,
       itemsPerPage: safeItemsPerPage,
       totalItems,
       totalPages,
@@ -359,7 +391,7 @@ export async function getRekapitulasiKegiatanExportOptions() {
   const { data, error } = await supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelas, jenis_kelamin",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenis_kelamin",
     )
     .order("tanggal_mulai", { ascending: false })
     .order("jam_mulai", { ascending: false });

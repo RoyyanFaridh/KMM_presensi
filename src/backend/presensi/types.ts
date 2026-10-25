@@ -101,6 +101,8 @@ export type RekapitulasiMudaMudi = {
   jenis_kelamin: string | null;
 };
 
+export type RekapitulasiStatus = PresensiStatus | "tidak_berlaku";
+
 export type RekapitulasiKegiatan = {
   id: number;
   nama: string;
@@ -110,6 +112,7 @@ export type RekapitulasiKegiatan = {
   jam_selesai: string;
   lokasi: string;
   desa: string[] | null;
+  kelompok: string[] | null;
   kelas: string[] | null;
   jenis_kelamin: string | null;
 };
@@ -117,8 +120,8 @@ export type RekapitulasiKegiatan = {
 export type RekapitulasiKehadiran = {
   kegiatan_id: number;
   mudamudi_id: number;
-  status: PresensiStatus;
-  metode: PresensiMetode;
+  status: RekapitulasiStatus;
+  metode: PresensiMetode | null;
   waktu_checkin: string | null;
   keterangan: string | null;
 };

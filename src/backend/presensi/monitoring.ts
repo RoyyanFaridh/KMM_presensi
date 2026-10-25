@@ -18,6 +18,7 @@ type KegiatanMonitoring = {
   jam_selesai: string;
   lokasi: string;
   desa: string[] | null;
+  kelompok: string[] | null;
   kelas: string[] | null;
   jenis_kelamin: string | null;
 };
@@ -66,7 +67,7 @@ export async function getMonitoringPresensi(kegiatanId: number) {
   const { data: kegiatan, error: kegiatanError } = await supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelas, jenis_kelamin",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenis_kelamin",
     )
     .eq("id", kegiatanId)
     .maybeSingle();
@@ -95,14 +96,24 @@ export async function getMonitoringPresensi(kegiatanId: number) {
     mudamudiQuery = mudamudiQuery.eq("desa", admin.desa);
   }
 
+  // Filter desa sasaran kegiatan.
   if (kegiatanMonitoring.desa?.length) {
     mudamudiQuery = mudamudiQuery.in("desa", kegiatanMonitoring.desa);
   }
 
+  // Filter kelompok sasaran kegiatan.
+  // NULL atau array kosong berarti tidak ada pembatasan kelompok,
+  // sesuai konvensi penyimpanan sasaran yang digunakan saat ini.
+  if (kegiatanMonitoring.kelompok?.length) {
+    mudamudiQuery = mudamudiQuery.in("kelompok", kegiatanMonitoring.kelompok);
+  }
+
+  // Filter kelas sasaran kegiatan.
   if (kegiatanMonitoring.kelas?.length) {
     mudamudiQuery = mudamudiQuery.in("kelas", kegiatanMonitoring.kelas);
   }
 
+  // Filter jenis kelamin jika dibatasi.
   if (kegiatanMonitoring.jenis_kelamin) {
     mudamudiQuery = mudamudiQuery.eq(
       "jenis_kelamin",

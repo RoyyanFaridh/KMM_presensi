@@ -2,6 +2,7 @@
 
 import type {
   PresensiStatus,
+  RekapitulasiStatus,
   RekapitulasiKegiatan,
   RekapitulasiKehadiran,
   RekapitulasiMudaMudi,
@@ -11,7 +12,7 @@ import { formatRentangTanggal } from "../../../backend/kegiatan/format";
 import Pagination from "./Pagination";
 import RekapitulasiLegend from "./RekapitulasiLegend";
 
-type RekapStatus = PresensiStatus | "belum_hadir";
+type RekapStatus = RekapitulasiStatus | "belum_hadir";
 
 type Props = {
   loading: boolean;
@@ -29,7 +30,7 @@ type Props = {
 const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
 const STATUS_STYLES: Record<
-  PresensiStatus,
+  RekapitulasiStatus,
   { className: string; label: string; textClassName: string }
 > = {
   hadir: {
@@ -56,6 +57,11 @@ const STATUS_STYLES: Record<
     className: "bg-red-500 ring-red-100",
     label: "Alpa",
     textClassName: "text-red-700",
+  },
+  tidak_berlaku: {
+    className: "bg-gray-300 ring-gray-100",
+    label: "Tidak Berlaku",
+    textClassName: "text-gray-500",
   },
 };
 
@@ -104,6 +110,10 @@ const SUMMARY_COLUMNS = [
   },
 ] as const;
 
+/**
+ * Menentukan apakah kegiatan sudah melewati tanggal dan jam selesai.
+ * Tanggal dan jam diperlakukan sebagai waktu lokal perangkat.
+ */
 function isKegiatanSelesai(kegiatan: RekapitulasiKegiatan): boolean {
   const { tanggal_selesai, jam_selesai } = kegiatan;
 
@@ -111,20 +121,43 @@ function isKegiatanSelesai(kegiatan: RekapitulasiKegiatan): boolean {
     return false;
   }
 
-  const tanggalValid = /^\d{4}-\d{2}-\d{2}$/.test(tanggal_selesai);
-  const jamValid = /^\d{2}:\d{2}(:\d{2})?$/.test(jam_selesai);
+  const tanggalValid = /^(\d{4})-(\d{2})-(\d{2})$/.exec(tanggal_selesai);
+
+  const jamValid = /^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(jam_selesai);
 
   if (!tanggalValid || !jamValid) {
     return false;
   }
 
-  const waktuSelesai = new Date(
-    `${tanggal_selesai}T${jam_selesai.length === 5 ? `${jam_selesai}:00` : jam_selesai}`,
-  );
+  const tahun = Number(tanggalValid[1]);
+  const bulan = Number(tanggalValid[2]);
+  const hari = Number(tanggalValid[3]);
 
-  if (Number.isNaN(waktuSelesai.getTime())) {
+  const jam = Number(jamValid[1]);
+  const menit = Number(jamValid[2]);
+  const detik = Number(jamValid[3] ?? "0");
+
+  // Validasi nilai kalender dan jam untuk menghindari tanggal tidak valid.
+  const tanggalPemeriksaan = new Date(tahun, bulan - 1, hari);
+
+  const tanggalBenar =
+    tanggalPemeriksaan.getFullYear() === tahun &&
+    tanggalPemeriksaan.getMonth() === bulan - 1 &&
+    tanggalPemeriksaan.getDate() === hari;
+
+  const jamBenar =
+    jam >= 0 &&
+    jam <= 23 &&
+    menit >= 0 &&
+    menit <= 59 &&
+    detik >= 0 &&
+    detik <= 59;
+
+  if (!tanggalBenar || !jamBenar) {
     return false;
   }
+
+  const waktuSelesai = new Date(tahun, bulan - 1, hari, jam, menit, detik);
 
   return Date.now() >= waktuSelesai.getTime();
 }
@@ -132,11 +165,16 @@ function isKegiatanSelesai(kegiatan: RekapitulasiKegiatan): boolean {
 function isMudamudiTargeted(
   kegiatan: RekapitulasiKegiatan,
   mudamudi: RekapitulasiMudaMudi,
-) {
+): boolean {
   const matchesDesa =
     !kegiatan.desa ||
     kegiatan.desa.length === 0 ||
     kegiatan.desa.includes(mudamudi.desa);
+
+  const matchesKelompok =
+    !kegiatan.kelompok ||
+    kegiatan.kelompok.length === 0 ||
+    kegiatan.kelompok.includes(mudamudi.kelompok);
 
   const matchesKelas =
     !kegiatan.kelas ||
@@ -147,14 +185,14 @@ function isMudamudiTargeted(
     !kegiatan.jenis_kelamin ||
     kegiatan.jenis_kelamin === mudamudi.jenis_kelamin;
 
-  return matchesDesa && matchesKelas && matchesJenisKelamin;
+  return matchesDesa && matchesKelompok && matchesKelas && matchesJenisKelamin;
 }
 
-function getStatusStyle(status: PresensiStatus) {
+function getStatusStyle(status: RekapitulasiStatus) {
   return STATUS_STYLES[status];
 }
 
-function formatStatusCount(value: number) {
+function formatStatusCount(value: number): string {
   return value.toLocaleString("id-ID");
 }
 
@@ -176,7 +214,7 @@ export default function RekapitulasiTable({
   const displayEnd =
     totalItems === 0 ? 0 : Math.min(currentPage * itemsPerPage, totalItems);
 
-  const attendanceMap = new Map<string, PresensiStatus>();
+  const attendanceMap = new Map<string, RekapitulasiStatus>();
 
   kehadiran.forEach((item) => {
     attendanceMap.set(`${item.mudamudi_id}-${item.kegiatan_id}`, item.status);
@@ -185,20 +223,37 @@ export default function RekapitulasiTable({
   function getStatus(
     mudamudi: RekapitulasiMudaMudi,
     kegiatanItem: RekapitulasiKegiatan,
-  ): RekapStatus | null {
-    if (!isMudamudiTargeted(kegiatanItem, mudamudi)) {
-      return null;
+  ): RekapStatus {
+    const key = `${mudamudi.id}-${kegiatanItem.id}`;
+    const statusPresensi = attendanceMap.get(key);
+    const kegiatanSelesai = isKegiatanSelesai(kegiatanItem);
+
+    // Peserta di luar sasaran kegiatan tidak memiliki kewajiban presensi.
+    if (
+      statusPresensi === "tidak_berlaku" ||
+      !isMudamudiTargeted(kegiatanItem, mudamudi)
+    ) {
+      return "tidak_berlaku";
     }
 
-    const statusPresensi = attendanceMap.get(
-      `${mudamudi.id}-${kegiatanItem.id}`,
-    );
+    /*
+     * Jika backend mengirim Alpa untuk peserta yang belum memiliki
+     * presensi, jangan tampilkan Alpa sebelum kegiatan selesai.
+     *
+     * Catatan: ini merupakan pengaman tampilan. Sumber data backend
+     * tetap perlu dipastikan agar tidak membuat Alpa secara prematur.
+     */
+    if (statusPresensi === "alpa" && !kegiatanSelesai) {
+      return "belum_hadir";
+    }
 
+    // Status presensi yang sudah tercatat tetap menjadi sumber utama.
     if (statusPresensi) {
       return statusPresensi;
     }
 
-    return isKegiatanSelesai(kegiatanItem) ? "alpa" : "belum_hadir";
+    // Peserta sasaran yang belum tercatat: tentukan dari waktu selesai.
+    return kegiatanSelesai ? "alpa" : "belum_hadir";
   }
 
   function getStatusTotals(mudamudi: RekapitulasiMudaMudi) {
@@ -217,7 +272,7 @@ export default function RekapitulasiTable({
 
       if (status === "belum_hadir") {
         belumHadir++;
-      } else if (status) {
+      } else if (status !== "tidak_berlaku") {
         totals[status]++;
       }
     });
@@ -420,14 +475,14 @@ export default function RekapitulasiTable({
                   {kegiatan.map((kegiatanItem) => {
                     const status = getStatus(item, kegiatanItem);
 
-                    if (!status) {
+                    if (status === "tidak_berlaku") {
                       return (
                         <td
                           key={kegiatanItem.id}
                           className="border-b border-gray-100 px-3 py-2.5 text-center"
                         >
                           <span
-                            className="text-[11px] text-gray-300"
+                            className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-[9px] font-medium text-gray-500"
                             title="Tidak Berlaku"
                             aria-label="Tidak Berlaku"
                           >
@@ -439,7 +494,7 @@ export default function RekapitulasiTable({
 
                     const belumHadir = status === "belum_hadir";
                     const statusStyle = belumHadir
-                      ? null
+                      ? undefined
                       : getStatusStyle(status);
 
                     return (
@@ -454,10 +509,14 @@ export default function RekapitulasiTable({
                               : (statusStyle?.className ?? "")
                           }`}
                           title={
-                            belumHadir ? "Belum Hadir" : statusStyle?.label
+                            belumHadir
+                              ? "Belum Hadir"
+                              : (statusStyle?.label ?? "Status tidak diketahui")
                           }
                           aria-label={
-                            belumHadir ? "Belum Hadir" : statusStyle?.label
+                            belumHadir
+                              ? "Belum Hadir"
+                              : (statusStyle?.label ?? "Status tidak diketahui")
                           }
                         />
                       </td>
@@ -500,6 +559,7 @@ export default function RekapitulasiTable({
               <th className="min-w-0 border-b border-gray-200 bg-gray-50 px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                 Peserta
               </th>
+
               {SUMMARY_COLUMNS.map((column) => (
                 <th
                   key={column.key}
