@@ -1,0 +1,228 @@
+"use server";
+
+import { requireAdmin } from "../auth/admin";
+import { createClient } from "../supabase/server";
+import { isMudamudiTargeted } from "./target";
+import type { PresensiStatus } from "./types";
+
+type ManualPresensiInput = {
+  kegiatanId: number;
+  mudamudiId: number;
+  status: PresensiStatus;
+  keterangan?: string | null;
+};
+
+type KegiatanAccess = {
+  desa: string[] | null;
+};
+
+const VALID_STATUSES: PresensiStatus[] = [
+  "hadir",
+  "terlambat",
+  "izin",
+  "sakit",
+  "alpa",
+];
+
+function canAccessKegiatan(
+  kegiatan: KegiatanAccess,
+  adminDesa: string | null,
+  isSuperAdmin: boolean,
+) {
+  if (isSuperAdmin) return true;
+
+  return (
+    adminDesa !== null &&
+    Array.isArray(kegiatan.desa) &&
+    kegiatan.desa.length > 0 &&
+    kegiatan.desa.every(
+      (desa) => typeof desa === "string" && desa === adminDesa,
+    )
+  );
+}
+
+export async function createManualPresensi(input: ManualPresensiInput) {
+  const admin = await requireAdmin();
+  const supabase = await createClient();
+
+  if (!Number.isInteger(input.kegiatanId) || input.kegiatanId <= 0) {
+    return {
+      success: false,
+      error: "Kegiatan tidak valid.",
+    };
+  }
+
+  if (!Number.isInteger(input.mudamudiId) || input.mudamudiId <= 0) {
+    return {
+      success: false,
+      error: "Muda-Mudi tidak valid.",
+    };
+  }
+
+  if (!VALID_STATUSES.includes(input.status)) {
+    return {
+      success: false,
+      error: "Status presensi tidak valid.",
+    };
+  }
+
+  const { data: kegiatan, error: kegiatanError } = await supabase
+    .from("kegiatan")
+    .select(
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelas, jenis_kelamin",
+    )
+    .eq("id", input.kegiatanId)
+    .maybeSingle();
+
+  if (kegiatanError) {
+    console.error("Gagal mengambil kegiatan:", kegiatanError);
+
+    return {
+      success: false,
+      error: "Gagal mengambil data kegiatan.",
+    };
+  }
+
+  if (!kegiatan) {
+    return {
+      success: false,
+      error: "Kegiatan tidak ditemukan.",
+    };
+  }
+
+  if (!canAccessKegiatan(kegiatan, admin.desa, admin.isSuperAdmin)) {
+    return {
+      success: false,
+      error: "Kamu tidak memiliki akses ke kegiatan ini.",
+    };
+  }
+
+  const { data: mudamudi, error: mudamudiError } = await supabase
+    .from("mudamudi")
+    .select("id, nama, desa, kelompok, kelas, jenis_kelamin")
+    .eq("id", input.mudamudiId)
+    .maybeSingle();
+
+  if (mudamudiError) {
+    console.error("Gagal mengambil data Muda-Mudi:", mudamudiError);
+
+    return {
+      success: false,
+      error: "Gagal mengambil data Muda-Mudi.",
+    };
+  }
+
+  if (!mudamudi) {
+    return {
+      success: false,
+      error: "Muda-Mudi tidak ditemukan atau tidak memiliki akses.",
+    };
+  }
+
+  if (!admin.isSuperAdmin && mudamudi.desa !== admin.desa) {
+    return {
+      success: false,
+      error: "Kamu tidak memiliki akses ke data Muda-Mudi ini.",
+    };
+  }
+
+  if (!isMudamudiTargeted(kegiatan, mudamudi)) {
+    return {
+      success: false,
+      error: "Muda-Mudi tidak termasuk sasaran kegiatan.",
+    };
+  }
+
+  const { data: existingPresensi, error: presensiCheckError } = await supabase
+    .from("presensi")
+    .select("id")
+    .eq("kegiatan_id", input.kegiatanId)
+    .eq("mudamudi_id", input.mudamudiId)
+    .maybeSingle();
+
+  if (presensiCheckError) {
+    console.error("Gagal memeriksa presensi:", presensiCheckError);
+
+    return {
+      success: false,
+      error: "Gagal memeriksa status presensi.",
+    };
+  }
+
+  if (existingPresensi) {
+    return {
+      success: false,
+      alreadyPresent: true,
+      error: "Muda-Mudi tersebut sudah memiliki presensi pada kegiatan ini.",
+    };
+  }
+
+  const waktuCheckin =
+    input.status === "hadir" || input.status === "terlambat"
+      ? new Date().toISOString()
+      : null;
+
+  const keterangan = input.keterangan?.trim().slice(0, 500) || null;
+
+  const { data: presensi, error: insertError } = await supabase
+    .from("presensi")
+    .insert({
+      kegiatan_id: input.kegiatanId,
+      mudamudi_id: input.mudamudiId,
+      waktu_checkin: waktuCheckin,
+      status: input.status,
+      metode: "manual",
+      keterangan,
+    })
+    .select(
+      "id, kegiatan_id, mudamudi_id, waktu_checkin, status, metode, keterangan",
+    )
+    .single();
+
+  if (insertError) {
+    console.error("Gagal menyimpan presensi manual:", insertError);
+
+    if (insertError.code === "23505") {
+      return {
+        success: false,
+        alreadyPresent: true,
+        error: "Muda-Mudi tersebut sudah memiliki presensi pada kegiatan ini.",
+      };
+    }
+
+    return {
+      success: false,
+      error: "Presensi manual gagal disimpan.",
+    };
+  }
+
+  return {
+    success: true,
+    data: {
+      presensiId: presensi.id,
+      kegiatanId: presensi.kegiatan_id,
+      mudamudiId: presensi.mudamudi_id,
+      waktuCheckin: presensi.waktu_checkin,
+      status: presensi.status as PresensiStatus,
+      metode: "manual" as const,
+      keterangan: presensi.keterangan,
+      kegiatan: {
+        id: kegiatan.id,
+        nama: kegiatan.nama,
+        tanggalMulai: kegiatan.tanggal_mulai,
+        tanggalSelesai: kegiatan.tanggal_selesai,
+        jamMulai: kegiatan.jam_mulai,
+        jamSelesai: kegiatan.jam_selesai,
+        lokasi: kegiatan.lokasi,
+      },
+      mudamudi: {
+        id: mudamudi.id,
+        nama: mudamudi.nama,
+        desa: mudamudi.desa,
+        kelompok: mudamudi.kelompok,
+        kelas: mudamudi.kelas,
+        jenisKelamin: mudamudi.jenis_kelamin,
+      },
+    },
+  };
+}
