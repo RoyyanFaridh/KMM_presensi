@@ -51,20 +51,24 @@ function isValidValues(values: string[], allowedValues: readonly string[]) {
   );
 }
 
+/**
+ * Menentukan kewenangan berdasarkan pembuat kegiatan.
+ *
+ * Admin Daerah dapat mengelola seluruh kegiatan.
+ * Admin Desa hanya dapat mengelola kegiatan buatannya sendiri.
+ *
+ * Desa sasaran kegiatan tidak digunakan untuk menentukan kepemilikan.
+ */
 function canManageKegiatan(
-  kegiatanDesa: string[] | null,
-  desaAdmin: string | null,
+  createdBy: string | null,
+  userId: string,
   isSuperAdmin: boolean,
 ) {
   if (isSuperAdmin) {
     return true;
   }
 
-  if (!desaAdmin || !kegiatanDesa || kegiatanDesa.length !== 1) {
-    return false;
-  }
-
-  return kegiatanDesa[0] === desaAdmin;
+  return Boolean(createdBy) && createdBy === userId;
 }
 
 function getAllowedKelompok(desa: string[]) {
@@ -198,7 +202,7 @@ function validateServer(
     }
 
     if (desa.length !== 1 || desa[0] !== desaAdmin) {
-      return "Admin desa hanya dapat mengelola kegiatan di desanya sendiri";
+      return "Admin desa hanya dapat membuat kegiatan di desanya sendiri";
     }
   }
 
@@ -206,7 +210,7 @@ function validateServer(
 }
 
 /**
- * Mengambil label pembuat hanya untuk Admin Daerah.
+ * Mengambil informasi pembuat kegiatan dari admin_profiles.
  * Service-role client hanya digunakan di server.
  */
 async function attachCreatorInfo<T extends { created_by?: string | null }>(
@@ -219,7 +223,7 @@ async function attachCreatorInfo<T extends { created_by?: string | null }>(
       creator_nama: null as string | null,
       creator_desa: null as string | null,
       creator_label: item.created_by
-        ? "Pembuat tidak ditemukan"
+        ? "Informasi pembuat tidak tersedia"
         : "Belum tercatat",
     }));
   }
@@ -278,12 +282,21 @@ async function attachCreatorInfo<T extends { created_by?: string | null }>(
   });
 }
 
-
+/**
+ * Mengambil daftar kegiatan sesuai kewenangan admin.
+ *
+ * Admin Daerah:
+ * - Dapat melihat semua kegiatan.
+ *
+ * Admin Desa:
+ * - Hanya dapat melihat kegiatan dengan created_by
+ *   yang sama dengan ID akun yang sedang login.
+ */
 export async function getKegiatan() {
-  const { desa: desaAdmin, isSuperAdmin } = await requireAdmin();
+  const { user, isSuperAdmin } = await requireAdmin();
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("kegiatan")
     .select(
       "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenis_kelamin, created_at, created_by",
@@ -291,22 +304,22 @@ export async function getKegiatan() {
     .order("tanggal_mulai", { ascending: false })
     .order("jam_mulai", { ascending: false });
 
+  if (!isSuperAdmin) {
+    query = query.eq("created_by", user.id);
+  }
+
+  const { data, error } = await query;
+
   if (error) {
     throw new Error(error.message);
   }
 
-  const filteredData = isSuperAdmin
-    ? (data ?? [])
-    : (data ?? []).filter((item) =>
-        canManageKegiatan(item.desa, desaAdmin, false),
-      );
-
-  return attachCreatorInfo(filteredData, true);
+  return attachCreatorInfo(data ?? [], true);
 }
-
 
 export async function addKegiatan(formData: FormData) {
   const { user, desa: desaAdmin, isSuperAdmin } = await requireAdmin();
+
   const supabase = await createClient();
 
   const nama = String(formData.get("nama") ?? "").trim();
@@ -400,7 +413,8 @@ export async function addKegiatan(formData: FormData) {
 }
 
 export async function updateKegiatan(id: number, formData: FormData) {
-  const { desa: desaAdmin, isSuperAdmin } = await requireAdmin();
+  const { user, desa: desaAdmin, isSuperAdmin } = await requireAdmin();
+
   const supabase = await createClient();
 
   if (!Number.isSafeInteger(id) || id <= 0) {
@@ -445,7 +459,7 @@ export async function updateKegiatan(id: number, formData: FormData) {
 
   const { data: existing, error: existingError } = await supabase
     .from("kegiatan")
-    .select("id, desa")
+    .select("id, created_by")
     .eq("id", id)
     .maybeSingle();
 
@@ -457,7 +471,7 @@ export async function updateKegiatan(id: number, formData: FormData) {
     return { error: "Kegiatan tidak ditemukan" };
   }
 
-  if (!canManageKegiatan(existing.desa, desaAdmin, isSuperAdmin)) {
+  if (!canManageKegiatan(existing.created_by, user.id, isSuperAdmin)) {
     return {
       error: "Kamu tidak memiliki kewenangan untuk mengubah kegiatan ini",
     };
@@ -528,7 +542,8 @@ export async function updateKegiatan(id: number, formData: FormData) {
 }
 
 export async function deleteKegiatan(id: number) {
-  const { desa: desaAdmin, isSuperAdmin } = await requireAdmin();
+  const { user, isSuperAdmin } = await requireAdmin();
+
   const supabase = await createClient();
 
   if (!Number.isSafeInteger(id) || id <= 0) {
@@ -537,7 +552,7 @@ export async function deleteKegiatan(id: number) {
 
   const { data: existing, error: existingError } = await supabase
     .from("kegiatan")
-    .select("id, desa")
+    .select("id, created_by")
     .eq("id", id)
     .maybeSingle();
 
@@ -549,7 +564,7 @@ export async function deleteKegiatan(id: number) {
     return { error: "Kegiatan tidak ditemukan" };
   }
 
-  if (!canManageKegiatan(existing.desa, desaAdmin, isSuperAdmin)) {
+  if (!canManageKegiatan(existing.created_by, user.id, isSuperAdmin)) {
     return {
       error: "Kamu tidak memiliki kewenangan untuk menghapus kegiatan ini",
     };

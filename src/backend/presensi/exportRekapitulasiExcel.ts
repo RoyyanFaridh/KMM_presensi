@@ -182,6 +182,10 @@ export async function exportRekapitulasiExcel({
   const attendanceMap = new Map<string, PresensiStatus>();
 
   for (const item of data.kehadiran) {
+    if (item.status === "tidak_berlaku") {
+      continue;
+    }
+
     attendanceMap.set(`${item.mudamudi_id}-${item.kegiatan_id}`, item.status);
   }
 

@@ -30,25 +30,35 @@ function buildDateTime(tanggal: string, jam: string): Date {
 }
 
 export async function getDashboardData() {
-  const { desa, isSuperAdmin } = await requireAdmin();
+  const admin = await requireAdmin();
   const supabase = createAdminClient();
+
+  const desa = admin.desa;
+  const isSuperAdmin = admin.isSuperAdmin;
+
+  if (!isSuperAdmin && !desa) {
+    throw new Error("Profil Admin Desa belum memiliki data desa yang valid.");
+  }
 
   const now = new Date();
 
+  // Ambil anggota sesuai cakupan desa Admin.
   let anggotaQuery = supabase.from("mudamudi").select("id, desa, kelompok");
 
   if (!isSuperAdmin) {
     anggotaQuery = anggotaQuery.eq("desa", desa!);
   }
 
+  // Admin Daerah melihat seluruh kegiatan.
+  // Admin Desa hanya melihat kegiatan yang dibuat oleh akunnya sendiri.
   let kegiatanQuery = supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, created_by",
     );
 
   if (!isSuperAdmin) {
-    kegiatanQuery = kegiatanQuery.contains("desa", [desa!]);
+    kegiatanQuery = kegiatanQuery.eq("created_by", admin.user.id);
   }
 
   const [anggotaResult, kegiatanDataResult] = await Promise.all([
@@ -94,7 +104,7 @@ export async function getDashboardData() {
     },
   ).sort((a, b) => b.jumlah - a.jumlah);
 
-  // Distribusi status dengan label tampilan yang rapi.
+  // Distribusi status presensi.
   const statusDistribusi: {
     label: string;
     jumlah: number;
@@ -106,9 +116,9 @@ export async function getDashboardData() {
   let presensiCount = 0;
   let presensiError: string | null = null;
 
+  // Hitung presensi hanya dari kegiatan yang masuk cakupan dashboard.
   if (kegiatanIds.length > 0) {
     const [totalResult, ...countResults] = await Promise.all([
-      // Hitung seluruh catatan presensi pada kegiatan yang dikelola admin.
       supabase
         .from("presensi")
         .select("id", {
@@ -117,7 +127,6 @@ export async function getDashboardData() {
         })
         .in("kegiatan_id", kegiatanIds),
 
-      // Hitung jumlah presensi untuk setiap status.
       ...STATUS_PRESENSI_TERCATAT.map((status) =>
         supabase
           .from("presensi")
@@ -145,6 +154,8 @@ export async function getDashboardData() {
     }
   }
 
+  // Kegiatan aktif dalam jendela presensi:
+  // mulai 30 menit sebelum jam mulai hingga jam selesai.
   const kegiatanAktif = kegiatanData.filter((kegiatan) => {
     const mulai = buildDateTime(kegiatan.tanggal_mulai, kegiatan.jam_mulai);
     const selesai = buildDateTime(
@@ -159,6 +170,7 @@ export async function getDashboardData() {
     return now >= bukaMulai && now <= selesai;
   });
 
+  // Kegiatan terdekat hanya berasal dari kegiatan dalam cakupan admin.
   const kegiatanTerdekat = kegiatanData
     .filter((kegiatan) => {
       const selesai = buildDateTime(

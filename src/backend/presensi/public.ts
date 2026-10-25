@@ -18,6 +18,7 @@ type Kegiatan = {
   jam_selesai: string;
   lokasi: string;
   desa: string[] | null;
+  kelompok: string[] | null;
   kelas: string[] | null;
   jenis_kelamin: string | null;
 };
@@ -143,6 +144,7 @@ async function getKegiatanByIdInternal(
         jam_selesai,
         lokasi,
         desa,
+        kelompok,
         kelas,
         jenis_kelamin
       `,
@@ -222,6 +224,7 @@ export async function scanMudamudiQR(
         jam_selesai,
         lokasi,
         desa,
+        kelompok,
         kelas,
         jenis_kelamin
       `,

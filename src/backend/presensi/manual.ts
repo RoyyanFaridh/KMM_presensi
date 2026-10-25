@@ -69,7 +69,7 @@ export async function createManualPresensi(input: ManualPresensiInput) {
   const { data: kegiatan, error: kegiatanError } = await supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelas, jenis_kelamin",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenis_kelamin",
     )
     .eq("id", input.kegiatanId)
     .maybeSingle();

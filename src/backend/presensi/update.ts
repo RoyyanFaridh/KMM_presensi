@@ -17,6 +17,7 @@ type AdminAccess = Awaited<ReturnType<typeof requireAdmin>>;
 
 type KegiatanAccess = {
   desa: string[] | null;
+  kelompok: string[] | null;
   kelas: string[] | null;
   jenis_kelamin: string | null;
 };
@@ -24,6 +25,7 @@ type KegiatanAccess = {
 type MudamudiAccess = {
   id: number;
   desa: string;
+  kelompok: string;
   kelas: string;
   jenis_kelamin: string | null;
 };
@@ -36,7 +38,10 @@ const VALID_STATUSES: PresensiStatus[] = [
   "alpa",
 ];
 
-function canAccessKegiatan(kegiatan: KegiatanAccess, admin: AdminAccess) {
+function canAccessKegiatan(
+  kegiatan: KegiatanAccess,
+  admin: AdminAccess,
+): boolean {
   if (admin.isSuperAdmin) return true;
 
   return (
@@ -49,7 +54,7 @@ function canAccessKegiatan(kegiatan: KegiatanAccess, admin: AdminAccess) {
   );
 }
 
-function normalizeKeterangan(keterangan?: string | null) {
+function normalizeKeterangan(keterangan?: string | null): string | null {
   const value = keterangan?.trim() || null;
   return value ? value.slice(0, 500) : null;
 }
@@ -58,7 +63,7 @@ function getWaktuCheckin(
   status: PresensiStatus,
   existingStatus?: PresensiStatus,
   existingWaktu?: string | null,
-) {
+): string | null {
   if (status !== "hadir" && status !== "terlambat") {
     return null;
   }
@@ -81,7 +86,7 @@ async function validateTarget(
 ) {
   const { data: kegiatan, error: kegiatanError } = await supabase
     .from("kegiatan")
-    .select("id, desa, kelas, jenis_kelamin")
+    .select("id, desa, kelompok, kelas, jenis_kelamin")
     .eq("id", kegiatanId)
     .maybeSingle();
 
@@ -110,7 +115,7 @@ async function validateTarget(
 
   const { data: mudamudi, error: mudamudiError } = await supabase
     .from("mudamudi")
-    .select("id, desa, kelas, jenis_kelamin")
+    .select("id, desa, kelompok, kelas, jenis_kelamin")
     .eq("id", mudamudiId)
     .maybeSingle();
 
@@ -149,7 +154,9 @@ async function validateTarget(
   };
 }
 
-export async function updatePresensiStatus(input: UpdatePresensiStatusInput) {
+export async function updatePresensiStatus(
+  input: UpdatePresensiStatusInput,
+) {
   const admin = await requireAdmin();
   const supabase = await createClient();
 
@@ -284,14 +291,15 @@ export async function updatePresensiStatus(input: UpdatePresensiStatusInput) {
     };
   }
 
-  const { data: existingByParticipant, error: existingError } = await supabase
-    .from("presensi")
-    .select(
-      "id, kegiatan_id, mudamudi_id, waktu_checkin, status, metode, keterangan",
-    )
-    .eq("kegiatan_id", input.kegiatanId)
-    .eq("mudamudi_id", input.mudamudiId)
-    .maybeSingle();
+  const { data: existingByParticipant, error: existingError } =
+    await supabase
+      .from("presensi")
+      .select(
+        "id, kegiatan_id, mudamudi_id, waktu_checkin, status, metode, keterangan",
+      )
+      .eq("kegiatan_id", input.kegiatanId)
+      .eq("mudamudi_id", input.mudamudiId)
+      .maybeSingle();
 
   if (existingError) {
     console.error("Gagal memeriksa presensi peserta:", existingError);
