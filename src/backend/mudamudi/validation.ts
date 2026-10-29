@@ -7,7 +7,7 @@ export function validateClient(
   kelas: string,
   kelompok: string,
   jenisKelamin: string,
-  tanggalLahir: string,
+  tahunLahirRaw: string,
 ): FieldErrors {
   const errors: FieldErrors = {};
 
@@ -21,8 +21,6 @@ export function validateClient(
     errors.nama = "Nama tidak boleh mengandung angka";
   }
 
-  // Kelas otomatis berdasarkan umur.
-  // Kosong diperbolehkan jika umur belum dapat ditentukan.
   if (!kelompok) {
     errors.kelompok = "Kelompok wajib dipilih";
   } else if (
@@ -41,33 +39,18 @@ export function validateClient(
     errors.jenis_kelamin = "Jenis kelamin wajib dipilih";
   }
 
-  // Tanggal lahir opsional.
-  // Jika diisi, pastikan format dan tanggalnya valid.
-  if (tanggalLahir) {
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(tanggalLahir);
+  // Tahun lahir opsional.
+  // Jika diisi, pastikan nilainya berupa tahun yang wajar.
+  if (tahunLahirRaw.trim() !== "") {
+    const tahunLahir = Number(tahunLahirRaw);
+    const currentYear = new Date().getFullYear();
 
-    if (!match) {
-      errors.tanggal_lahir = "Format tanggal lahir tidak valid";
-    } else {
-      const year = Number(match[1]);
-      const month = Number(match[2]);
-      const day = Number(match[3]);
-      const birthDate = new Date(year, month - 1, day);
-
-      if (
-        birthDate.getFullYear() !== year ||
-        birthDate.getMonth() !== month - 1 ||
-        birthDate.getDate() !== day
-      ) {
-        errors.tanggal_lahir = "Tanggal lahir tidak valid";
-      } else {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (birthDate > today) {
-          errors.tanggal_lahir = "Tanggal lahir tidak boleh di masa depan";
-        }
-      }
+    if (
+      !Number.isInteger(tahunLahir) ||
+      tahunLahir < 1900 ||
+      tahunLahir > currentYear
+    ) {
+      errors.tahun_lahir = `Tahun lahir harus berupa angka antara 1900 dan ${currentYear}`;
     }
   }
 

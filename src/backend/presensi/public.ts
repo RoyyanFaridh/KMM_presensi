@@ -30,7 +30,7 @@ type Mudamudi = {
   kelompok: string;
   kelas: string;
   jenis_kelamin: string | null;
-  tanggal_lahir: string | null;
+  tahun_lahir: number | null;
 };
 
 export type ScanMudamudiQRResult =
@@ -270,7 +270,7 @@ export async function scanMudamudiQR(
         kelompok,
         kelas,
         jenis_kelamin,
-        tanggal_lahir
+        tahun_lahir
       `,
     )
     .eq("qr_id", qrId)

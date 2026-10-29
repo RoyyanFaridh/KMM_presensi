@@ -77,42 +77,11 @@ function isValidKelas(kelas: string): boolean {
   return KELAS_OPTIONS.includes(kelas as (typeof KELAS_OPTIONS)[number]);
 }
 
-function calculateAge(tanggalLahir: string): number | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(tanggalLahir);
+function calculateKelas(tahunLahir: number | null): string {
+  if (tahunLahir === null) return "";
 
-  if (!match) return null;
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-
-  const birthDate = new Date(year, month - 1, day);
-
-  if (
-    birthDate.getFullYear() !== year ||
-    birthDate.getMonth() !== month - 1 ||
-    birthDate.getDate() !== day
-  ) {
-    return null;
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  if (birthDate > today) return null;
-
-  let age = today.getFullYear() - year;
-  const monthDifference = today.getMonth() - (month - 1);
-
-  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < day)) {
-    age--;
-  }
-
-  return age >= 0 ? age : null;
-}
-
-function calculateKelas(umur: number | null): string {
-  if (umur === null) return "";
+  const currentYear = new Date().getFullYear();
+  const umur = currentYear - tahunLahir;
 
   if (umur >= 5 && umur <= 6) return "PAUD";
   if (umur >= 7 && umur <= 12) return "Caberawit";
@@ -129,8 +98,7 @@ function validate(
   kelompok: string,
   jenisKelamin: string,
   kelas: string,
-  umurRaw: string,
-  tanggalLahir: string,
+  tahunLahirRaw: string,
 ): string | null {
   if (!nama.trim()) return "Nama wajib diisi";
 
@@ -152,19 +120,16 @@ function validate(
     return "Kelas wajib dipilih dan harus sesuai dengan pilihan yang tersedia";
   }
 
-  if (umurRaw !== "") {
-    const umur = Number(umurRaw);
+  if (tahunLahirRaw !== "") {
+    const tahunLahir = Number(tahunLahirRaw);
+    const currentYear = new Date().getFullYear();
 
-    if (!Number.isInteger(umur) || umur < 0) {
-      return "Umur harus berupa bilangan bulat minimal 0";
-    }
-  }
-
-  if (tanggalLahir !== "") {
-    const umurDariTanggalLahir = calculateAge(tanggalLahir);
-
-    if (umurDariTanggalLahir === null) {
-      return "Tanggal lahir tidak valid atau tidak boleh di masa depan";
+    if (
+      !Number.isInteger(tahunLahir) ||
+      tahunLahir < 1900 ||
+      tahunLahir > currentYear
+    ) {
+      return `Tahun lahir harus berupa angka antara 1900 dan ${currentYear}`;
     }
   }
 
@@ -189,23 +154,13 @@ function readFormData(formData: FormData) {
   const kelompok = String(formData.get("kelompok") ?? "").trim();
   const jenisKelamin = String(formData.get("jenis_kelamin") ?? "").trim();
   const kelasRaw = String(formData.get("kelas") ?? "").trim();
-  const umurRaw = String(formData.get("umur") ?? "").trim();
-  const tanggalLahirRaw = String(formData.get("tanggal_lahir") ?? "").trim();
+  const tahunLahirRaw = String(formData.get("tahun_lahir") ?? "").trim();
 
-  const umurDariTanggalLahir = tanggalLahirRaw
-    ? calculateAge(tanggalLahirRaw)
-    : null;
+  const tahunLahir =
+    tahunLahirRaw === "" ? null : Number(tahunLahirRaw);
 
-  const kelasOtomatis = tanggalLahirRaw
-    ? calculateKelas(umurDariTanggalLahir)
-    : "";
-
+  const kelasOtomatis = tahunLahir !== null ? calculateKelas(tahunLahir) : "";
   const kelas = kelasOtomatis || kelasRaw;
-  const umur = tanggalLahirRaw
-    ? umurDariTanggalLahir
-    : umurRaw === ""
-      ? null
-      : Number(umurRaw);
 
   return {
     nama,
@@ -213,15 +168,11 @@ function readFormData(formData: FormData) {
     kelompok,
     jenisKelamin,
     kelas,
-    umur,
-    umurRaw: tanggalLahirRaw ? String(umurDariTanggalLahir ?? "") : umurRaw,
-    tanggalLahir: tanggalLahirRaw || null,
+    tahunLahir,
+    tahunLahirRaw,
     tempatLahir: String(formData.get("tempat_lahir") ?? "").trim() || null,
     noHp: String(formData.get("no_hp") ?? "").trim() || null,
     pekerjaan: String(formData.get("pekerjaan") ?? "").trim() || null,
-    namaAyah: String(formData.get("nama_ayah") ?? "").trim() || null,
-    namaIbu: String(formData.get("nama_ibu") ?? "").trim() || null,
-    noHpOrtu: String(formData.get("no_hp_ortu") ?? "").trim() || null,
     alamat: String(formData.get("alamat") ?? "").trim() || null,
   };
 }
@@ -233,8 +184,7 @@ function validateFormData(data: ReturnType<typeof readFormData>) {
     data.kelompok,
     data.jenisKelamin,
     data.kelas,
-    data.umurRaw,
-    data.tanggalLahir ?? "",
+    data.tahunLahirRaw,
   );
 }
 
@@ -245,14 +195,10 @@ function mapImportRow(row: ImportRow) {
     kelompok: row.kelompok.trim(),
     jenis_kelamin: row.jenis_kelamin.trim(),
     tempat_lahir: row.tempat_lahir?.trim() || null,
-    tanggal_lahir: row.tanggal_lahir || null,
-    umur: row.umur ?? null,
+    tahun_lahir: row.tahun_lahir ?? null,
     no_hp: row.no_hp?.trim() || null,
     pekerjaan: row.pekerjaan?.trim() || null,
     kelas: row.kelas?.trim() || null,
-    nama_ayah: row.nama_ayah?.trim() || null,
-    nama_ibu: row.nama_ibu?.trim() || null,
-    no_hp_ortu: row.no_hp_ortu?.trim() || null,
     alamat: row.alamat?.trim() || null,
   };
 }
@@ -389,14 +335,10 @@ export async function addMudamudi(formData: FormData): Promise<ActionResult> {
     kelompok: data.kelompok,
     jenis_kelamin: data.jenisKelamin,
     tempat_lahir: data.tempatLahir,
-    tanggal_lahir: data.tanggalLahir,
-    umur: data.umur,
+    tahun_lahir: data.tahunLahir,
     kelas: data.kelas,
     no_hp: data.noHp,
     pekerjaan: data.pekerjaan,
-    nama_ayah: data.namaAyah,
-    nama_ibu: data.namaIbu,
-    no_hp_ortu: data.noHpOrtu,
     alamat: data.alamat,
   });
 
@@ -509,14 +451,10 @@ export async function updateMudamudi(
       kelompok: data.kelompok,
       jenis_kelamin: data.jenisKelamin,
       tempat_lahir: data.tempatLahir,
-      tanggal_lahir: data.tanggalLahir,
-      umur: data.umur,
+      tahun_lahir: data.tahunLahir,
       kelas: data.kelas,
       no_hp: data.noHp,
       pekerjaan: data.pekerjaan,
-      nama_ayah: data.namaAyah,
-      nama_ibu: data.namaIbu,
-      no_hp_ortu: data.noHpOrtu,
       alamat: data.alamat,
     })
     .eq("id", id);

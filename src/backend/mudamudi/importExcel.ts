@@ -13,14 +13,10 @@ export type ImportField =
   | "nama"
   | "jenis_kelamin"
   | "tempat_lahir"
-  | "tanggal_lahir"
-  | "umur"
+  | "tahun_lahir"
   | "no_hp"
   | "pekerjaan"
   | "kelas"
-  | "nama_ayah"
-  | "nama_ibu"
-  | "no_hp_ortu"
   | "alamat";
 
 export type ImportRow = {
@@ -29,14 +25,10 @@ export type ImportRow = {
   nama: string;
   jenis_kelamin: string;
   tempat_lahir: string | null;
-  tanggal_lahir: string | null;
-  umur: number | null;
+  tahun_lahir: number | null;
   no_hp: string | null;
   pekerjaan: string | null;
   kelas: string | null;
-  nama_ayah: string | null;
-  nama_ibu: string | null;
-  no_hp_ortu: string | null;
   alamat: string | null;
   presentFields: ImportField[];
 };
@@ -389,34 +381,13 @@ function isValidDateNotFuture(tanggalLahir: string): boolean {
   return birthDate.getTime() <= today.getTime();
 }
 
-function calculateAge(tanggalLahir: string | null): number | null {
-  if (!tanggalLahir) {
+function calculateKelas(tahunLahir: number | null): string | null {
+  if (tahunLahir === null) {
     return null;
   }
 
-  const [year, month, day] = tanggalLahir.split("-").map(Number);
-
-  if (!buildValidISODate(year, month, day)) {
-    return null;
-  }
-
-  const today = new Date();
-  let age = today.getFullYear() - year;
-
-  if (
-    today.getMonth() + 1 < month ||
-    (today.getMonth() + 1 === month && today.getDate() < day)
-  ) {
-    age--;
-  }
-
-  return age >= 0 ? age : null;
-}
-
-function calculateKelas(umur: number | null): string | null {
-  if (umur === null) {
-    return null;
-  }
+  const currentYear = new Date().getFullYear();
+  const umur = currentYear - tahunLahir;
 
   if (umur >= 5 && umur <= 6) {
     return "PAUD";
@@ -487,25 +458,19 @@ type ValidateValues = {
   nama: string;
   jenisKelamin: string;
   tempatLahir: string;
-  tanggalLahirRaw: string;
+  tahunLahirRaw: string;
   noHp: string;
   pekerjaan: string;
   kelas: string;
-  namaAyah: string;
-  namaIbu: string;
-  noHpOrtu: string;
   alamat: string;
 };
 
 type HeaderPresence = {
   tempatLahir: boolean;
-  tanggalLahir: boolean;
+  tahunLahir: boolean;
   noHp: boolean;
   pekerjaan: boolean;
   kelas: boolean;
-  namaAyah: boolean;
-  namaIbu: boolean;
-  noHpOrtu: boolean;
   alamat: boolean;
 };
 
@@ -518,13 +483,10 @@ function getPresentFields(headers: HeaderPresence): ImportField[] {
   ];
 
   if (headers.tempatLahir) fields.push("tempat_lahir");
-  if (headers.tanggalLahir) fields.push("tanggal_lahir");
+  if (headers.tahunLahir) fields.push("tahun_lahir");
   if (headers.noHp) fields.push("no_hp");
   if (headers.pekerjaan) fields.push("pekerjaan");
   if (headers.kelas) fields.push("kelas");
-  if (headers.namaAyah) fields.push("nama_ayah");
-  if (headers.namaIbu) fields.push("nama_ibu");
-  if (headers.noHpOrtu) fields.push("no_hp_ortu");
   if (headers.alamat) fields.push("alamat");
 
   return fields;
@@ -546,13 +508,10 @@ function validateRow(
     nama,
     jenisKelamin,
     tempatLahir,
-    tanggalLahirRaw,
+    tahunLahirRaw,
     noHp,
     pekerjaan,
     kelas,
-    namaAyah,
-    namaIbu,
-    noHpOrtu,
     alamat,
   } = values;
 
@@ -600,22 +559,27 @@ function validateRow(
     rowWarnings.push("Tempat Lahir kosong");
   }
 
-  const tanggalLahir = parseDate(tanggalLahirRaw);
-  let tanggalLahirFinal: string | null = null;
+  // Validasi tahun lahir
+  let tahunLahirFinal: number | null = null;
+  const currentYear = new Date().getFullYear();
 
-  if (!tanggalLahirRaw) {
-    rowWarnings.push("Tanggal Lahir kosong; umur tidak dapat dihitung");
-  } else if (!tanggalLahir) {
-    rowWarnings.push("Tanggal Lahir tidak valid; umur tidak dapat dihitung");
-  } else if (!isValidDateNotFuture(tanggalLahir)) {
-    rowWarnings.push(
-      "Tanggal Lahir melebihi tanggal hari ini; umur tidak dapat dihitung",
-    );
+  if (!tahunLahirRaw) {
+    rowWarnings.push("Tahun Lahir kosong");
   } else {
-    tanggalLahirFinal = tanggalLahir;
-  }
+    const tahunLahir = Number(tahunLahirRaw.trim());
 
-  const umur = calculateAge(tanggalLahirFinal);
+    if (
+      !Number.isInteger(tahunLahir) ||
+      tahunLahir < 1900 ||
+      tahunLahir > currentYear
+    ) {
+      rowWarnings.push(
+        `Tahun Lahir tidak valid; harus berupa angka antara 1900 dan ${currentYear}`,
+      );
+    } else {
+      tahunLahirFinal = tahunLahir;
+    }
+  }
 
   if (headers.noHp) {
     if (!noHp) {
@@ -640,7 +604,7 @@ function validateRow(
       rowWarnings.push("Kelas yang diisi tidak valid; kelas tidak disimpan");
     }
   } else {
-    kelasFinal = calculateKelas(umur);
+    kelasFinal = calculateKelas(tahunLahirFinal);
 
     if (kelasFinal === null) {
       rowWarnings.push(
@@ -648,25 +612,6 @@ function validateRow(
       );
     }
   }
-
-  if (headers.namaAyah && !namaAyah) {
-    rowWarnings.push("Nama Ayah kosong");
-  }
-
-  if (headers.namaIbu && !namaIbu) {
-    rowWarnings.push("Nama Ibu kosong");
-  }
-
-  if (headers.noHpOrtu) {
-    if (!noHpOrtu) {
-      rowWarnings.push("No HP Orangtua kosong");
-    } else if (!isValidPhone(noHpOrtu)) {
-      rowWarnings.push("Format No HP Orangtua tidak valid");
-    }
-  }
-
-  const noHpOrtuFinal =
-    noHpOrtu && isValidPhone(noHpOrtu) ? normalizePhone(noHpOrtu) : null;
 
   if (headers.alamat && !alamat) {
     rowWarnings.push("Alamat kosong");
@@ -698,14 +643,10 @@ function validateRow(
       nama: nama.trim(),
       jenis_kelamin: normalizedJenisKelamin,
       tempat_lahir: emptyToNull(tempatLahir),
-      tanggal_lahir: tanggalLahirFinal,
-      umur,
+      tahun_lahir: tahunLahirFinal,
       no_hp: noHpFinal,
       pekerjaan: emptyToNull(pekerjaan),
       kelas: kelasFinal,
-      nama_ayah: emptyToNull(namaAyah),
-      nama_ibu: emptyToNull(namaIbu),
-      no_hp_ortu: noHpOrtuFinal,
       alamat: emptyToNull(alamat),
       presentFields: getPresentFields(headers),
     },
@@ -746,13 +687,10 @@ function getHeaderPresence(
 ): HeaderPresence {
   return {
     tempatLahir: headerMap.has("TEMPAT"),
-    tanggalLahir: headerMap.has("TANGGAL LAHIR"),
+    tahunLahir: headerMap.has("TAHUN LAHIR"),
     noHp: headerMap.has("NO HP"),
     pekerjaan: headerMap.has("PEKERJAAN"),
     kelas: headerMap.has("KELAS"),
-    namaAyah: headerMap.has("NAMA AYAH"),
-    namaIbu: headerMap.has("NAMA IBU"),
-    noHpOrtu: headerMap.has("NO HP ORANGTUA"),
     alamat: headerMap.has("ALAMAT"),
   };
 }
@@ -809,8 +747,8 @@ async function parseXlsx(file: File): Promise<ImportParseResult> {
 
       const cell = row.getCell(column);
 
-      if (header === "TANGGAL LAHIR") {
-        return getExcelDateValue(cell);
+      if (header === "TAHUN LAHIR") {
+        return getCellValue(cell);
       }
 
       return getCellValue(cell);
@@ -822,13 +760,10 @@ async function parseXlsx(file: File): Promise<ImportParseResult> {
       nama: getValue("NAMA LENGKAP"),
       jenisKelamin: getValue("JENIS KELAMIN"),
       tempatLahir: getValue("TEMPAT"),
-      tanggalLahirRaw: getValue("TANGGAL LAHIR"),
+      tahunLahirRaw: getValue("TAHUN LAHIR"),
       noHp: getValue("NO HP"),
       pekerjaan: getValue("PEKERJAAN"),
       kelas: getValue("KELAS"),
-      namaAyah: getValue("NAMA AYAH"),
-      namaIbu: getValue("NAMA IBU"),
-      noHpOrtu: getValue("NO HP ORANGTUA"),
       alamat: getValue("ALAMAT"),
     };
 
@@ -1001,13 +936,10 @@ async function parseCsv(file: File): Promise<ImportParseResult> {
       nama: getValue("NAMA LENGKAP"),
       jenisKelamin: getValue("JENIS KELAMIN"),
       tempatLahir: getValue("TEMPAT"),
-      tanggalLahirRaw: getValue("TANGGAL LAHIR"),
+      tahunLahirRaw: getValue("TAHUN LAHIR"),
       noHp: getValue("NO HP"),
       pekerjaan: getValue("PEKERJAAN"),
       kelas: getValue("KELAS"),
-      namaAyah: getValue("NAMA AYAH"),
-      namaIbu: getValue("NAMA IBU"),
-      noHpOrtu: getValue("NO HP ORANGTUA"),
       alamat: getValue("ALAMAT"),
     };
 

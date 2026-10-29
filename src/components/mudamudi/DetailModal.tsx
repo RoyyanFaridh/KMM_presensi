@@ -15,16 +15,6 @@ type Props = {
 export default function DetailModal({ data, onClose }: Props) {
   const avatarColor = getAvatarColor(data.nama);
 
-  function formatTanggal(tanggal: string | null) {
-    if (!tanggal) {
-      return "-";
-    }
-
-    const [year, month, day] = tanggal.split("-");
-
-    return `${day}-${month}-${year}`;
-  }
-
   function DetailItem({
     label,
     value,
@@ -122,13 +112,8 @@ export default function DetailModal({ data, onClose }: Props) {
               <DetailItem label="Tempat Lahir" value={data.tempat_lahir} />
 
               <DetailItem
-                label="Tanggal Lahir"
-                value={formatTanggal(data.tanggal_lahir)}
-              />
-
-              <DetailItem
-                label="Umur"
-                value={data.umur !== null ? `${data.umur} tahun` : null}
+                label="Tahun Lahir"
+                value={data.tahun_lahir !== null ? String(data.tahun_lahir) : null}
               />
 
               <DetailItem label="No. HP" value={data.no_hp} />
@@ -138,22 +123,6 @@ export default function DetailModal({ data, onClose }: Props) {
               <div className="col-span-2 sm:col-span-3">
                 <DetailItem label="Alamat" value={data.alamat} />
               </div>
-            </div>
-          </section>
-
-          <div className="my-5 border-t border-gray-100" />
-
-          <section>
-            <h3 className="text-[11px] font-semibold text-gray-800">
-              Data Orang Tua
-            </h3>
-
-            <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-              <DetailItem label="Nama Ayah" value={data.nama_ayah} />
-
-              <DetailItem label="Nama Ibu" value={data.nama_ibu} />
-
-              <DetailItem label="No. HP Orang Tua" value={data.no_hp_ortu} />
             </div>
           </section>
         </div>

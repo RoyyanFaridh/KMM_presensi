@@ -5,27 +5,13 @@ import {
   importMudamudi,
   previewImportMudamudi,
 } from "../../backend/mudamudi/actions";
+import type { ImportRow } from "../../backend/mudamudi/importExcel";
 import ModalWrapper from "./ModalWrapper";
 import { UploadIcon } from "./icons";
 
 type ImportAction = "insert" | "update";
 
-type PreviewRow = {
-  desa: string;
-  kelompok: string;
-  nama: string;
-  jenis_kelamin: string;
-  tempat_lahir: string | null;
-  tanggal_lahir: string | null;
-  umur: number | null;
-  no_hp: string | null;
-  pekerjaan: string | null;
-  kelas: string | null;
-  nama_ayah: string | null;
-  nama_ibu: string | null;
-  no_hp_ortu: string | null;
-  alamat: string | null;
-  presentFields: string[];
+type PreviewRow = ImportRow & {
   importAction?: ImportAction;
 };
 
@@ -369,8 +355,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
 
                 <p className="mt-1 text-[10px] leading-4 text-gray-500">
                   <span className="font-medium text-gray-700">Opsional:</span>{" "}
-                  Tempat, Tanggal Lahir, Umur, No HP, Pekerjaan, Kelas, Nama
-                  Ayah, Nama Ibu, No HP Orangtua, Alamat.
+                  Tempat, Tahun Lahir, No HP, Pekerjaan, Kelas, Alamat.
                 </p>
 
                 <p className="mt-2 text-[9px] leading-4 text-gray-400">
@@ -585,7 +570,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                       </p>
 
                       <p className="mt-0.5 text-[9px] leading-4 text-amber-600">
-                        Periksa kembali data opsional, tanggal lahir, nomor HP,
+                        Periksa kembali data opsional, tahun lahir, nomor HP,
                         dan kelas jika ada peringatan.
                       </p>
                     </div>
@@ -639,7 +624,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                           <th className="px-3 py-2 font-medium">Desa</th>
                           <th className="px-3 py-2 font-medium">Kelompok</th>
                           <th className="px-3 py-2 font-medium">JK</th>
-                          <th className="px-3 py-2 font-medium">Umur</th>
+                          <th className="px-3 py-2 font-medium">Tahun Lahir</th>
                           <th className="px-3 py-2 font-medium">Kelas</th>
                           <th className="px-3 py-2 font-medium">Status</th>
                         </tr>
@@ -666,7 +651,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                             <td className="px-3 py-2">{item.jenis_kelamin}</td>
 
                             <td className="px-3 py-2">
-                              {item.umur ?? (
+                              {item.tahun_lahir ?? (
                                 <span className="text-gray-400">Kosong</span>
                               )}
                             </td>

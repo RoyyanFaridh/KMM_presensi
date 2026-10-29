@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useRef, useState } from "react";
@@ -21,6 +22,7 @@ import MonitoringFilters from "./MonitoringFilters";
 import MonitoringTable from "./MonitoringTable";
 import MonitoringDetailModal from "./MonitoringDetailModal";
 import MonitoringEditModal from "./MonitoringEditModal";
+import BeritaAcaraModal from "./BeritaAcaraModal";
 
 type Props = {
   kegiatan: Kegiatan[];
@@ -28,13 +30,13 @@ type Props = {
 
 type MonitoringResult =
   | {
-      data: MonitoringPresensi | null;
-      error: string;
-    }
+    data: MonitoringPresensi | null;
+    error: string;
+  }
   | {
-      data: MonitoringPresensi;
-      error?: never;
-    };
+    data: MonitoringPresensi;
+    error?: never;
+  };
 
 const STATUS_OPTIONS = [
   "Hadir",
@@ -88,9 +90,9 @@ function calculateTotals(peserta: MonitoringPeserta[]) {
 
   for (const item of peserta) {
     switch (
-      String(item.status ?? "")
-        .trim()
-        .toLowerCase()
+    String(item.status ?? "")
+      .trim()
+      .toLowerCase()
     ) {
       case "hadir":
         totals.totalHadir++;
@@ -130,6 +132,8 @@ export default function MonitoringPage({ kegiatan }: Props) {
   const [selectedKelompok, setSelectedKelompok] = useState<string[]>([]);
   const [selectedKelas, setSelectedKelas] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
+
+  const [showBeritaAcara, setShowBeritaAcara] = useState(false);
 
   const [detailPeserta, setDetailPeserta] = useState<MonitoringPeserta | null>(
     null,
@@ -196,6 +200,7 @@ export default function MonitoringPage({ kegiatan }: Props) {
     setSelectedKegiatanId(kegiatanId);
     setData(null);
     setError("");
+    setShowBeritaAcara(false);
 
     resetFilters();
 
@@ -217,8 +222,8 @@ export default function MonitoringPage({ kegiatan }: Props) {
     const pesertaSesuaiDesa =
       nextDesa.length > 0
         ? data.peserta.filter(
-            (peserta) => peserta.desa && nextDesa.includes(peserta.desa),
-          )
+          (peserta) => peserta.desa && nextDesa.includes(peserta.desa),
+        )
         : data.peserta;
 
     const kelompokTersedia = new Set(
@@ -278,20 +283,19 @@ export default function MonitoringPage({ kegiatan }: Props) {
 
       const updated = result.data;
 
-      // Perbarui peserta, summary, dan tabel tanpa fetch ulang.
       setData((current) => {
         if (!current) return current;
 
         const peserta = current.peserta.map((item) =>
           item.mudamudi_id === updated.mudamudiId
             ? {
-                ...item,
-                presensi_id: updated.presensiId,
-                status: updated.status,
-                waktu_checkin: updated.waktuCheckin,
-                metode: updated.metode,
-                keterangan: updated.keterangan,
-              }
+              ...item,
+              presensi_id: updated.presensiId,
+              status: updated.status,
+              waktu_checkin: updated.waktuCheckin,
+              metode: updated.metode,
+              keterangan: updated.keterangan,
+            }
             : item,
         );
 
@@ -325,8 +329,8 @@ export default function MonitoringPage({ kegiatan }: Props) {
     const pesertaSesuaiDesa =
       selectedDesa.length > 0
         ? data.peserta.filter(
-            (peserta) => peserta.desa && selectedDesa.includes(peserta.desa),
-          )
+          (peserta) => peserta.desa && selectedDesa.includes(peserta.desa),
+        )
         : data.peserta;
 
     return getUniqueSortedValues(
@@ -383,6 +387,13 @@ export default function MonitoringPage({ kegiatan }: Props) {
     selectedStatus,
   ]);
 
+  const selectedKegiatan = useMemo(() => {
+    return kegiatan.find((item) => item.id === selectedKegiatanId) ?? null;
+  }, [kegiatan, selectedKegiatanId]);
+
+  const canDownloadBeritaAcara =
+    Boolean(data) && !loading && !error && Boolean(selectedKegiatan);
+
   return (
     <div className="space-y-4 p-4 md:p-6">
       <div>
@@ -399,6 +410,7 @@ export default function MonitoringPage({ kegiatan }: Props) {
         </p>
       </div>
 
+      {/* Pemilih kegiatan tetap terpisah dari filter dan tombol unduh */}
       <MonitoringKegiatanSelector
         kegiatan={kegiatan}
         selectedKegiatanId={selectedKegiatanId}
@@ -471,16 +483,17 @@ export default function MonitoringPage({ kegiatan }: Props) {
                 Terdapat {data.totalAlpa} peserta dengan status Alpa.
               </p>
               <p className="mt-0.5 text-[11px] text-red-700">
-                Status Alpa dapat diberikan secara manual oleh admin atau secara
-                otomatis oleh sistem setelah kegiatan berakhir apabila peserta
-                belum melakukan presensi.
+                Status Alpa dapat diberikan secara manual oleh admin atau
+                secara otomatis oleh sistem setelah kegiatan berakhir apabila
+                peserta belum melakukan presensi.
               </p>
             </div>
           )}
 
           <div className="w-full min-w-0 rounded-xl border border-gray-200 bg-white">
-            <div className="w-full min-w-0 space-y-4 border-b border-gray-200 p-4">
-              <div className="block w-full min-w-0">
+            {/* Filter dan tombol unduh berada dalam satu baris */}
+            <div className="flex min-w-0 items-start gap-2 border-b border-gray-200 p-3 sm:items-center sm:gap-3 sm:p-4">
+              <div className="min-w-0 flex-1">
                 <MonitoringFilters
                   search={search}
                   onSearchChange={setSearch}
@@ -499,6 +512,35 @@ export default function MonitoringPage({ kegiatan }: Props) {
                   onReset={resetFilters}
                 />
               </div>
+
+              {canDownloadBeritaAcara && (
+                <button
+                  type="button"
+                  onClick={() => setShowBeritaAcara(true)}
+                  aria-label="Unduh Berita Acara"
+                  title="Unduh Berita Acara (.docx)"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-700 text-white shadow-sm transition hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 sm:h-10 sm:w-auto sm:gap-2 sm:rounded-lg sm:px-4"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.8}
+                    className="h-5 w-5 sm:h-4 sm:w-4"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"
+                    />
+                  </svg>
+
+                  <span className="hidden whitespace-nowrap text-xs font-semibold sm:inline">
+                    Unduh
+                  </span>
+                </button>
+              )}
             </div>
 
             {filteredPeserta.length > 0 ? (
@@ -541,6 +583,14 @@ export default function MonitoringPage({ kegiatan }: Props) {
         onClose={handleCloseEdit}
         onSave={handleSaveStatus}
       />
+
+      {showBeritaAcara && selectedKegiatan && (
+        <BeritaAcaraModal
+          kegiatan={selectedKegiatan}
+          monitoringData={data}
+          onClose={() => setShowBeritaAcara(false)}
+        />
+      )}
     </div>
   );
 }

@@ -14,14 +14,10 @@ const HEADER = [
   "Nama Lengkap",
   "Jenis Kelamin",
   "Tempat",
-  "Tanggal Lahir",
-  "Umur",
+  "Tahun Lahir",
   "No HP",
   "Pekerjaan",
   "Kelas",
-  "Nama Ayah",
-  "Nama Ibu",
-  "No HP orangtua",
   "Alamat",
 ] as const;
 
@@ -46,21 +42,6 @@ const BORDER_STYLE: Partial<ExcelJS.Borders> = {
   left: { style: "thin", color: { argb: "FFD9D9D9" } },
   right: { style: "thin", color: { argb: "FFD9D9D9" } },
 };
-
-const BULAN_INDONESIA = [
-  "januari",
-  "februari",
-  "maret",
-  "april",
-  "mei",
-  "juni",
-  "juli",
-  "agustus",
-  "september",
-  "oktober",
-  "november",
-  "desember",
-] as const;
 
 function getKelompokIndex(desa: string, kelompok: string): number {
   const options = KELOMPOK_BY_DESA[desa as keyof typeof KELOMPOK_BY_DESA];
@@ -109,117 +90,6 @@ function toCapitalEachWord(value: string | null | undefined): string {
     );
 }
 
-/**
- * Mengubah tanggal menjadi Date lokal tanpa menggeser hari.
- * Tanggal yang tidak dikenali dibiarkan sebagai teks agar tidak
- * diam-diam berubah menjadi tanggal yang berbeda.
- */
-function parseTanggalLahir(
-  value: string | Date | null | undefined,
-): Date | string | null {
-  if (value == null || value === "") return null;
-
-  if (value instanceof Date) {
-    if (Number.isNaN(value.getTime())) return null;
-
-    return new Date(
-      value.getFullYear(),
-      value.getMonth(),
-      value.getDate(),
-      12,
-      0,
-      0,
-    );
-  }
-
-  const input = String(value).trim();
-
-  if (!input) return null;
-
-  let year: number;
-  let month: number;
-  let day: number;
-
-  const isoMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T|\s)/);
-  const dmyMatch = input.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
-
-  if (isoMatch) {
-    year = Number(isoMatch[1]);
-    month = Number(isoMatch[2]);
-    day = Number(isoMatch[3]);
-  } else if (dmyMatch) {
-    day = Number(dmyMatch[1]);
-    month = Number(dmyMatch[2]);
-    year = Number(dmyMatch[3]);
-  } else {
-    return input;
-  }
-
-  const date = new Date(year, month - 1, day, 12, 0, 0);
-
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
-    return input;
-  }
-
-  return date;
-}
-
-/**
- * Formula umur:
- * - Mendukung tanggal yang disimpan sebagai angka tanggal Excel.
- * - Mendukung teks "12 Januari 2017", "5 Februari 2016",
- *   dan nama bulan Indonesia lainnya.
- * - Mendukung teks DD-MM-YYYY dan DD/MM/YYYY.
- * - Menghasilkan 0 jika tanggal kosong atau tidak valid.
- *
- * Formula ini menggunakan fungsi Excel standar.
- */
-function getAgeFormula(rowNumber: number): string {
-  const cell = `G${rowNumber}`;
-  const text = `TRIM(${cell}&"")`;
-
-  const firstSpace = `FIND(" ",${text}&" ")`;
-
-  const secondSpace = `FIND(" ",${text}&" ",${firstSpace}+1)`;
-
-  const dayFromText = `VALUE(LEFT(${text},${firstSpace}-1))`;
-
-  const monthFromText = `LOWER(MID(${text},${firstSpace}+1,${secondSpace}-${firstSpace}-1))`;
-
-  const yearFromText = `VALUE(RIGHT(${text},4))`;
-
-  const monthNumber =
-    `MATCH(${monthFromText},` +
-    `{"januari","februari","maret","april","mei","juni",` +
-    `"juli","agustus","september","oktober","november","desember"},0)`;
-
-  const indonesianTextDate = `DATE(${yearFromText},${monthNumber},${dayFromText})`;
-
-  // Mendukung teks DD-MM-YYYY atau DD/MM/YYYY.
-  const separatorPosition = `IFERROR(FIND("-",${text}),IFERROR(FIND("/",${text}),0))`;
-
-  const numericTextDate =
-    `DATE(VALUE(RIGHT(${text},4)),` +
-    `VALUE(MID(${text},${separatorPosition}+1,` +
-    `FIND(MID(${text},${separatorPosition},1),${text},` +
-    `${separatorPosition}+1)-${separatorPosition}-1)),` +
-    `VALUE(LEFT(${text},${separatorPosition}-1)))`;
-
-  const parsedTextDate = `IFERROR(${indonesianTextDate},${numericTextDate})`;
-
-  return (
-    `IF(${text}="",0,IFERROR(` +
-    `IF(ISNUMBER(${cell}),` +
-    `IF(OR(${cell}>TODAY(),${cell}<=0),0,DATEDIF(${cell},TODAY(),"Y")),` +
-    `IF(${parsedTextDate}>TODAY(),0,` +
-    `DATEDIF(${parsedTextDate},TODAY(),"Y"))),0))`
-  );
-}
-
 function getTimestamp(): string {
   const now = new Date();
 
@@ -247,7 +117,7 @@ function setCellAlignment(
 
 function applyDataValidation(
   sheet: ExcelJS.Worksheet,
-  column: "E" | "K",
+  column: "E" | "J",
   values: readonly string[],
   promptTitle: string,
   prompt: string,
@@ -309,14 +179,10 @@ export async function exportPresensiExcel({
     { key: "nama", width: 30 },
     { key: "jenis_kelamin", width: 18 },
     { key: "tempat", width: 18 },
-    { key: "tanggal_lahir", width: 24 },
-    { key: "umur", width: 10 },
+    { key: "tahun_lahir", width: 14 },
     { key: "no_hp", width: 18 },
     { key: "pekerjaan", width: 22 },
     { key: "kelas", width: 18 },
-    { key: "nama_ayah", width: 28 },
-    { key: "nama_ibu", width: 28 },
-    { key: "no_hp_ortu", width: 20 },
     { key: "alamat", width: 38 },
   ];
 
@@ -347,16 +213,10 @@ export async function exportPresensiExcel({
       toCapitalEachWord(item.nama),
       item.jenis_kelamin ?? "",
       item.tempat_lahir ?? "",
-      parseTanggalLahir(item.tanggal_lahir),
-      {
-        formula: getAgeFormula(rowNumber),
-      },
+      item.tahun_lahir !== null ? item.tahun_lahir : "",
       item.no_hp == null ? "" : String(item.no_hp),
       item.pekerjaan ?? "",
       item.kelas ?? "",
-      item.nama_ayah ?? "",
-      item.nama_ibu ?? "",
-      item.no_hp_ortu == null ? "" : String(item.no_hp_ortu),
       item.alamat ?? "",
     ]);
 
@@ -371,7 +231,7 @@ export async function exportPresensiExcel({
 
       cell.border = BORDER_STYLE;
 
-      const leftAlignedColumns = [4, 12, 13, 15];
+      const leftAlignedColumns = [4, 11];
 
       setCellAlignment(
         cell,
@@ -379,10 +239,8 @@ export async function exportPresensiExcel({
       );
     });
 
-    row.getCell(7).numFmt = "[$-id-ID]dd mmmm yyyy";
-    row.getCell(8).numFmt = "0";
-    row.getCell(9).numFmt = "@";
-    row.getCell(14).numFmt = "@";
+    row.getCell(7).numFmt = "0";
+    row.getCell(8).numFmt = "@";
   });
 
   applyDataValidation(
@@ -395,7 +253,7 @@ export async function exportPresensiExcel({
 
   applyDataValidation(
     sheet,
-    "K",
+    "J",
     KELAS_OPTIONS,
     "Kelas",
     "Pilih kelas dari daftar yang tersedia.",
@@ -403,7 +261,7 @@ export async function exportPresensiExcel({
 
   sheet.autoFilter = {
     from: "A1",
-    to: `O${Math.max(sorted.length + 1, 1)}`,
+    to: `K${Math.max(sorted.length + 1, 1)}`,
   };
 
   const buffer = await workbook.xlsx.writeBuffer();

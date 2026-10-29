@@ -5,14 +5,10 @@ export type Mudamudi = {
   nama: string;
   jenis_kelamin: string | null;
   tempat_lahir: string | null;
-  tanggal_lahir: string | null;
-  umur: number | null;
+  tahun_lahir: number | null;
   no_hp: string | null;
   pekerjaan: string | null;
   kelas: string;
-  nama_ayah: string | null;
-  nama_ibu: string | null;
-  no_hp_ortu: string | null;
   alamat: string | null;
   qr_id: string;
   created_at: string;
@@ -30,14 +26,10 @@ export type FieldErrors = {
   nama?: string;
   jenis_kelamin?: string;
   tempat_lahir?: string;
-  tanggal_lahir?: string;
-  umur?: string;
+  tahun_lahir?: string;
   no_hp?: string;
   pekerjaan?: string;
   kelas?: string;
-  nama_ayah?: string;
-  nama_ibu?: string;
-  no_hp_ortu?: string;
   alamat?: string;
 };
 
@@ -47,7 +39,7 @@ export type SortKey =
   | "nama"
   | "kelas"
   | "jenis_kelamin"
-  | "umur"
+  | "tahun_lahir"
   | "created_at";
 
 export type SortConfig = {

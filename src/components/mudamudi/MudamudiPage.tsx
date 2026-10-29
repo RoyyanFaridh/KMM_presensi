@@ -148,7 +148,7 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
     const kelas = String(formData.get("kelas") ?? "");
     const kelompok = String(formData.get("kelompok") ?? "");
     const jenisKelamin = String(formData.get("jenis_kelamin") ?? "");
-    const tanggalLahir = String(formData.get("tanggal_lahir") ?? "");
+    const tahunLahir = String(formData.get("tahun_lahir") ?? "");
 
     const errors = validateClient(
       nama,
@@ -156,7 +156,7 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
       kelas,
       kelompok,
       jenisKelamin,
-      tanggalLahir,
+      tahunLahir,
     );
 
     setFieldErrors(errors);
@@ -191,7 +191,7 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
     const kelas = String(formData.get("kelas") ?? "");
     const kelompok = String(formData.get("kelompok") ?? "");
     const jenisKelamin = String(formData.get("jenis_kelamin") ?? "");
-    const tanggalLahir = String(formData.get("tanggal_lahir") ?? "");
+    const tahunLahir = String(formData.get("tahun_lahir") ?? "");
 
     const errors = validateClient(
       nama,
@@ -199,7 +199,7 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
       kelas,
       kelompok,
       jenisKelamin,
-      tanggalLahir,
+      tahunLahir,
     );
 
     setFieldErrors(errors);

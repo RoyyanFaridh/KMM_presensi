@@ -20,43 +20,11 @@ type Props = {
   onClose: () => void;
 };
 
-function calculateAge(tanggalLahir: string): number | null {
-  if (!tanggalLahir) return null;
+function calculateKelas(tahunLahir: number | null): string {
+  if (tahunLahir === null) return "";
 
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(tanggalLahir);
-
-  if (!match) return null;
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const birthDate = new Date(year, month - 1, day);
-
-  if (
-    birthDate.getFullYear() !== year ||
-    birthDate.getMonth() !== month - 1 ||
-    birthDate.getDate() !== day
-  ) {
-    return null;
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  if (birthDate > today) return null;
-
-  let age = today.getFullYear() - year;
-  const monthDifference = today.getMonth() - (month - 1);
-
-  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < day)) {
-    age--;
-  }
-
-  return age >= 0 ? age : null;
-}
-
-function calculateKelas(umur: number | null): string {
-  if (umur === null) return "";
+  const currentYear = new Date().getFullYear();
+  const umur = currentYear - tahunLahir;
 
   if (umur >= 5 && umur <= 6) return "PAUD";
   if (umur >= 7 && umur <= 12) return "Caberawit";
@@ -79,13 +47,10 @@ export default function MudamudiFormModal({
   const isAdminDesa = adminDesa !== null;
 
   const [desa, setDesa] = useState(adminDesa ?? initialData?.desa ?? "");
-  const [tanggalLahir, setTanggalLahir] = useState(
-    initialData?.tanggal_lahir ?? "",
+  const [tahunLahirRaw, setTahunLahirRaw] = useState(
+    initialData?.tahun_lahir != null ? String(initialData.tahun_lahir) : "",
   );
   const [kelompok, setKelompok] = useState(initialData?.kelompok ?? "");
-  const [umurManual, setUmurManual] = useState(
-    initialData?.umur == null ? "" : String(initialData.umur),
-  );
   const [kelasManual, setKelasManual] = useState(initialData?.kelas ?? "");
 
   useEffect(() => {
@@ -106,25 +71,17 @@ export default function MudamudiFormModal({
     }
   }, [desa]);
 
-  const tanggalLahirTerisi = tanggalLahir !== "";
-  const umurOtomatis = calculateAge(tanggalLahir);
-  const kelasOtomatis = calculateKelas(umurOtomatis);
-  const kelasOtomatisTersedia = tanggalLahirTerisi && kelasOtomatis !== "";
-
-  const umur = tanggalLahirTerisi
-    ? umurOtomatis == null
-      ? ""
-      : String(umurOtomatis)
-    : umurManual;
+  const tahunLahir =
+    tahunLahirRaw.trim() !== "" ? Number(tahunLahirRaw.trim()) : null;
+  const kelasOtomatis = calculateKelas(tahunLahir);
+  const kelasOtomatisTersedia =
+    tahunLahir !== null &&
+    !Number.isNaN(tahunLahir) &&
+    kelasOtomatis !== "";
 
   const kelas = kelasOtomatisTersedia ? kelasOtomatis : kelasManual;
 
-  const today = new Date();
-  const maxTanggalLahir = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
-  ].join("-");
+  const currentYear = new Date().getFullYear();
 
   const inputClass =
     "h-9.75 w-full rounded-lg border border-gray-200 bg-white px-3 text-[11px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-50";
@@ -401,72 +358,45 @@ export default function MudamudiFormModal({
             </div>
           </div>
 
-          <div>
-            <label htmlFor="tanggal_lahir" className={labelClass}>
-              Tanggal Lahir{" "}
-              <span className="font-normal text-gray-400">(Opsional)</span>
-            </label>
-            <input
-              id="tanggal_lahir"
-              name="tanggal_lahir"
-              type="date"
-              max={maxTanggalLahir}
-              value={tanggalLahir}
-              onChange={(e) => {
-                const value = e.target.value;
-                setTanggalLahir(value);
-
-                const calculatedAge = calculateAge(value);
-                const calculatedClass = calculateKelas(calculatedAge);
-
-                if (value && calculatedClass) {
-                  setKelasManual(calculatedClass);
-                }
-              }}
-              className={`${inputClass} ${
-                fieldErrors.tanggal_lahir ? "border-red-300" : ""
-              }`}
-            />
-            {fieldErrors.tanggal_lahir && (
-              <p className="mt-1 text-[10px] text-red-500">
-                {fieldErrors.tanggal_lahir}
-              </p>
-            )}
-            <p className={helperClass}>
-              {tanggalLahirTerisi
-                ? kelasOtomatisTersedia
-                  ? "Umur dan kelas dihitung otomatis dari tanggal lahir."
-                  : "Umur belum dapat menentukan kelas secara otomatis. Silakan pilih kelas."
-                : "Kosongkan jika tanggal lahir tidak diketahui."}
-            </p>
-          </div>
-
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="umur" className={labelClass}>
-                Umur{" "}
+              <label htmlFor="tahun_lahir" className={labelClass}>
+                Tahun Lahir{" "}
                 <span className="font-normal text-gray-400">(Opsional)</span>
               </label>
               <input
-                id="umur"
-                name="umur"
+                id="tahun_lahir"
+                name="tahun_lahir"
                 type="number"
-                min="0"
+                min="1900"
+                max={currentYear}
                 step="1"
-                value={umur}
-                onChange={(e) => setUmurManual(e.target.value)}
-                readOnly={tanggalLahirTerisi}
-                placeholder="Masukkan umur"
+                value={tahunLahirRaw}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setTahunLahirRaw(val);
+
+                  const parsed = val.trim() !== "" ? Number(val.trim()) : null;
+                  const calculatedClass = calculateKelas(parsed);
+
+                  if (parsed !== null && calculatedClass) {
+                    setKelasManual(calculatedClass);
+                  }
+                }}
+                placeholder={`Contoh: ${currentYear - 20}`}
                 className={`${inputClass} ${
-                  tanggalLahirTerisi
-                    ? "cursor-not-allowed bg-gray-50 text-gray-500"
-                    : ""
+                  fieldErrors.tahun_lahir ? "border-red-300" : ""
                 }`}
               />
+              {fieldErrors.tahun_lahir && (
+                <p className="mt-1 text-[10px] text-red-500">
+                  {fieldErrors.tahun_lahir}
+                </p>
+              )}
               <p className={helperClass}>
-                {tanggalLahirTerisi
-                  ? "Dihitung dari tanggal lahir."
-                  : "Isi umur dalam tahun jika diketahui."}
+                {kelasOtomatisTersedia
+                  ? "Kelas diisi otomatis dari tahun lahir."
+                  : "Kosongkan jika tahun lahir tidak diketahui."}
               </p>
             </div>
 
@@ -576,80 +506,6 @@ export default function MudamudiFormModal({
                 {fieldErrors.alamat}
               </p>
             )}
-          </div>
-
-          <div className="border-t border-gray-100 pt-4">
-            <h3 className="mb-3 text-[11px] font-semibold text-gray-700">
-              Data Orang Tua
-            </h3>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="nama_ayah" className={labelClass}>
-                    Nama Ayah
-                  </label>
-                  <input
-                    id="nama_ayah"
-                    name="nama_ayah"
-                    type="text"
-                    placeholder="Masukkan nama ayah"
-                    defaultValue={initialData?.nama_ayah ?? ""}
-                    className={`${inputClass} ${
-                      fieldErrors.nama_ayah ? "border-red-300" : ""
-                    }`}
-                  />
-                  {fieldErrors.nama_ayah && (
-                    <p className="mt-1 text-[10px] text-red-500">
-                      {fieldErrors.nama_ayah}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="nama_ibu" className={labelClass}>
-                    Nama Ibu
-                  </label>
-                  <input
-                    id="nama_ibu"
-                    name="nama_ibu"
-                    type="text"
-                    placeholder="Masukkan nama ibu"
-                    defaultValue={initialData?.nama_ibu ?? ""}
-                    className={`${inputClass} ${
-                      fieldErrors.nama_ibu ? "border-red-300" : ""
-                    }`}
-                  />
-                  {fieldErrors.nama_ibu && (
-                    <p className="mt-1 text-[10px] text-red-500">
-                      {fieldErrors.nama_ibu}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="no_hp_ortu" className={labelClass}>
-                  No. HP Orang Tua
-                </label>
-                <input
-                  id="no_hp_ortu"
-                  name="no_hp_ortu"
-                  type="tel"
-                  inputMode="numeric"
-                  placeholder="Masukkan nomor HP orang tua"
-                  defaultValue={initialData?.no_hp_ortu ?? ""}
-                  className={`${inputClass} ${
-                    fieldErrors.no_hp_ortu ? "border-red-300" : ""
-                  }`}
-                />
-                {fieldErrors.no_hp_ortu && (
-                  <p className="mt-1 text-[10px] text-red-500">
-                    {fieldErrors.no_hp_ortu}
-                  </p>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 

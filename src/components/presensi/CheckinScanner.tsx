@@ -35,7 +35,7 @@ type Mudamudi = {
   kelompok: string;
   kelas: string;
   jenis_kelamin: string | null;
-  tanggal_lahir: string | null;
+  tahun_lahir: number | null;
 };
 
 type ScanResult =

@@ -1,3 +1,4 @@
+
 "use client";
 
 type Props = {
@@ -28,7 +29,7 @@ function SummaryCard({
   const safePercentage = Math.min(100, Math.max(0, percentage));
 
   return (
-    <article className="min-w-0 rounded-xl border border-gray-200/80 bg-white px-2.5 py-2.5 shadow-sm transition-colors hover:border-gray-300 sm:px-3 sm:py-3">
+    <article className="min-w-0 rounded-xl border border-gray-200/80 bg-white px-2.5 py-2.5 shadow-xs transition-colors hover:border-gray-300 sm:px-3 sm:py-3">
       <div className="flex min-w-0 items-center gap-1.5">
         <span
           className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}`}
@@ -44,12 +45,12 @@ function SummaryCard({
       </div>
 
       <p
-        className={`mt-2.5 text-lg font-bold leading-tight tracking-tight text-gray-900 ${valueClass}`}
+        className={`mt-2 text-lg font-bold leading-tight tracking-tight text-gray-900 ${valueClass}`}
       >
         {value.toLocaleString("id-ID")}
       </p>
 
-      <div className="mt-2.5 flex items-center gap-2">
+      <div className="mt-2 flex items-center gap-2">
         <div
           className="h-1 flex-1 overflow-hidden rounded-full bg-gray-100"
           role="progressbar"
@@ -65,7 +66,7 @@ function SummaryCard({
         </div>
 
         <span className="shrink-0 text-[10px] font-semibold tabular-nums text-gray-500">
-          {percentage.toLocaleString("id-ID", {
+          {safePercentage.toLocaleString("id-ID", {
             maximumFractionDigits: 1,
           })}
           %
@@ -91,14 +92,7 @@ export default function MonitoringSummary({
     return (value / safeTotal) * 100;
   }
 
-  const cards: SummaryCardProps[] = [
-    {
-      label: "Total Peserta",
-      value: totalPeserta,
-      percentage: safeTotal > 0 ? 100 : 0,
-      valueClass: "text-gray-900",
-      dotClass: "bg-gray-400",
-    },
+  const statusCards: SummaryCardProps[] = [
     {
       label: "Hadir",
       value: totalHadir,
@@ -134,46 +128,46 @@ export default function MonitoringSummary({
       valueClass: "text-red-600",
       dotClass: "bg-red-500",
     },
-    {
-      label: "Belum Hadir",
-      value: totalBelumHadir,
-      percentage: getPercentage(totalBelumHadir),
-      valueClass: "text-slate-700",
-      dotClass: "bg-slate-400",
-    },
   ];
 
+  const belumHadirCard: SummaryCardProps = {
+    label: "Belum Hadir",
+    value: totalBelumHadir,
+    percentage: getPercentage(totalBelumHadir),
+    valueClass: "text-slate-700",
+    dotClass: "bg-slate-400",
+  };
+
   return (
-    <section aria-label="Ringkasan presensi" className="min-w-0">
-      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="text-[13px] font-semibold tracking-tight text-gray-900 sm:text-sm">
-            Statistik Kehadiran
-          </h2>
+    <section
+      aria-label="Ringkasan presensi"
+      className="min-w-0 space-y-2.5"
+    >
+      {/* Baris pertama: Total Muda-Mudi dan Belum Hadir */}
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        <SummaryCard
+          label="Total Muda-Mudi"
+          value={totalPeserta}
+          percentage={safeTotal > 0 ? 100 : 0}
+          valueClass="text-gray-900"
+          dotClass="bg-teal-600"
+        />
 
-          <p className="mt-0.5 text-[10px] text-gray-500 sm:text-[11px]">
-            Rekap status presensi peserta.
-          </p>
+        <div className="hidden sm:block">
+          <SummaryCard {...belumHadirCard} />
         </div>
-
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-teal-50 px-2 py-1 text-[10px] font-semibold text-teal-700">
-          <span
-            className="h-1.5 w-1.5 rounded-full bg-teal-500"
-            aria-hidden="true"
-          />
-          {safeTotal.toLocaleString("id-ID")} peserta
-        </span>
       </div>
 
-      <div className="grid grid-cols-3 gap-2.5 xl:grid-cols-7">
-        {cards.map((card, index) => (
-          <div
-            key={card.label}
-            className={index === 0 ? "col-span-3 xl:col-span-1" : ""}
-          >
-            <SummaryCard {...card} />
-          </div>
+      {/* Baris kedua: lima statistik dengan lebar sama */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
+        {statusCards.map((card) => (
+          <SummaryCard key={card.label} {...card} />
         ))}
+
+        {/* Belum Hadir tetap tampil di mobile */}
+        <div className="sm:hidden">
+          <SummaryCard {...belumHadirCard} />
+        </div>
       </div>
     </section>
   );
