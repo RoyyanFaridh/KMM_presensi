@@ -1,3 +1,5 @@
+"use client";
+
 import { Mudamudi } from "../../backend/mudamudi/types";
 import {
   toTitleCase,
@@ -23,11 +25,11 @@ export default function DetailModal({ data, onClose }: Props) {
     value: string | number | null;
   }) {
     return (
-      <div>
-        <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">
+      <div className="min-w-0">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.05em] text-gray-400">
           {label}
         </p>
-        <p className="mt-1 text-[11px] leading-4 text-gray-700">
+        <p className="mt-1 wrap-break-word text-[10px] font-medium leading-4 text-gray-800">
           {value ?? "-"}
         </p>
       </div>
@@ -35,25 +37,25 @@ export default function DetailModal({ data, onClose }: Props) {
   }
 
   return (
-    <ModalWrapper onClose={onClose}>
-      <div className="max-h-[90vh] w-full max-w-150 overflow-hidden rounded-2xl bg-white shadow-xl">
+    <ModalWrapper onClose={onClose} size="md">
+      <div className="flex max-h-[90dvh] min-h-0 w-full flex-col overflow-hidden bg-white">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <div className="flex items-center gap-3">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 sm:px-5">
+          <div className="flex min-w-0 items-center gap-2.5">
             <div
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[10px] font-medium text-white ring-2 ${avatarColor.ring}`}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-medium text-white ring-2 ${avatarColor.ring}`}
               style={{ backgroundColor: avatarColor.bg }}
             >
               {getInitials(data.nama)}
             </div>
 
             <div className="min-w-0">
-              <h2 className="truncate text-[15px] font-semibold text-gray-800">
+              <h2 className="truncate text-[11px] font-semibold leading-5 text-gray-900">
                 {toTitleCase(data.nama)}
               </h2>
 
-              <p className="mt-0.5 text-[10px] text-gray-500">
-                Detail Data Mudamudi
+              <p className="mt-0.5 text-[9px] leading-4 text-gray-500">
+                Detail Data Generus
               </p>
             </div>
           </div>
@@ -62,10 +64,9 @@ export default function DetailModal({ data, onClose }: Props) {
             type="button"
             onClick={onClose}
             aria-label="Tutup"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
           >
             <svg
-              xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -79,47 +80,45 @@ export default function DetailModal({ data, onClose }: Props) {
               />
             </svg>
           </button>
-        </div>
+        </header>
 
         {/* Content */}
-        <div className="max-h-[calc(90vh-130px)] overflow-y-auto px-5 py-5">
-          <section>
-            <h3 className="text-[11px] font-semibold text-gray-800">
-              Informasi Utama
-            </h3>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
+          <section className="rounded-xl border border-gray-200/90 bg-gray-50/40 p-3.5">
+            <div className="mb-2.5 flex items-center justify-between">
+              <h3 className="text-[10px] font-semibold tracking-tight text-gray-800">
+                Wilayah & Status
+              </h3>
+              <span
+                className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-medium ${getKelasBadgeClass(
+                  data.kelas,
+                )}`}
+              >
+                {data.kelas}
+              </span>
+            </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <DetailItem label="Desa" value={data.desa} />
-
               <DetailItem label="Kelompok" value={data.kelompok} />
-
               <DetailItem label="Jenis Kelamin" value={data.jenis_kelamin} />
-
-              <DetailItem label="Kelas" value={data.kelas} />
             </div>
           </section>
 
-          <div className="my-5 border-t border-gray-100" />
-
-          <section>
-            <h3 className="text-[11px] font-semibold text-gray-800">
-              Data Pribadi
+          <section className="rounded-xl border border-gray-200/90 bg-white p-3.5">
+            <h3 className="mb-2.5 text-[10px] font-semibold tracking-tight text-gray-800">
+              Informasi Pribadi
             </h3>
 
-            <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-              <DetailItem label="Nama" value={toTitleCase(data.nama)} />
-
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <DetailItem label="Nama Lengkap" value={toTitleCase(data.nama)} />
               <DetailItem label="Tempat Lahir" value={data.tempat_lahir} />
-
               <DetailItem
                 label="Tahun Lahir"
                 value={data.tahun_lahir !== null ? String(data.tahun_lahir) : null}
               />
-
               <DetailItem label="No. HP" value={data.no_hp} />
-
               <DetailItem label="Pekerjaan" value={data.pekerjaan} />
-
               <div className="col-span-2 sm:col-span-3">
                 <DetailItem label="Alamat" value={data.alamat} />
               </div>
@@ -128,15 +127,15 @@ export default function DetailModal({ data, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end border-t border-gray-100 bg-gray-50/50 px-5 py-3.5">
+        <footer className="flex shrink-0 items-center justify-end border-t border-gray-100 bg-gray-50/60 px-4 py-3 sm:px-5">
           <button
             type="button"
             onClick={onClose}
-            className="h-9 rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-medium text-gray-600 transition hover:bg-gray-50"
+            className="inline-flex min-h-9 items-center justify-center rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-[9px] font-semibold text-gray-600 transition hover:bg-gray-50 active:scale-[0.98]"
           >
             Tutup
           </button>
-        </div>
+        </footer>
       </div>
     </ModalWrapper>
   );

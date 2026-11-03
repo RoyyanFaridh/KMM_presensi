@@ -33,7 +33,7 @@ export default function MonitoringDetailModal({ peserta, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm sm:px-6 sm:py-10"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8 backdrop-blur-xs sm:px-6 sm:py-10"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
@@ -41,7 +41,7 @@ export default function MonitoringDetailModal({ peserta, onClose }: Props) {
       }}
     >
       <div
-        className="w-full min-w-0 max-w-md max-h-[82dvh] overflow-hidden rounded-xl bg-white shadow-2xl"
+        className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="monitoring-detail-title"
@@ -50,7 +50,7 @@ export default function MonitoringDetailModal({ peserta, onClose }: Props) {
         {/* HEADER */}
         <div className="flex shrink-0 items-start justify-between border-b border-gray-100 px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-50 text-teal-600">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-700">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -72,13 +72,13 @@ export default function MonitoringDetailModal({ peserta, onClose }: Props) {
             <div className="min-w-0">
               <h2
                 id="monitoring-detail-title"
-                className="text-[14px] font-semibold leading-5 text-gray-800"
+                className="text-[11px] font-semibold tracking-tight text-gray-800"
               >
                 Detail Presensi
               </h2>
 
-              <p className="mt-0.5 truncate text-[10px] leading-4 text-gray-400">
-                Informasi presensi peserta
+              <p className="text-[9px] leading-3.5 text-gray-400">
+                Informasi presensi peserta kegiatan
               </p>
             </div>
           </div>
@@ -87,7 +87,7 @@ export default function MonitoringDetailModal({ peserta, onClose }: Props) {
             type="button"
             onClick={onClose}
             aria-label="Tutup"
-            className="ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            className="ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -108,27 +108,27 @@ export default function MonitoringDetailModal({ peserta, onClose }: Props) {
         </div>
 
         {/* CONTENT */}
-        <div className="max-h-[68dvh] space-y-4 overflow-y-auto px-5 py-5">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5">
           {/* PESERTA */}
           <section>
-            <div className="mb-3">
-              <h3 className="text-[11px] font-semibold text-gray-700">
+            <div className="mb-2">
+              <h3 className="text-[10px] font-semibold tracking-wide text-gray-700">
                 Informasi Peserta
               </h3>
             </div>
 
-            <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-3">
-              <div className="mb-3">
-                <p className="text-[10px] font-medium text-gray-400">Nama</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/80 p-3">
+              <div className="mb-2.5">
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">Nama</p>
 
-                <p className="mt-0.5 wrap-break-word text-[12px] font-semibold text-gray-800">
+                <p className="mt-0.5 wrap-break-word text-[12px] font-bold text-gray-800">
                   {peserta.nama}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-medium text-gray-400">Desa</p>
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">Desa</p>
 
                   <p className="mt-0.5 truncate text-[11px] font-medium text-gray-700">
                     {peserta.desa}
@@ -136,7 +136,7 @@ export default function MonitoringDetailModal({ peserta, onClose }: Props) {
                 </div>
 
                 <div className="min-w-0">
-                  <p className="text-[10px] font-medium text-gray-400">
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">
                     Kelompok
                   </p>
 
@@ -146,7 +146,7 @@ export default function MonitoringDetailModal({ peserta, onClose }: Props) {
                 </div>
 
                 <div className="min-w-0">
-                  <p className="text-[10px] font-medium text-gray-400">Kelas</p>
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">Kelas</p>
 
                   <p className="mt-0.5 truncate text-[11px] font-medium text-gray-700">
                     {peserta.kelas}
@@ -154,7 +154,7 @@ export default function MonitoringDetailModal({ peserta, onClose }: Props) {
                 </div>
 
                 <div className="min-w-0">
-                  <p className="text-[10px] font-medium text-gray-400">
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">
                     Status
                   </p>
 
@@ -168,46 +168,48 @@ export default function MonitoringDetailModal({ peserta, onClose }: Props) {
 
           {/* DETAIL PRESENSI */}
           <section>
-            <div className="mb-3">
-              <h3 className="text-[11px] font-semibold text-gray-700">
+            <div className="mb-2">
+              <h3 className="text-[10px] font-semibold tracking-wide text-gray-700">
                 Detail Presensi
               </h3>
             </div>
 
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              <div>
-                <p className="text-[10px] font-medium text-gray-400">Metode</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/80 p-3">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                <div>
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">Metode</p>
 
-                <p className="mt-0.5 text-[11px] font-medium text-gray-700">
-                  {peserta.metode === "qr"
-                    ? "QR"
-                    : peserta.metode === "manual"
-                      ? "Manual"
-                      : "-"}
-                </p>
-              </div>
+                  <p className="mt-0.5 text-[11px] font-medium text-gray-700">
+                    {peserta.metode === "qr"
+                      ? "QR"
+                      : peserta.metode === "manual"
+                        ? "Manual"
+                        : "-"}
+                  </p>
+                </div>
 
-              <div>
-                <p className="text-[10px] font-medium text-gray-400">
-                  Waktu Check-in
-                </p>
+                <div>
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">
+                    Waktu Check-in
+                  </p>
 
-                <p className="mt-0.5 text-[11px] font-medium text-gray-700">
-                  {formatWaktuCheckin(peserta.waktu_checkin)}
-                </p>
+                  <p className="mt-0.5 text-[11px] font-medium text-gray-700">
+                    {formatWaktuCheckin(peserta.waktu_checkin)}
+                  </p>
+                </div>
               </div>
             </div>
           </section>
 
           {/* KETERANGAN */}
-          <section className="border-t border-gray-100 pt-4">
-            <div className="mb-2">
-              <p className="text-[10px] font-medium text-gray-400">
+          <section className="border-t border-gray-100 pt-3">
+            <div className="mb-1.5">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">
                 Keterangan
               </p>
             </div>
 
-            <div className="rounded-lg bg-gray-50 px-3 py-2.5">
+            <div className="rounded-xl border border-gray-100 bg-gray-50/80 p-3">
               <p className="wrap-break-word text-[11px] leading-relaxed text-gray-700">
                 {peserta.keterangan || "Tidak ada keterangan."}
               </p>

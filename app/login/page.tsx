@@ -43,7 +43,7 @@ export default function LoginPage() {
         <div className="overflow-hidden rounded-2xl border border-gray-200/90 bg-white/45 shadow-[0_12px_40px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl">
           <div className="px-5 pb-5 pt-6">
             <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-teal-600">
-              SIKEMA
+              GENARA
             </p>
 
             <h1 className="mt-1 text-lg font-semibold tracking-tight text-gray-900">
@@ -51,7 +51,7 @@ export default function LoginPage() {
             </h1>
 
             <p className="mt-1 text-[10px] leading-4 text-gray-400">
-              Masuk untuk mengelola kegiatan, Muda Mudi,
+              Masuk untuk mengelola kegiatan, Generus,
               dan presensi.
             </p>
           </div>
@@ -244,7 +244,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-1 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-teal-600 text-[11px] font-medium text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-1 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-teal-700 text-[11px] font-semibold text-white shadow-xs transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -272,13 +272,13 @@ export default function LoginPage() {
 
           <div className="border-t border-gray-200/70 bg-white/30 px-5 py-3">
             <p className="text-center text-[9px] text-gray-400">
-              Sistem Informasi Kegiatan dan Muda Mudi
+              Generus Administrasi dan Presensi
             </p>
           </div>
         </div>
 
         <p className="mt-3 text-center text-[9px] text-gray-400">
-          SIKEMA
+          GENARA
         </p>
       </div>
     </main>

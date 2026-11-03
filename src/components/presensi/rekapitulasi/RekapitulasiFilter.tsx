@@ -138,12 +138,12 @@ export default function RekapitulasiFilter({
   return (
     <section className="mb-2 space-y-2">
       {/* Filter utama */}
-      <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
+      <div className="rounded-xl border border-gray-200/90 bg-white p-3.5 sm:p-4 shadow-xs">
         <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_32px] items-end gap-x-3 gap-y-3 lg:grid-cols-[minmax(180px,1.35fr)_minmax(140px,0.8fr)_minmax(170px,1fr)_auto] lg:gap-x-4 lg:gap-y-3">
           {/* Pencarian */}
           <div className="col-span-3 min-w-0 lg:col-span-1">
             <label htmlFor="rekap-search" className={LABEL_CLASS}>
-              Cari Muda-Mudi
+              Cari Generus
             </label>
 
             <div className="relative">
@@ -161,12 +161,32 @@ export default function RekapitulasiFilter({
 
               <input
                 id="rekap-search"
-                type="search"
+                type="text"
                 value={search}
                 onChange={(event) => onSearchChange(event.target.value)}
-                placeholder="Cari nama peserta..."
-                className={`${CONTROL_CLASS} pl-8`}
+                placeholder="Cari nama Generus..."
+                className={`${CONTROL_CLASS} pl-8 pr-7`}
               />
+
+              {search.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange("")}
+                  aria-label="Hapus pencarian"
+                  className="absolute right-2 top-1/2 flex h-4.5 w-4.5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="h-2.5 w-2.5"
+                  >
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
 
@@ -264,15 +284,77 @@ export default function RekapitulasiFilter({
           </button>
         </div>
 
-        {/* Reset filter */}
-        {hasActiveFilter && (
-          <div className="mt-2 flex justify-end">
+        {/* Active chips / Reset filter */}
+        {(hasActiveFilter || search.trim().length > 0) && (
+          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] font-medium text-gray-400 mr-0.5">
+                Filter aktif:
+              </span>
+
+              {search.trim().length > 0 && (
+                <span className="inline-flex items-center gap-1 rounded border border-teal-100 bg-teal-50 px-1.5 py-0.5 text-[10px] text-teal-700">
+                  <span>Cari: &ldquo;{search}&rdquo;</span>
+                  <button
+                    type="button"
+                    onClick={() => onSearchChange("")}
+                    className="font-bold hover:text-teal-900 ml-0.5"
+                    title="Hapus pencarian"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+
+              {isSuperAdmin && selectedDesa && (
+                <span className="inline-flex items-center gap-1 rounded border border-teal-100 bg-teal-50 px-1.5 py-0.5 text-[10px] text-teal-700">
+                  <span>Desa: {selectedDesa}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleDesaChange("")}
+                    className="font-bold hover:text-teal-900 ml-0.5"
+                    title="Hapus filter desa"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+
+              {selectedKelompok && (
+                <span className="inline-flex items-center gap-1 rounded border border-teal-100 bg-teal-50 px-1.5 py-0.5 text-[10px] text-teal-700">
+                  <span>Kelompok: {selectedKelompok}</span>
+                  <button
+                    type="button"
+                    onClick={() => onKelompokChange("")}
+                    className="font-bold hover:text-teal-900 ml-0.5"
+                    title="Hapus filter kelompok"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+
+              {selectedKelas && (
+                <span className="inline-flex items-center gap-1 rounded border border-teal-100 bg-teal-50 px-1.5 py-0.5 text-[10px] text-teal-700">
+                  <span>Kelas: {selectedKelas}</span>
+                  <button
+                    type="button"
+                    onClick={() => onKelasChange("")}
+                    className="font-bold hover:text-teal-900 ml-0.5"
+                    title="Hapus filter kelas"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={handleReset}
-              className="px-1 py-0.5 text-[10px] font-medium text-teal-700 hover:text-teal-900"
+              className="text-[10px] font-medium text-red-600 hover:text-red-700 transition"
             >
-              Reset filter lanjutan
+              Reset filter
             </button>
           </div>
         )}

@@ -135,7 +135,7 @@ export default function NestedBarChart({
                             <button
                               key={key}
                               type="button"
-                              aria-label={`${kelompok.label}, ${desa.label}: ${kelompok.jumlah} muda-mudi`}
+                              aria-label={`${kelompok.label}, ${desa.label}: ${kelompok.jumlah} generus`}
                               className="relative flex h-full min-w-1 max-w-10 flex-1 cursor-pointer items-end outline-none"
                               {...pointerHandlers(key)}
                             >
@@ -168,7 +168,7 @@ export default function NestedBarChart({
                                   </span>
                                   <span className="block tabular-nums">
                                     {kelompok.jumlah.toLocaleString("id-ID")}{" "}
-                                    muda-mudi
+                                    generus
                                   </span>
                                 </span>
                               )}
@@ -189,7 +189,7 @@ export default function NestedBarChart({
 
                     <div
                       className="flex h-10 shrink-0 flex-col justify-center px-1"
-                      title={`${desa.label}: ${desa.jumlah.toLocaleString("id-ID")} muda-mudi`}
+                      title={`${desa.label}: ${desa.jumlah.toLocaleString("id-ID")} generus`}
                     >
                       <p className="truncate text-center text-[11px] font-medium text-gray-700">
                         {desa.label}
@@ -245,7 +245,7 @@ export default function NestedBarChart({
                     <button
                       key={key}
                       type="button"
-                      aria-label={`${kelompok.label}, ${desa.label}: ${kelompok.jumlah} muda-mudi`}
+                      aria-label={`${kelompok.label}, ${desa.label}: ${kelompok.jumlah} generus`}
                       className="relative block h-5 w-full cursor-pointer text-left outline-none sm:h-7"
                       {...pointerHandlers(key)}
                     >
@@ -282,7 +282,7 @@ export default function NestedBarChart({
                             {desa.label}
                           </span>
                           <span className="block tabular-nums">
-                            {kelompok.jumlah.toLocaleString("id-ID")} muda-mudi
+                            {kelompok.jumlah.toLocaleString("id-ID")} generus
                           </span>
                         </span>
                       )}

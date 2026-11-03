@@ -76,27 +76,6 @@ export default function MudamudiTableView({
 
   return (
     <div>
-      <p className="mb-2.5 text-[12px] text-gray-500">
-        Menampilkan{" "}
-        <span className="font-medium text-gray-600">
-          {displayStart}
-          {data.length > 0 && displayEnd !== displayStart
-            ? `–${displayEnd}`
-            : ""}
-        </span>{" "}
-        dari <span className="font-medium text-gray-600">{totalCount}</span>{" "}
-        data
-      </p>
-
-      <MobileList
-        data={paginatedData}
-        onDetail={onDetail}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        onShowQR={onShowQR}
-        startIndex={startIndex}
-      />
-
       <DesktopTable
         data={paginatedData}
         startIndex={startIndex}
@@ -106,6 +85,15 @@ export default function MudamudiTableView({
         onEdit={onEdit}
         onDelete={onDelete}
         onShowQR={onShowQR}
+      />
+
+      <MobileList
+        data={paginatedData}
+        onDetail={onDetail}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onShowQR={onShowQR}
+        startIndex={startIndex}
       />
 
       <Pagination

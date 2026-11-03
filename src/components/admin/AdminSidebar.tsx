@@ -28,7 +28,7 @@ const menuItems = [
     ),
   },
   {
-    label: "Muda Mudi",
+    label: "Generus",
     href: "/admin/mudamudi",
     icon: (
       <svg
@@ -286,21 +286,21 @@ function MenuLinks({ onNavigate }: { onNavigate?: () => void }) {
 function Brand() {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-[11px] font-bold tracking-tight text-white shadow-sm">
-        SK
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-700 text-[11px] font-bold tracking-tight text-white shadow-sm">
+        GN
       </div>
 
       <div className="min-w-0">
         <h1 className="truncate text-[14px] font-semibold tracking-tight text-gray-900">
-          SIKEMA
+          GENARA
         </h1>
 
         <p className="truncate text-[9px] leading-4 text-gray-500">
-          Sistem Informasi Kegiatan
+          Generus Administrasi
         </p>
 
         <p className="truncate text-[9px] leading-3 text-gray-500">
-          dan Muda Mudi
+          dan Presensi
         </p>
       </div>
     </div>
@@ -548,11 +548,11 @@ export default function AdminSidebar() {
 
         <div className="ml-2.5 min-w-0">
           <p className="truncate text-[12px] font-semibold text-gray-900">
-            SIKEMA
+            GENARA
           </p>
 
           <p className="truncate text-[9px] text-gray-500">
-            Panel Administrasi
+            Generus Administrasi & Presensi
           </p>
         </div>
       </header>

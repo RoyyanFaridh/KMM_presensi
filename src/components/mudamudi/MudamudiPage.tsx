@@ -245,17 +245,17 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
         <header className="border-b border-gray-200 pb-5">
           <div className="mb-5">
             <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-teal-600">
-              Muda Mudi
+              Generus
             </p>
 
             <div className="mt-1 flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h1 className="text-xl font-semibold tracking-tight text-gray-900">
-                  Data Muda Mudi
+                  Data Generus
                 </h1>
 
                 <p className="mt-1 max-w-xs text-[10px] leading-4 text-gray-500 sm:max-w-none sm:text-xs">
-                  Kelola data anggota muda mudi yang digunakan untuk presensi.
+                  Kelola data anggota Generus yang digunakan untuk presensi.
                 </p>
               </div>
 
@@ -287,13 +287,13 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
                 <button
                   type="button"
                   onClick={openAddModal}
-                  aria-label="Tambah data"
-                  title="Tambah data"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-teal-600 text-lg font-medium leading-none text-white transition-colors hover:bg-teal-700 active:bg-teal-800 md:h-9 md:w-auto md:px-4 md:text-[11px]"
+                  aria-label="Tambah Generus"
+                  title="Tambah Generus"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-teal-700 text-lg font-medium leading-none text-white shadow-xs transition-colors hover:bg-teal-800 active:bg-teal-900 md:h-9 md:w-auto md:px-4 md:text-[11px]"
                 >
                   <span className="md:hidden">+</span>
 
-                  <span className="hidden md:inline">+ Tambah Data</span>
+                  <span className="hidden md:inline">+ Tambah Generus</span>
                 </button>
               </div>
             </div>

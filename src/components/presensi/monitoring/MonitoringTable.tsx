@@ -68,7 +68,7 @@ function ActionButton({
 }) {
   const styles =
     variant === "edit"
-      ? "border-teal-100 bg-teal-50 text-teal-700 hover:border-teal-200 hover:bg-teal-100"
+      ? "border-teal-100 bg-teal-50 text-teal-700 hover:border-teal-200 hover:bg-teal-100/80"
       : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800";
 
   return (
@@ -77,10 +77,18 @@ function ActionButton({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className={`inline-flex h-7 w-7 items-center justify-center rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 ${styles}`}
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 ${styles}`}
     >
       {children}
     </button>
+  );
+}
+
+function RowNumber({ index }: { index: number }) {
+  return (
+    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-md bg-gray-100 px-1 font-mono text-[9px] font-medium text-gray-500 transition-colors group-hover:bg-teal-50 group-hover:text-teal-700">
+      {index}
+    </span>
   );
 }
 
@@ -132,7 +140,7 @@ function ParticipantAvatar({ nama }: { nama: string }) {
 
   return (
     <div
-      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-[10px] font-semibold text-teal-700 ring-1 ring-teal-100"
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-[10px] font-bold text-teal-700 ring-1 ring-teal-100"
       aria-hidden="true"
     >
       {initials || "?"}
@@ -230,89 +238,99 @@ export default function MonitoringTable({ peserta, onDetail, onEdit }: Props) {
 
   return (
     <div className="flex min-w-0 flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-4 py-2.5">
-        <p className="text-[10px] text-gray-500">
-          Menampilkan{" "}
-          <span className="font-semibold text-gray-800">
-            {displayStart.toLocaleString("id-ID")}
-            {displayEnd !== displayStart
-              ? `–${displayEnd.toLocaleString("id-ID")}`
-              : ""}
-          </span>{" "}
-          dari{" "}
-          <span className="font-semibold text-gray-800">
-            {peserta.length.toLocaleString("id-ID")}
-          </span>{" "}
-          peserta
-        </p>
+      {/* CARD HEADER */}
+      <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-700">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path d="M8 5h12M8 12h12M8 19h12" strokeLinecap="round" />
+              <circle cx="4" cy="5" r="1" />
+              <circle cx="4" cy="12" r="1" />
+              <circle cx="4" cy="19" r="1" />
+            </svg>
+          </div>
 
-        <span className="inline-flex items-center gap-1 text-[10px] text-gray-400">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            className="h-3 w-3"
-            aria-hidden="true"
-          >
-            <path d="M8 5h12M8 12h12M8 19h12" strokeLinecap="round" />
-            <circle cx="4" cy="5" r="1" />
-            <circle cx="4" cy="12" r="1" />
-            <circle cx="4" cy="19" r="1" />
-          </svg>
-          Data peserta
-        </span>
+          <div className="min-w-0">
+            <h3 className="text-[10px] font-semibold tracking-tight text-gray-800">
+              Daftar Peserta Monitoring
+            </h3>
+            <p className="text-[9px] leading-3.5 text-gray-400">
+              Data kehadiran dan presensi peserta kegiatan
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[9px] font-medium text-gray-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+            {peserta.length} Peserta
+          </span>
+        </div>
       </div>
 
+      {/* DESKTOP TABLE */}
       <div className="hidden min-w-0 overflow-x-auto lg:block">
         <table className="w-full min-w-250 border-collapse text-left">
           <thead>
-            <tr className="bg-gray-50/70">
+            <tr className="border-b border-gray-200 bg-gray-50/90">
               <th
                 scope="col"
-                className="whitespace-nowrap border-b border-gray-200 px-4 py-2.5 text-[9px] font-semibold uppercase tracking-wider text-gray-500"
+                className="w-12 px-3.5 py-3 text-center text-[9px] font-semibold uppercase tracking-[0.07em] text-gray-500"
+              >
+                No.
+              </th>
+              <th
+                scope="col"
+                className="whitespace-nowrap px-3.5 py-3 text-[9px] font-semibold uppercase tracking-[0.07em] text-gray-500"
               >
                 Peserta
               </th>
               <th
                 scope="col"
-                className="whitespace-nowrap border-b border-gray-200 px-3 py-2.5 text-[9px] font-semibold uppercase tracking-wider text-gray-500"
+                className="whitespace-nowrap px-3 py-3 text-[9px] font-semibold uppercase tracking-[0.07em] text-gray-500"
               >
                 Desa
               </th>
               <th
                 scope="col"
-                className="whitespace-nowrap border-b border-gray-200 px-3 py-2.5 text-[9px] font-semibold uppercase tracking-wider text-gray-500"
+                className="whitespace-nowrap px-3 py-3 text-[9px] font-semibold uppercase tracking-[0.07em] text-gray-500"
               >
                 Kelompok
               </th>
               <th
                 scope="col"
-                className="whitespace-nowrap border-b border-gray-200 px-3 py-2.5 text-[9px] font-semibold uppercase tracking-wider text-gray-500"
+                className="whitespace-nowrap px-3 py-3 text-[9px] font-semibold uppercase tracking-[0.07em] text-gray-500"
               >
                 Kelas
               </th>
               <th
                 scope="col"
-                className="whitespace-nowrap border-b border-gray-200 px-3 py-2.5 text-[9px] font-semibold uppercase tracking-wider text-gray-500"
+                className="whitespace-nowrap px-3 py-3 text-[9px] font-semibold uppercase tracking-[0.07em] text-gray-500"
               >
                 Status
               </th>
               <th
                 scope="col"
-                className="whitespace-nowrap border-b border-gray-200 px-3 py-2.5 text-[9px] font-semibold uppercase tracking-wider text-gray-500"
+                className="whitespace-nowrap px-3 py-3 text-[9px] font-semibold uppercase tracking-[0.07em] text-gray-500"
               >
                 Metode
               </th>
               <th
                 scope="col"
-                className="whitespace-nowrap border-b border-gray-200 px-3 py-2.5 text-[9px] font-semibold uppercase tracking-wider text-gray-500"
+                className="whitespace-nowrap px-3 py-3 text-[9px] font-semibold uppercase tracking-[0.07em] text-gray-500"
               >
                 Waktu
               </th>
               <th
                 scope="col"
-                className="whitespace-nowrap border-b border-gray-200 px-3 py-2.5 text-center text-[9px] font-semibold uppercase tracking-wider text-gray-500"
+                className="whitespace-nowrap px-3 py-3 text-center text-[9px] font-semibold uppercase tracking-[0.07em] text-gray-500"
               >
                 Aksi
               </th>
@@ -323,50 +341,52 @@ export default function MonitoringTable({ peserta, onDetail, onEdit }: Props) {
             {paginatedPeserta.map((item, index) => (
               <tr
                 key={item.mudamudi_id}
-                className={`transition-colors hover:bg-teal-50/40 ${
-                  index % 2 === 1 ? "bg-gray-50/30" : "bg-white"
-                }`}
+                className="group transition-colors hover:bg-teal-50/35"
               >
-                <td className="px-4 py-2.5">
+                <td className="px-3.5 py-3 text-center">
+                  <RowNumber index={startIndex + index + 1} />
+                </td>
+
+                <td className="px-3.5 py-3">
                   <div className="flex min-w-0 items-center gap-2.5">
                     <ParticipantAvatar nama={item.nama} />
                     <div className="min-w-0">
                       <p className="max-w-55 truncate text-[11px] font-semibold text-gray-800">
                         {item.nama}
                       </p>
-                      <p className="mt-0.5 text-[9px] text-gray-400">
+                      <p className="text-[9px] text-gray-400">
                         Peserta kegiatan
                       </p>
                     </div>
                   </div>
                 </td>
 
-                <td className="px-3 py-2.5 text-[11px] text-gray-600">
+                <td className="px-3 py-3 text-[11px] text-gray-600">
                   {item.desa || "-"}
                 </td>
 
-                <td className="px-3 py-2.5 text-[11px] text-gray-600">
+                <td className="px-3 py-3 text-[11px] text-gray-600">
                   {item.kelompok || "-"}
                 </td>
 
-                <td className="px-3 py-2.5 text-[11px] text-gray-600">
+                <td className="px-3 py-3 text-[11px] text-gray-600">
                   {item.kelas || "-"}
                 </td>
 
-                <td className="whitespace-nowrap px-3 py-2.5">
+                <td className="whitespace-nowrap px-3 py-3">
                   <MonitoringStatusBadge status={item.status} />
                 </td>
 
-                <td className="whitespace-nowrap px-3 py-2.5">
+                <td className="whitespace-nowrap px-3 py-3">
                   <MethodBadge metode={item.metode} />
                 </td>
 
-                <td className="whitespace-nowrap px-3 py-2.5">
+                <td className="whitespace-nowrap px-3 py-3">
                   <TimeLabel waktu={item.waktu_checkin} />
                 </td>
 
-                <td className="px-3 py-2.5">
-                  <div className="flex items-center justify-center gap-1">
+                <td className="px-3 py-3">
+                  <div className="flex items-center justify-center gap-1.5">
                     <ActionButton
                       label={`Lihat detail ${item.nama}`}
                       variant="detail"
@@ -390,63 +410,84 @@ export default function MonitoringTable({ peserta, onDetail, onEdit }: Props) {
         </table>
       </div>
 
-      <div className="divide-y divide-gray-100 lg:hidden">
+      {/* MOBILE LIST */}
+      <div className="space-y-3 p-3.5 lg:hidden">
         {paginatedPeserta.map((item) => (
           <article
             key={item.mudamudi_id}
-            className="px-3 py-3 transition-colors hover:bg-gray-50/70 sm:px-4"
+            className="overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-xs transition hover:border-gray-300"
           >
-            <div className="flex min-w-0 items-start gap-2.5">
-              <ParticipantAvatar nama={item.nama} />
-
-              <div className="min-w-0 flex-1">
-                <div className="flex min-w-0 items-start justify-between gap-2">
-                  <h3 className="min-w-0 flex-1 wrap-break-word text-[11px] font-semibold leading-4 text-gray-900">
-                    {item.nama}
-                  </h3>
-
-                  <div className="shrink-0">
-                    <MonitoringStatusBadge status={item.status} />
+            <div className="p-3.5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <ParticipantAvatar nama={item.nama} />
+                  <div>
+                    <span className="text-[8px] font-semibold uppercase tracking-widest text-teal-700">
+                      Peserta
+                    </span>
+                    <h4 className="text-[13px] font-bold tracking-tight text-gray-900">
+                      {item.nama}
+                    </h4>
                   </div>
                 </div>
-
-                <div className="mt-2 flex flex-wrap gap-1">
-                  <span className="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[9px] text-gray-600">
-                    {item.desa || "Desa -"}
-                  </span>
-                  <span className="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[9px] text-gray-600">
-                    {item.kelompok || "Kelompok -"}
-                  </span>
-                  <span className="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[9px] text-gray-600">
-                    {item.kelas || "Kelas -"}
-                  </span>
+                <div className="shrink-0">
+                  <MonitoringStatusBadge status={item.status} />
                 </div>
+              </div>
 
-                <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-2">
+              <div className="my-3 h-px w-full bg-gray-100" />
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-gray-400">
+                    Desa
+                  </p>
+                  <p className="mt-0.5 truncate text-[11px] font-medium text-gray-700">
+                    {item.desa || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-gray-400">
+                    Kelompok
+                  </p>
+                  <p className="mt-0.5 truncate text-[11px] font-medium text-gray-700">
+                    {item.kelompok || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-gray-400">
+                    Kelas
+                  </p>
+                  <p className="mt-0.5 truncate text-[11px] font-medium text-gray-700">
+                    {item.kelas || "-"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-2.5">
+                <div className="flex items-center gap-2">
                   <MethodBadge metode={item.metode} />
                   <TimeLabel waktu={item.waktu_checkin} />
+                </div>
 
-                  <div className="ml-auto flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => onDetail(item)}
-                      className="inline-flex h-7 items-center gap-1 rounded-md border border-gray-200 bg-white px-2 text-[10px] font-medium text-gray-600 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1"
-                      aria-label={`Lihat detail ${item.nama}`}
-                    >
-                      <DetailIcon />
-                      Detail
-                    </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => onDetail(item)}
+                    className="inline-flex h-7.5 items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 text-[10px] font-medium text-gray-600 transition hover:bg-gray-50"
+                  >
+                    <DetailIcon />
+                    <span>Detail</span>
+                  </button>
 
-                    <button
-                      type="button"
-                      onClick={() => onEdit(item)}
-                      className="inline-flex h-7 items-center gap-1 rounded-md border border-teal-100 bg-teal-50 px-2 text-[10px] font-medium text-teal-700 transition-colors hover:bg-teal-100 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1"
-                      aria-label={`Edit presensi ${item.nama}`}
-                    >
-                      <EditIcon />
-                      Edit
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onEdit(item)}
+                    className="inline-flex h-7.5 items-center gap-1 rounded-lg border border-teal-100 bg-teal-50 px-2.5 text-[10px] font-semibold text-teal-700 transition hover:bg-teal-100"
+                  >
+                    <EditIcon />
+                    <span>Edit</span>
+                  </button>
                 </div>
               </div>
             </div>

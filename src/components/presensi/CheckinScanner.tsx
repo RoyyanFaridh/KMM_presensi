@@ -122,7 +122,7 @@ const TONES: Record<
 const FAILURE_META: Record<FailureType, FailureMeta> = {
   already_present: {
     title: "Sudah presensi",
-    hint: "Muda-Mudi ini sudah tercatat pada kegiatan ini. Tidak perlu scan ulang.",
+    hint: "Generus ini sudah tercatat pada kegiatan ini. Tidak perlu scan ulang.",
     tone: "amber",
   },
   kegiatan_inactive: {
@@ -132,17 +132,17 @@ const FAILURE_META: Record<FailureType, FailureMeta> = {
   },
   not_target: {
     title: "Bukan sasaran kegiatan",
-    hint: "Muda-Mudi ini tidak termasuk peserta yang ditetapkan untuk kegiatan ini. Cek desa peserta dan sasaran kegiatan di bawah.",
+    hint: "Generus ini tidak termasuk peserta yang ditetapkan untuk kegiatan ini. Cek desa peserta dan sasaran kegiatan di bawah.",
     tone: "amber",
   },
   invalid_qr: {
     title: "QR tidak valid",
-    hint: "QR rusak atau bukan QR Muda-Mudi. Minta peserta menampilkan QR personalnya lagi.",
+    hint: "QR rusak atau bukan QR Generus valid. Minta peserta menampilkan QR personalnya lagi.",
     tone: "rose",
   },
   mudamudi_not_found: {
-    title: "Muda-Mudi tidak ditemukan",
-    hint: "QR terbaca, tetapi datanya tidak ada di sistem. QR mungkin sudah lama atau data anggota sudah dihapus. Cek di menu Muda-Mudi.",
+    title: "Generus tidak ditemukan",
+    hint: "QR terbaca, tetapi datanya tidak ada di sistem. QR mungkin sudah lama atau data anggota sudah dihapus. Cek di menu Generus.",
     tone: "rose",
   },
   kegiatan_not_found: {
@@ -217,11 +217,11 @@ function PageHeader({ children }: { children?: ReactNode }) {
         </p>
 
         <h1 className="mt-1 text-xl font-semibold tracking-tight text-gray-900">
-          Scan QR Muda-Mudi
+          Scan QR Generus
         </h1>
 
         <p className="mt-1 max-w-xl text-[10px] leading-4 text-gray-500 sm:text-xs">
-          Gunakan kamera untuk mencatat kehadiran Muda-Mudi pada kegiatan.
+          Gunakan kamera untuk mencatat kehadiran Generus pada kegiatan.
         </p>
       </div>
 
@@ -963,7 +963,7 @@ export default function CheckinScanner({ kegiatanId }: CheckinScannerProps) {
                 </h2>
 
                 <p className="mt-0.5 text-[10px] text-gray-400">
-                  Arahkan QR personal Muda-Mudi ke kamera.
+                  Arahkan QR personal Generus ke kamera.
                 </p>
               </div>
 

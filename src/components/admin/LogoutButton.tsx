@@ -125,7 +125,7 @@ export default function LogoutButton({ onCloseMenu }: Props) {
                   </h2>
 
                   <p className="mt-1 text-[10px] leading-4 text-gray-500">
-                    Anda akan keluar dari panel administrasi SIKEMA.
+                    Anda akan keluar dari panel administrasi GENARA.
                   </p>
                 </div>
               </div>

@@ -393,7 +393,7 @@ export default function RekapitulasiPage({ adminDesa }: Props) {
                 </h1>
 
                 <p className="mt-1 max-w-xs text-[10px] leading-4 text-gray-500 sm:max-w-none sm:text-xs">
-                  Lihat riwayat kehadiran Muda-Mudi pada setiap kegiatan.
+                  Lihat riwayat kehadiran Generus pada setiap kegiatan.
                 </p>
               </div>
             </div>
@@ -473,7 +473,7 @@ export default function RekapitulasiPage({ adminDesa }: Props) {
           />
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-[0_3px_12px_rgba(15,23,42,0.035)]">
           {loading && hasLoaded && (
             <div
               role="status"

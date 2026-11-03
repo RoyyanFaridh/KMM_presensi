@@ -103,8 +103,23 @@ export default function MonitoringKegiatanSelector({
     setOpen(false);
   }
 
+  const [searchKegiatan, setSearchKegiatan] = useState("");
+
+  const filteredKegiatan = kegiatan.filter((item) => {
+    if (!searchKegiatan.trim()) return true;
+    const q = searchKegiatan.toLowerCase();
+    return (
+      item.nama.toLowerCase().includes(q) ||
+      item.lokasi.toLowerCase().includes(q)
+    );
+  });
+
   return (
-    <section className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
+    <section
+      className={`relative rounded-2xl border border-gray-200/90 bg-white p-4 shadow-[0_3px_12px_rgba(15,23,42,0.035)] transition-all ${
+        open ? "z-30 ring-1 ring-teal-500/20" : "z-10"
+      }`}
+    >
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-xs font-semibold text-gray-900 sm:text-sm">
@@ -116,7 +131,8 @@ export default function MonitoringKegiatanSelector({
         </div>
 
         {kegiatan.length > 0 && (
-          <span className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-500">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[9px] font-medium text-gray-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
             {kegiatan.length} kegiatan
           </span>
         )}
@@ -140,9 +156,9 @@ export default function MonitoringKegiatanSelector({
           <button
             type="button"
             onClick={() => setOpen((value) => !value)}
-            className={`flex min-h-19 w-full items-start justify-between gap-3 rounded-md border bg-white px-3 py-2.5 text-left transition-colors ${
+            className={`flex min-h-19 w-full items-start justify-between gap-3 rounded-xl border bg-white px-3 py-2.5 text-left transition-colors ${
               open
-                ? "border-teal-500 ring-1 ring-teal-500/20"
+                ? "border-teal-600 ring-2 ring-teal-50"
                 : "border-gray-200 hover:border-gray-300"
             }`}
             aria-haspopup="listbox"
@@ -176,50 +192,83 @@ export default function MonitoringKegiatanSelector({
 
           {open && (
             <div
-              className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg"
+              className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5"
               role="listbox"
               aria-label="Daftar kegiatan"
             >
-              <div className="max-h-72 overflow-y-auto p-1.5">
-                {kegiatan.map((item) => {
-                  const isSelected = item.id === selectedKegiatanId;
-
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      role="option"
-                      aria-selected={isSelected}
-                      onClick={() => handleSelect(item.id)}
-                      className={`w-full rounded-md border px-3 py-2.5 text-left transition-colors ${
-                        isSelected
-                          ? "border-teal-100 bg-teal-50/70"
-                          : "border-transparent hover:bg-gray-50"
-                      }`}
+              {kegiatan.length > 4 && (
+                <div className="border-b border-gray-100 p-2">
+                  <div className="relative">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
                     >
-                      <div className="flex items-start gap-2.5">
-                        <div className="min-w-0 flex-1">
-                          <KegiatanInfo item={item} compact />
-                        </div>
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m16 16 4 4" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Cari kegiatan..."
+                      value={searchKegiatan}
+                      onChange={(e) => setSearchKegiatan(e.target.value)}
+                      className="h-8 w-full rounded-lg border border-gray-200 bg-gray-50/70 pl-8 pr-2 text-[11px] text-gray-700 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-1 focus:ring-teal-100"
+                    />
+                  </div>
+                </div>
+              )}
 
-                        {isSelected && (
-                          <svg
-                            className="mt-1 h-4 w-4 shrink-0 text-teal-600"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            aria-hidden="true"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.414 0l-3.25-3.25a1 1 0 111.414-1.42l2.543 2.544 6.543-6.544a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
+              <div className="max-h-80 overflow-y-auto overscroll-contain p-1.5">
+                {filteredKegiatan.length === 0 ? (
+                  <p className="px-3 py-4 text-center text-xs text-gray-400">
+                    Tidak ada kegiatan yang cocok
+                  </p>
+                ) : (
+                  filteredKegiatan.map((item) => {
+                    const isSelected = item.id === selectedKegiatanId;
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        onClick={() => {
+                          handleSelect(item.id);
+                          setSearchKegiatan("");
+                        }}
+                        className={`w-full rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                          isSelected
+                            ? "border-teal-100 bg-teal-50/70"
+                            : "border-transparent hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <div className="min-w-0 flex-1">
+                            <KegiatanInfo item={item} compact />
+                          </div>
+
+                          {isSelected && (
+                            <svg
+                              className="mt-1 h-4 w-4 shrink-0 text-teal-600"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.414 0l-3.25-3.25a1 1 0 111.414-1.42l2.543 2.544 6.543-6.544a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
               </div>
             </div>
           )}

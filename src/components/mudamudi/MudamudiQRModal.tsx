@@ -39,11 +39,11 @@ export default function MudamudiQRModal({ data, onClose }: Props) {
         data.nama
           ?.trim()
           .replace(/[^a-zA-Z0-9\s-_]/g, "")
-          .replace(/\s+/g, "-") || "Muda-Mudi";
+          .replace(/\s+/g, "-") || "Generus";
 
       const link = document.createElement("a");
 
-      link.download = `QR-SIKEMA-${safeName}.png`;
+      link.download = `QR-GENARA-${safeName}.png`;
       link.href = dataUrl;
 
       document.body.appendChild(link);
@@ -57,42 +57,37 @@ export default function MudamudiQRModal({ data, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs px-4 py-6">
       <div className="relative flex max-h-[95vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
         <div className="shrink-0 border-b border-gray-200 px-5 py-4">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 text-teal-600">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    className="h-4 w-4"
-                    aria-hidden="true"
-                  >
-                    <rect x="4" y="4" width="16" height="16" rx="2" />
-
-                    <path
-                      strokeLinecap="round"
-                      d="M8 8h3M8 12h1M8 16h3M13 8h3M13 12h3M13 16h3"
-                    />
-                  </svg>
-                </div>
-
-                <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-teal-600">
-                  QR Muda-Mudi
-                </p>
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-700">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                >
+                  <rect x="4" y="4" width="16" height="16" rx="2" />
+                  <path
+                    strokeLinecap="round"
+                    d="M8 8h3M8 12h1M8 16h3M13 8h3M13 12h3M13 16h3"
+                  />
+                </svg>
               </div>
 
-              <h2 className="mt-2 text-base font-semibold tracking-tight text-gray-900">
-                Kartu QR Presensi
-              </h2>
+              <div className="min-w-0">
+                <h2 className="text-[11px] font-semibold tracking-tight text-gray-800">
+                  Kartu QR Presensi Generus
+                </h2>
 
-              <p className="mt-1 text-[10px] leading-4 text-gray-500">
-                QR personal yang digunakan untuk presensi kegiatan SIKEMA.
-              </p>
+                <p className="text-[9px] leading-3.5 text-gray-400">
+                  QR personal yang digunakan untuk presensi kegiatan GENARA
+                </p>
+              </div>
             </div>
 
             <button
@@ -130,7 +125,7 @@ export default function MudamudiQRModal({ data, onClose }: Props) {
                 <div className="flex h-full w-full flex-col px-[8%] py-[7%]">
                   <div className="text-center">
                     <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-teal-600">
-                      SIKEMA
+                      GENARA
                     </p>
 
                     <h3 className="mt-1 text-[15px] font-semibold tracking-tight text-gray-900">
@@ -187,7 +182,7 @@ export default function MudamudiQRModal({ data, onClose }: Props) {
           <div className="min-w-0">
             <p className="text-[9px] text-gray-400">
               QR personal{" "}
-              <span className="font-medium text-gray-500">Muda-Mudi</span>
+              <span className="font-medium text-gray-500">Generus</span>
             </p>
 
             <p className="mt-0.5 text-[8px] text-gray-400">

@@ -152,9 +152,9 @@ export async function exportPresensiExcel({
 
   const workbook = new ExcelJS.Workbook();
 
-  workbook.creator = "SIKEMA";
-  workbook.subject = "Database Muda-Mudi";
-  workbook.title = "Database Muda-Mudi";
+  workbook.creator = "GENARA";
+  workbook.subject = "Database Generus";
+  workbook.title = "Database Generus";
   workbook.created = new Date();
   workbook.modified = new Date();
   workbook.calcProperties.fullCalcOnLoad = true;
@@ -274,7 +274,7 @@ export async function exportPresensiExcel({
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = `Database Muda-Mudi_${getTimestamp()}.xlsx`;
+  link.download = `Database Generus_${getTimestamp()}.xlsx`;
 
   document.body.appendChild(link);
   link.click();

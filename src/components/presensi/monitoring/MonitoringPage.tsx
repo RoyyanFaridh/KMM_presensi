@@ -396,18 +396,22 @@ export default function MonitoringPage({ kegiatan }: Props) {
 
   return (
     <div className="space-y-4 p-4 md:p-6">
-      <div>
+      <div className="mb-5">
         <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-teal-600">
           Presensi
         </p>
 
-        <h1 className="mt-0.5 text-lg font-semibold tracking-tight text-gray-900">
-          Monitoring Presensi
-        </h1>
+        <div className="mt-1 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl font-semibold tracking-tight text-gray-900">
+              Monitoring Presensi
+            </h1>
 
-        <p className="mt-0.5 text-xs text-gray-500">
-          Pantau dan kelola kehadiran peserta berdasarkan kegiatan.
-        </p>
+            <p className="mt-1 max-w-xs text-[10px] leading-4 text-gray-500 sm:max-w-none sm:text-xs">
+              Pantau dan kelola kehadiran peserta berdasarkan kegiatan.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Pemilih kegiatan tetap terpisah dari filter dan tombol unduh */}
@@ -490,7 +494,7 @@ export default function MonitoringPage({ kegiatan }: Props) {
             </div>
           )}
 
-          <div className="w-full min-w-0 rounded-xl border border-gray-200 bg-white">
+          <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-[0_3px_12px_rgba(15,23,42,0.035)]">
             {/* Filter dan tombol unduh berada dalam satu baris */}
             <div className="flex min-w-0 items-start gap-2 border-b border-gray-200 p-3 sm:items-center sm:gap-3 sm:p-4">
               <div className="min-w-0 flex-1">

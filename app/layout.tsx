@@ -31,8 +31,8 @@ const poppins = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "SIKEMA",
-  description: "Sistem Informasi Kegiatan dan Muda Mudi",
+  title: "GENARA - Generus Administrasi dan Presensi",
+  description: "GENARA - Generus Administrasi dan Presensi",
   icons: {
     icon: "/icon_gold.webp",
   },

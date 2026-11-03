@@ -143,10 +143,10 @@ export default function MonitoringSummary({
       aria-label="Ringkasan presensi"
       className="min-w-0 space-y-2.5"
     >
-      {/* Baris pertama: Total Muda-Mudi dan Belum Hadir */}
+      {/* Baris pertama: Total Generus dan Belum Hadir */}
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         <SummaryCard
-          label="Total Muda-Mudi"
+          label="Total Generus"
           value={totalPeserta}
           percentage={safeTotal > 0 ? 100 : 0}
           valueClass="text-gray-900"

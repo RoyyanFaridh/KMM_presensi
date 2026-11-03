@@ -88,7 +88,7 @@ export default function MonitoringEditModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm sm:px-6 sm:py-10"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8 backdrop-blur-xs sm:px-6 sm:py-10"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !loading) {
           onClose();
@@ -96,7 +96,7 @@ export default function MonitoringEditModal({
       }}
     >
       <div
-        className="w-full min-w-0 max-w-md max-h-[82dvh] overflow-hidden rounded-xl bg-white shadow-2xl"
+        className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="monitoring-edit-title"
@@ -105,7 +105,7 @@ export default function MonitoringEditModal({
         {/* HEADER */}
         <div className="flex shrink-0 items-start justify-between border-b border-gray-100 px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-50 text-teal-600">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-700">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -131,12 +131,12 @@ export default function MonitoringEditModal({
             <div className="min-w-0">
               <h2
                 id="monitoring-edit-title"
-                className="text-[14px] font-semibold leading-5 text-gray-800"
+                className="text-[11px] font-semibold tracking-tight text-gray-800"
               >
                 Edit Status Presensi
               </h2>
 
-              <p className="mt-0.5 truncate text-[10px] leading-4 text-gray-400">
+              <p className="text-[9px] leading-3.5 text-gray-400">
                 {peserta.nama}
               </p>
             </div>
@@ -147,7 +147,7 @@ export default function MonitoringEditModal({
             onClick={onClose}
             disabled={loading}
             aria-label="Tutup"
-            className="ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -344,7 +344,7 @@ export default function MonitoringEditModal({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="h-9 w-full rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-medium text-gray-600 transition hover:bg-gray-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              className="h-9 w-full rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               Batal
             </button>
@@ -352,7 +352,7 @@ export default function MonitoringEditModal({
             <button
               type="submit"
               disabled={loading || !status}
-              className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-[#171717] px-5 text-[11px] font-medium text-white transition hover:bg-gray-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-teal-700 px-5 text-[11px] font-semibold text-white shadow-xs transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {loading ? "Menyimpan..." : "Simpan"}
             </button>

@@ -3,9 +3,9 @@ import Link from "next/link";
 const features = [
   {
     number: "01",
-    title: "Kelola Muda Mudi",
+    title: "Kelola Generus",
     description:
-      "Kelola data Muda Mudi secara terpusat berdasarkan desa dan kelompok.",
+      "Kelola data Generus secara terpusat berdasarkan desa dan kelompok.",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -51,7 +51,7 @@ const features = [
     number: "03",
     title: "Presensi QR",
     description:
-      "Catat kehadiran dengan memindai QR personal Muda-Mudi melalui perangkat admin.",
+      "Catat kehadiran dengan memindai QR personal Generus melalui perangkat admin.",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -82,11 +82,11 @@ export default function Home() {
         <header className="flex h-16 items-center justify-between">
           <div>
             <p className="text-sm font-semibold tracking-tight text-teal-700">
-              SIKEMA
+              GENARA
             </p>
 
             <p className="text-[10px] text-gray-400">
-              Sistem Informasi Kegiatan dan Muda Mudi
+              Generus Administrasi dan Presensi
             </p>
           </div>
 
@@ -120,20 +120,16 @@ export default function Home() {
             </div>
 
             <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-teal-600">
-              Sistem Informasi
+              Aplikasi Administrasi & Presensi
             </p>
 
-            <h1 className="mt-1.5 text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
-              Kegiatan dan Muda Mudi
-            </h1>
-
             <p className="mx-auto mt-3 max-w-md text-xs leading-5 text-gray-500">
-              Kelola kegiatan, data Muda Mudi, dan presensi dalam satu sistem.
+              Kelola data Generus, kegiatan, dan presensi secara terpusat, modern, dan akurat.
             </p>
 
             <Link
               href="/login"
-              className="mt-6 inline-flex h-9 items-center justify-center rounded-lg bg-teal-600 px-5 text-[11px] font-medium text-white transition hover:bg-teal-700"
+              className="mt-6 inline-flex h-9 items-center justify-center rounded-lg bg-teal-700 px-5 text-[11px] font-medium text-white shadow-xs transition hover:bg-teal-800"
             >
               Masuk sebagai Admin
               <svg

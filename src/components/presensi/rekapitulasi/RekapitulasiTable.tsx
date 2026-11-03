@@ -324,7 +324,7 @@ export default function RekapitulasiTable({
           </svg>
         </div>
         <p className="mt-3 text-[11px] font-semibold text-gray-700">
-          Data Muda-Mudi tidak ditemukan
+          Data Generus tidak ditemukan
         </p>
         <p className="mt-1 text-[10px] text-gray-500">
           Coba ubah kata kunci atau filter yang digunakan.
@@ -348,15 +348,15 @@ export default function RekapitulasiTable({
 
   return (
     <div className="flex min-h-0 flex-col bg-white">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-4 py-3 sm:px-5">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-700">
             <svg
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="1.8"
-              className="h-3.5 w-3.5"
+              className="h-4 w-4"
               aria-hidden="true"
             >
               <path
@@ -367,26 +367,21 @@ export default function RekapitulasiTable({
             </svg>
           </div>
           <div>
-            <p className="text-[11px] font-semibold text-gray-800">
+            <h3 className="text-[10px] font-semibold tracking-tight text-gray-800">
               Rekapitulasi Kehadiran
-            </p>
-            <p className="mt-0.5 text-[10px] text-gray-400">
-              Ringkasan status setiap kegiatan
+            </h3>
+            <p className="text-[9px] leading-3.5 text-gray-400">
+              Ringkasan kehadiran peserta pada setiap kegiatan
             </p>
           </div>
         </div>
 
-        <p className="text-[10px] text-gray-500">
-          Menampilkan{" "}
-          <span className="font-semibold tabular-nums text-gray-700">
-            {displayStart}–{displayEnd}
-          </span>{" "}
-          dari{" "}
-          <span className="font-semibold tabular-nums text-gray-700">
-            {totalItems}
-          </span>{" "}
-          peserta
-        </p>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[9px] font-medium text-gray-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+            {totalItems} Peserta
+          </span>
+        </div>
       </div>
 
       <div className="shrink-0 border-b border-gray-100 bg-gray-50/70 px-4 py-2.5 sm:px-5">
@@ -398,7 +393,7 @@ export default function RekapitulasiTable({
           <thead className="sticky top-0 z-20">
             <tr>
               <th className="sticky left-0 z-40 min-w-64 border-b border-r border-gray-200 bg-gray-50 px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                Muda-Mudi
+                Generus
               </th>
 
               {kegiatan.map((item) => (

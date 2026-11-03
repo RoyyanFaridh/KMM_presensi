@@ -89,7 +89,7 @@ export default function SearchFilterBar({
   }
 
   return (
-    <div className="mb-4">
+    <div className="mb-4 space-y-2">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2.5">
         <div className="relative">
           <svg
@@ -106,24 +106,44 @@ export default function SearchFilterBar({
 
           <input
             type="text"
-            placeholder="Cari nama..."
+            placeholder="Cari nama Generus..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9.5 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-[12px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-gray-300 focus:ring-1 focus:ring-gray-200"
+            className="h-10 w-full rounded-xl border border-gray-200 bg-white pl-9.5 pr-8 text-[12px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
           />
+
+          {search.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              aria-label="Hapus pencarian"
+              className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="h-3 w-3"
+              >
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
 
         <button
           type="button"
           onClick={() => setShowFilter((prev) => !prev)}
           className={`
-            flex h-9.5 items-center justify-center gap-1.5
-            rounded-lg border px-3 text-[12px]
-            transition
+            flex h-10 items-center justify-center gap-1.5
+            rounded-xl border px-3.5 text-[12px] font-medium
+            transition shadow-xs
             ${
               showFilter || hasActiveFilters
-                ? "border-teal-200 bg-teal-50 text-teal-700"
-                : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                ? "border-teal-300 bg-teal-50 text-teal-800 ring-2 ring-teal-100"
+                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300"
             }
           `}
         >
@@ -141,23 +161,110 @@ export default function SearchFilterBar({
           </svg>
           Filter
           {activeFilterCount > 0 && (
-            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-teal-700 px-1 text-[9px] font-medium text-white">
+            <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-teal-700 px-1 text-[10px] font-semibold text-white">
               {activeFilterCount}
             </span>
           )}
         </button>
       </div>
 
+      {/* Active filter badges / chips */}
+      {(activeFilterCount > 0 || search.trim().length > 0) && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          <span className="text-[11px] font-medium text-gray-400 mr-1">
+            Filter aktif:
+          </span>
+
+          {search.trim().length > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50/70 px-2 py-0.5 text-[11px] text-teal-800">
+              <span>Cari: &ldquo;{search}&rdquo;</span>
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="hover:text-teal-950 font-bold ml-0.5"
+                title="Hapus filter cari"
+              >
+                ×
+              </button>
+            </span>
+          )}
+
+          {isSuperAdmin && filterDesa && (
+            <span className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50/70 px-2 py-0.5 text-[11px] text-teal-800">
+              <span>Desa: {filterDesa}</span>
+              <button
+                type="button"
+                onClick={() => handleDesaChange("")}
+                className="hover:text-teal-950 font-bold ml-0.5"
+                title="Hapus filter desa"
+              >
+                ×
+              </button>
+            </span>
+          )}
+
+          {filterKelompok && (
+            <span className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50/70 px-2 py-0.5 text-[11px] text-teal-800">
+              <span>Kelompok: {filterKelompok}</span>
+              <button
+                type="button"
+                onClick={() => setFilterKelompok("")}
+                className="hover:text-teal-950 font-bold ml-0.5"
+                title="Hapus filter kelompok"
+              >
+                ×
+              </button>
+            </span>
+          )}
+
+          {filterJenisKelamin && (
+            <span className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50/70 px-2 py-0.5 text-[11px] text-teal-800">
+              <span>JK: {filterJenisKelamin}</span>
+              <button
+                type="button"
+                onClick={() => setFilterJenisKelamin("")}
+                className="hover:text-teal-950 font-bold ml-0.5"
+                title="Hapus filter jenis kelamin"
+              >
+                ×
+              </button>
+            </span>
+          )}
+
+          {filterkelas && (
+            <span className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50/70 px-2 py-0.5 text-[11px] text-teal-800">
+              <span>Kelas: {filterkelas}</span>
+              <button
+                type="button"
+                onClick={() => setFilterkelas("")}
+                className="hover:text-teal-950 font-bold ml-0.5"
+                title="Hapus filter kelas"
+              >
+                ×
+              </button>
+            </span>
+          )}
+
+          <button
+            type="button"
+            onClick={handleReset}
+            className="text-[11px] font-medium text-red-600 hover:text-red-700 ml-1 transition"
+          >
+            Reset Semua
+          </button>
+        </div>
+      )}
+
       {showFilter && (
         <div className="mt-2.5 rounded-xl border border-gray-200 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h3 className="text-[12px] font-semibold text-gray-800">
-                Filter Data
+                Filter Data Generus
               </h3>
 
               <p className="mt-0.5 text-[10px] text-gray-400">
-                Pilih kriteria untuk menyaring data
+                Pilih kriteria untuk menyaring data Generus
               </p>
             </div>
 
@@ -344,7 +451,7 @@ export default function SearchFilterBar({
 
             <div className="border-t border-gray-100 pt-4 md:border-t-0 md:border-l md:pl-6 md:pt-0">
               <p className="mb-2 text-[11px] font-medium text-gray-600">
-                kelas
+                Kelas
               </p>
 
               <div className="flex flex-wrap gap-x-4 gap-y-2">

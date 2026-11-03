@@ -211,20 +211,20 @@ export default function ProfileForm({ user, profile }: Props) {
           </p>
         </div>
 
-        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <section className="overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-[0_3px_12px_rgba(15,23,42,0.035)]">
           <div className="border-b border-gray-100 px-5 py-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-[11px] font-semibold tracking-tight text-gray-800">
                   Informasi Akun
                 </h2>
 
-                <p className="mt-1 text-[10px] text-gray-400">
-                  Informasi akun yang terdaftar pada sistem SIKEMA.
+                <p className="mt-0.5 text-[9px] leading-3.5 text-gray-400">
+                  Informasi akun yang terdaftar pada sistem GENARA.
                 </p>
               </div>
 
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-600">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-700">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="17"
@@ -313,29 +313,48 @@ export default function ProfileForm({ user, profile }: Props) {
 
       {showPasswordModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs"
           onClick={closePasswordModal}
         >
           <div
-            className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-xl"
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between border-b border-gray-100 px-5 py-4">
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900">
-                  Ganti Password
-                </h2>
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-700">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
 
-                <p className="mt-1 text-[10px] leading-4 text-gray-400">
-                  Masukkan password lama sebelum membuat password baru.
-                </p>
+                <div className="min-w-0">
+                  <h2 className="text-[11px] font-semibold tracking-tight text-gray-800">
+                    Ganti Password
+                  </h2>
+
+                  <p className="text-[9px] leading-3.5 text-gray-400">
+                    Masukkan password lama sebelum membuat password baru
+                  </p>
+                </div>
               </div>
 
               <button
                 type="button"
                 onClick={closePasswordModal}
                 disabled={passwordLoading}
-                className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Tutup"
               >
                 <svg
@@ -480,7 +499,7 @@ export default function ProfileForm({ user, profile }: Props) {
                 <button
                   type="submit"
                   disabled={passwordLoading}
-                  className="h-9 rounded-lg bg-teal-600 px-4 text-[11px] font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="h-9 rounded-lg bg-teal-700 px-4 text-[11px] font-semibold text-white shadow-xs transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {passwordLoading ? "Memproses..." : "Simpan Password"}
                 </button>

@@ -174,7 +174,7 @@ export default function MonitoringFilters({
         <div className="grid grid-cols-[minmax(0,1fr)_32px] items-end gap-x-3 gap-y-3 lg:grid-cols-[minmax(180px,1fr)_auto]">
           <div className="min-w-0">
             <label htmlFor="monitoring-search" className={LABEL_CLASS}>
-              Cari Peserta
+              Cari Generus
             </label>
 
             <div className="relative">
@@ -192,12 +192,32 @@ export default function MonitoringFilters({
 
               <input
                 id="monitoring-search"
-                type="search"
+                type="text"
                 value={search}
                 onChange={(event) => onSearchChange(event.target.value)}
-                placeholder="Cari nama peserta..."
-                className={`${CONTROL_CLASS} pl-8`}
+                placeholder="Cari nama Generus..."
+                className={`${CONTROL_CLASS} pl-8 pr-7`}
               />
+
+              {search.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange("")}
+                  aria-label="Hapus pencarian"
+                  className="absolute right-2 top-1/2 flex h-4.5 w-4.5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="h-2.5 w-2.5"
+                  >
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
 
