@@ -13,34 +13,34 @@ const STATUS_CONFIG: Record<
 > = {
   hadir: {
     label: "Hadir",
-    className: "bg-emerald-50 text-emerald-700",
+    className: "bg-[#E6F2EA] text-[#206440] border border-[#65B98A]/30",
   },
 
   terlambat: {
     label: "Terlambat",
-    className: "bg-violet-50 text-violet-700",
+    className: "bg-amber-50 text-amber-700 border border-amber-200",
   },
 
   izin: {
     label: "Izin",
-    className: "bg-yellow-50 text-yellow-700",
+    className: "bg-blue-50 text-blue-700 border border-blue-200",
   },
 
   sakit: {
     label: "Sakit",
-    className: "bg-blue-50 text-blue-700",
+    className: "bg-purple-50 text-purple-700 border border-purple-200",
   },
 
   alpa: {
     label: "Alpa",
-    className: "bg-red-50 text-red-700",
+    className: "bg-red-50 text-red-700 border border-red-200",
   },
 };
 
 export default function MonitoringStatusBadge({ status }: Props) {
   if (!status) {
     return (
-      <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+      <span className="inline-flex items-center rounded-full border border-[#E5EAE6] bg-[#F5F7F5] px-2 py-0.5 text-[10px] font-medium text-[#78827C]">
         Belum Hadir
       </span>
     );

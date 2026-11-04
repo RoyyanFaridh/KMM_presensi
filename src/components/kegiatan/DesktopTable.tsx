@@ -42,7 +42,7 @@ const columns: { key: SortKey; label: string }[] = [
 ];
 
 const HEADER_CELL =
-  "px-3.5 py-3 text-left text-[9px] font-semibold uppercase tracking-[0.07em] text-gray-500";
+  "px-3.5 py-3 text-left text-[9px] font-semibold uppercase tracking-[0.07em] text-[#78827C]";
 
 function SortIndicator({
   active,
@@ -58,8 +58,8 @@ function SortIndicator({
         "inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded",
         "transition-colors",
         active
-          ? "bg-teal-100 text-teal-700"
-          : "text-gray-400 group-hover:bg-gray-200/70 group-hover:text-gray-600",
+          ? "bg-[#E6F2EA] text-[#287A50]"
+          : "text-[#9AA39D] group-hover:bg-[#F0F4F1] group-hover:text-[#78827C]",
       ].join(" ")}
     >
       {active ? (
@@ -101,7 +101,7 @@ function SortIndicator({
 
 function RowNumber({ value }: { value: number }) {
   return (
-    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-md bg-gray-100 px-1 text-[9px] font-medium tabular-nums text-gray-500 transition-colors group-hover:bg-teal-50 group-hover:text-teal-700">
+    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-md bg-[#F0F4F1] px-1 text-[9px] font-medium tabular-nums text-[#78827C] transition-colors group-hover:bg-[#E6F2EA] group-hover:text-[#287A50]">
       {value}
     </span>
   );
@@ -118,11 +118,11 @@ export default function DesktopTable({
   return (
     <section
       aria-label="Daftar kegiatan"
-      className="hidden overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-[0_3px_12px_rgba(15,23,42,0.035)] md:block"
+      className="hidden overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-xs md:block"
     >
-      <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
+      <div className="flex items-center justify-between gap-3 border-b border-[#E5EAE6] px-4 py-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-700">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#E5EAE6] bg-[#E6F2EA] text-[#287A50]">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -147,17 +147,17 @@ export default function DesktopTable({
             </svg>
           </div>
           <div className="min-w-0">
-            <h2 className="text-[10px] font-semibold tracking-tight text-gray-800">
+            <h2 className="text-[10px] font-semibold tracking-tight text-[#202824]">
               Daftar Kegiatan
             </h2>
-            <p className="mt-0.5 text-[9px] leading-3.5 text-gray-400">
+            <p className="mt-0.5 text-[9px] leading-3.5 text-[#78827C]">
               Informasi jadwal dan pengelolaan presensi
             </p>
           </div>
         </div>
 
-        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[9px] font-medium text-gray-600">
-          <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#E5EAE6] bg-[#F5F7F5] px-2.5 py-1 text-[9px] font-medium text-[#78827C]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#287A50]" />
           {data.length} kegiatan
         </span>
       </div>
@@ -175,7 +175,7 @@ export default function DesktopTable({
           </colgroup>
 
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50/90">
+            <tr className="border-b border-[#E5EAE6] bg-[#F5F7F5]">
               <th scope="col" className={`${HEADER_CELL} text-center`}>
                 No.
               </th>
@@ -200,10 +200,10 @@ export default function DesktopTable({
                       aria-label={`Urutkan berdasarkan ${column.label}`}
                       className={[
                         "group inline-flex min-h-7 items-center gap-1.5 rounded-md",
-                        "transition-colors hover:text-teal-800",
+                        "transition-colors hover:text-[#287A50]",
                         "focus-visible:outline-none focus-visible:ring-2",
-                        "focus-visible:ring-teal-600 focus-visible:ring-offset-2",
-                        active ? "text-teal-800" : "",
+                        "focus-visible:ring-[#287A50] focus-visible:ring-offset-2",
+                        active ? "text-[#287A50]" : "",
                       ].join(" ")}
                     >
                       <span>{column.label}</span>
@@ -224,7 +224,7 @@ export default function DesktopTable({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-[#E5EAE6]">
             {data.length === 0 ? (
               <tr>
                 <td colSpan={7} className="p-0">
@@ -249,35 +249,35 @@ export default function DesktopTable({
                 return (
                   <tr
                     key={item.id}
-                    className="group transition-colors duration-150 hover:bg-teal-50/35"
+                    className="group transition-colors duration-150 hover:bg-[#F5F7F5]"
                   >
                     <td className="px-3 py-4 text-center align-middle">
                       <RowNumber value={index + 1} />
                     </td>
 
                     <td className="px-3.5 py-4 align-middle">
-                      <p className="wrap-break-word text-[10px] font-semibold leading-[1.6] text-gray-800 transition-colors group-hover:text-teal-800">
+                      <p className="wrap-break-word text-[10px] font-semibold leading-[1.6] text-[#202824] transition-colors group-hover:text-[#287A50]">
                         {item.nama}
                       </p>
                       <div className="mt-1">
                         <CreatorText
                           kegiatan={item}
-                          className="text-[9px] leading-4 text-gray-400"
+                          className="text-[9px] leading-4 text-[#9AA39D]"
                         />
                       </div>
                     </td>
 
                     <td className="px-3.5 py-4 align-middle">
                       <div className="flex items-center gap-2">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-gray-400 transition-colors group-hover:bg-white group-hover:text-teal-600">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#F5F7F5] text-[#9AA39D] transition-colors group-hover:bg-[#E6F2EA] group-hover:text-[#287A50]">
                           <CalendarIcon />
                         </span>
                         <div className="min-w-0 pt-0.5">
-                          <p className="text-[10px] font-medium leading-4 text-gray-700">
+                          <p className="text-[10px] font-medium leading-4 text-[#202824]">
                             {tanggalMulai}
                           </p>
                           {tanggalSelesai && (
-                            <p className="mt-1 text-[9px] leading-3.5 text-gray-400">
+                            <p className="mt-1 text-[9px] leading-3.5 text-[#9AA39D]">
                               s.d. {tanggalSelesai}
                             </p>
                           )}
@@ -287,14 +287,14 @@ export default function DesktopTable({
 
                     <td className="px-3.5 py-4 align-middle">
                       <div className="flex items-start gap-2">
-                        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-gray-400 transition-colors group-hover:bg-white group-hover:text-teal-600">
+                        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#F5F7F5] text-[#9AA39D] transition-colors group-hover:bg-[#E6F2EA] group-hover:text-[#287A50]">
                           <ClockIcon />
                         </span>
                         <div className="min-w-0 pt-0.5">
-                          <p className="whitespace-nowrap text-[10px] font-medium leading-4 tabular-nums text-gray-700">
+                          <p className="whitespace-nowrap text-[10px] font-medium leading-4 tabular-nums text-[#202824]">
                             {formatJam(item.jam_mulai)}
                           </p>
-                          <p className="mt-1 whitespace-nowrap text-[9px] leading-3.5 tabular-nums text-gray-400">
+                          <p className="mt-1 whitespace-nowrap text-[9px] leading-3.5 tabular-nums text-[#9AA39D]">
                             s.d. {formatJam(item.jam_selesai)}
                           </p>
                         </div>
@@ -303,12 +303,12 @@ export default function DesktopTable({
 
                     <td className="px-3.5 py-4 align-middle">
                       <div className="flex items-start gap-2">
-                        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-gray-400 transition-colors group-hover:bg-white group-hover:text-teal-600">
+                        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#F5F7F5] text-[#9AA39D] transition-colors group-hover:bg-[#E6F2EA] group-hover:text-[#287A50]">
                           <LocationIcon />
                         </span>
-                        <span className="min-w-0 wrap-break-word pt-1 text-[10px] leading-4.5 text-gray-600">
+                        <span className="min-w-0 wrap-break-word pt-1 text-[10px] leading-4.5 text-[#78827C]">
                           {item.lokasi || (
-                            <span className="italic text-gray-400">
+                            <span className="italic text-[#9AA39D]">
                               Belum ditentukan
                             </span>
                           )}
@@ -331,7 +331,7 @@ export default function DesktopTable({
                         />
                         <span
                           aria-hidden="true"
-                          className="mx-0.5 h-5 w-px shrink-0 bg-gray-200"
+                          className="mx-0.5 h-5 w-px shrink-0 bg-[#E5EAE6]"
                         />
                         <IconButton
                           label={`Edit ${item.nama}`}
@@ -357,15 +357,15 @@ export default function DesktopTable({
       </div>
 
       {data.length > 0 && (
-        <footer className="flex min-h-10 items-center justify-between gap-3 border-t border-gray-200 bg-gray-50/60 px-4 py-2.5">
-          <p className="text-[9px] text-gray-500">
+        <footer className="flex min-h-10 items-center justify-between gap-3 border-t border-[#E5EAE6] bg-[#F5F7F5] px-4 py-2.5">
+          <p className="text-[9px] text-[#78827C]">
             Menampilkan{" "}
-            <span className="font-semibold tabular-nums text-gray-700">
+            <span className="font-semibold tabular-nums text-[#202824]">
               {data.length}
             </span>{" "}
             kegiatan
           </p>
-          <p className="inline-flex items-center gap-1.5 text-[9px] text-gray-400">
+          <p className="inline-flex items-center gap-1.5 text-[9px] text-[#9AA39D]">
             <svg
               viewBox="0 0 20 20"
               fill="none"

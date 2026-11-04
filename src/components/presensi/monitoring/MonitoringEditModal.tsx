@@ -88,7 +88,7 @@ export default function MonitoringEditModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8 backdrop-blur-xs sm:px-6 sm:py-10"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8 backdrop-blur-xs sm:px-6 sm:py-10"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !loading) {
           onClose();
@@ -96,16 +96,16 @@ export default function MonitoringEditModal({
       }}
     >
       <div
-        className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
+        className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="monitoring-edit-title"
         onMouseDown={(event) => event.stopPropagation()}
       >
         {/* HEADER */}
-        <div className="flex shrink-0 items-start justify-between border-b border-gray-100 px-5 py-4">
+        <div className="flex shrink-0 items-start justify-between border-b border-[#E5EAE6] px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-700">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#65B98A]/30 bg-[#E6F2EA] text-[#287A50]">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -131,12 +131,12 @@ export default function MonitoringEditModal({
             <div className="min-w-0">
               <h2
                 id="monitoring-edit-title"
-                className="text-[11px] font-semibold tracking-tight text-gray-800"
+                className="text-xs font-semibold tracking-tight text-[#202824]"
               >
                 Edit Status Presensi
               </h2>
 
-              <p className="text-[9px] leading-3.5 text-gray-400">
+              <p className="text-[10px] text-[#78827C]">
                 {peserta.nama}
               </p>
             </div>
@@ -147,7 +147,7 @@ export default function MonitoringEditModal({
             onClick={onClose}
             disabled={loading}
             aria-label="Tutup"
-            className="ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[#9AA39D] transition hover:bg-[#F5F7F5] hover:text-[#202824] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -175,46 +175,46 @@ export default function MonitoringEditModal({
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5">
             {/* INFORMASI PESERTA */}
             <section>
-              <div className="mb-3">
-                <h3 className="text-[11px] font-semibold text-gray-700">
+              <div className="mb-2">
+                <h3 className="text-xs font-semibold text-[#202824]">
                   Informasi Peserta
                 </h3>
               </div>
 
-              <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-3">
+              <div className="rounded-xl border border-[#E5EAE6] bg-[#F5F7F5] p-3.5">
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
                   <div className="min-w-0">
-                    <p className="text-[10px] font-medium text-gray-400">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider text-[#78827C]">
                       Desa
                     </p>
-                    <p className="mt-0.5 truncate text-[11px] font-medium text-gray-700">
+                    <p className="mt-0.5 truncate text-xs font-medium text-[#202824]">
                       {peserta.desa}
                     </p>
                   </div>
 
                   <div className="min-w-0">
-                    <p className="text-[10px] font-medium text-gray-400">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider text-[#78827C]">
                       Kelompok
                     </p>
-                    <p className="mt-0.5 truncate text-[11px] font-medium text-gray-700">
+                    <p className="mt-0.5 truncate text-xs font-medium text-[#202824]">
                       {peserta.kelompok}
                     </p>
                   </div>
 
                   <div className="min-w-0">
-                    <p className="text-[10px] font-medium text-gray-400">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider text-[#78827C]">
                       Kelas
                     </p>
-                    <p className="mt-0.5 truncate text-[11px] font-medium text-gray-700">
+                    <p className="mt-0.5 truncate text-xs font-medium text-[#202824]">
                       {peserta.kelas}
                     </p>
                   </div>
 
                   <div className="min-w-0">
-                    <p className="text-[10px] font-medium text-gray-400">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider text-[#78827C]">
                       Status Saat Ini
                     </p>
-                    <p className="mt-0.5 truncate text-[11px] font-medium text-gray-700">
+                    <p className="mt-0.5 truncate text-xs font-medium text-[#202824]">
                       {getStatusLabel(peserta.status)}
                     </p>
                   </div>
@@ -226,7 +226,7 @@ export default function MonitoringEditModal({
             <section>
               <label
                 htmlFor="monitoring-edit-status"
-                className="mb-1.5 block text-[11px] font-medium text-gray-600"
+                className="mb-1.5 block text-xs font-medium text-[#78827C]"
               >
                 Status Presensi
               </label>
@@ -240,13 +240,13 @@ export default function MonitoringEditModal({
                   }
                   disabled={loading}
                   required
-                  className={`h-9.75 w-full appearance-none rounded-lg border bg-white px-3 pr-9 text-[11px] outline-none transition focus:ring-2 sm:text-[12px] ${
-                    status ? "text-gray-700" : "text-gray-500"
+                  className={`h-10 w-full appearance-none rounded-xl border bg-white px-3 pr-9 text-xs outline-none transition focus:ring-2 ${
+                    status ? "text-[#202824]" : "text-[#9AA39D]"
                   } ${
                     error
-                      ? "border-red-300 focus:border-red-400 focus:ring-red-50"
-                      : "border-gray-200 focus:border-teal-400 focus:ring-teal-50"
-                  } disabled:cursor-not-allowed disabled:bg-gray-50`}
+                      ? "border-rose-300 focus:border-rose-400 focus:ring-rose-50"
+                      : "border-[#E5EAE6] focus:border-[#287A50] focus:ring-[#65B98A]/20"
+                  } disabled:cursor-not-allowed disabled:bg-[#F5F7F5]`}
                 >
                   <option value="" disabled>
                     Pilih status presensi
@@ -259,14 +259,14 @@ export default function MonitoringEditModal({
                   ))}
                 </select>
 
-                <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-gray-500">
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[#78827C]">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1.8"
-                    className="h-3.5 w-3.5"
+                    className="h-4 w-4"
                     aria-hidden="true"
                   >
                     <path
@@ -279,7 +279,7 @@ export default function MonitoringEditModal({
               </div>
 
               {!status && !error && (
-                <p className="mt-1 text-[9px] leading-3 text-gray-400">
+                <p className="mt-1 text-[10px] text-[#78827C]">
                   Pilih status untuk menyimpan perubahan.
                 </p>
               )}
@@ -289,10 +289,10 @@ export default function MonitoringEditModal({
             <section>
               <label
                 htmlFor="monitoring-edit-keterangan"
-                className="mb-1.5 block text-[11px] font-medium text-gray-600"
+                className="mb-1.5 block text-xs font-medium text-[#78827C]"
               >
                 Keterangan
-                <span className="ml-1 font-normal text-gray-400">
+                <span className="ml-1 font-normal text-[#9AA39D]">
                   (opsional)
                 </span>
               </label>
@@ -305,24 +305,24 @@ export default function MonitoringEditModal({
                 rows={3}
                 placeholder="Tambahkan keterangan..."
                 maxLength={500}
-                className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-[11px] text-gray-700 outline-none transition placeholder:text-gray-500 focus:border-teal-400 focus:ring-2 focus:ring-teal-50 sm:text-[12px] disabled:cursor-not-allowed disabled:bg-gray-50"
+                className="w-full resize-none rounded-xl border border-[#E5EAE6] bg-white px-3 py-2.5 text-xs text-[#202824] placeholder:text-[#9AA39D] outline-none transition focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20 disabled:cursor-not-allowed disabled:bg-[#F5F7F5]"
               />
 
-              <p className="mt-1 text-right text-[9px] text-gray-400">
+              <p className="mt-1 text-right text-[10px] text-[#9AA39D]">
                 {keterangan.length}/500
               </p>
             </section>
 
             {/* ERROR */}
             {error && (
-              <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
+              <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
-                  className="mt-0.5 h-4 w-4 shrink-0 text-red-500"
+                  className="mt-0.5 h-4 w-4 shrink-0 text-rose-500"
                   aria-hidden="true"
                 >
                   <circle cx="12" cy="12" r="9" />
@@ -333,18 +333,18 @@ export default function MonitoringEditModal({
                   />
                 </svg>
 
-                <p className="text-[10px] leading-4 text-red-600">{error}</p>
+                <p className="text-xs leading-4 text-rose-600">{error}</p>
               </div>
             )}
           </div>
 
           {/* FOOTER */}
-          <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50/50 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-end">
+          <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-[#E5EAE6] bg-[#F5F7F5]/50 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-end">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="h-9 w-full rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              className="h-9 w-full rounded-xl border border-[#E5EAE6] bg-white px-4 text-xs font-medium text-[#78827C] transition hover:bg-[#F5F7F5] hover:text-[#202824] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               Batal
             </button>
@@ -352,7 +352,7 @@ export default function MonitoringEditModal({
             <button
               type="submit"
               disabled={loading || !status}
-              className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-teal-700 px-5 text-[11px] font-semibold text-white shadow-xs transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-[#287A50] px-5 text-xs font-semibold text-white shadow-xs transition hover:bg-[#206440] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {loading ? "Menyimpan..." : "Simpan"}
             </button>

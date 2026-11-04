@@ -81,9 +81,9 @@ export default function LogoutButton({ onCloseMenu }: Props) {
       <button
         type="button"
         onClick={openConfirmation}
-        className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[11px] font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
+        className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[11px] font-medium text-[#CAD3CE] transition-colors hover:bg-[#181C1B] hover:text-white"
       >
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-50 text-gray-400 transition-colors group-hover:text-gray-600">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#181C1B] text-[#78827C] transition-colors group-hover:text-red-400">
           <LogoutIcon />
         </span>
 
@@ -92,16 +92,16 @@ export default function LogoutButton({ onCloseMenu }: Props) {
 
       {isOpen && (
         <div
-          className="fixed inset-0 z-100 flex items-center justify-center bg-black/45 px-4 backdrop-blur-[2px]"
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 px-4 backdrop-blur-[2px]"
           onClick={closeConfirmation}
         >
           <div
-            className="w-full max-w-sm overflow-hidden rounded-xl bg-white shadow-2xl"
+            className="w-full max-w-sm overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="px-5 pb-4 pt-5">
               <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-500">
                   <svg
                     viewBox="0 0 20 20"
                     fill="none"
@@ -120,29 +120,29 @@ export default function LogoutButton({ onCloseMenu }: Props) {
                 </div>
 
                 <div className="min-w-0">
-                  <h2 className="text-[13px] font-semibold text-gray-800">
+                  <h2 className="text-[13px] font-bold text-[#202824]">
                     Keluar dari akun?
                   </h2>
 
-                  <p className="mt-1 text-[10px] leading-4 text-gray-500">
+                  <p className="mt-1 text-[11px] leading-4 text-[#78827C]">
                     Anda akan keluar dari panel administrasi GENARA.
                   </p>
                 </div>
               </div>
 
               {error && (
-                <div className="mt-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-[10px] leading-4 text-red-600">
+                <div className="mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-[10px] leading-4 text-red-600">
                   {error}
                 </div>
               )}
             </div>
 
-            <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50/50 px-5 py-3.5 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-[#E5EAE6] bg-[#F5F7F5] px-5 py-3.5 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={closeConfirmation}
                 disabled={loading}
-                className="h-9 w-full rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                className="h-9 w-full rounded-xl border border-[#E5EAE6] bg-white px-4 text-[11px] font-medium text-[#78827C] transition-colors hover:bg-gray-50 hover:text-[#202824] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >
                 Batal
               </button>
@@ -151,7 +151,7 @@ export default function LogoutButton({ onCloseMenu }: Props) {
                 type="button"
                 onClick={handleLogout}
                 disabled={loading}
-                className="h-9 w-full rounded-lg bg-red-600 px-4 text-[11px] font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                className="h-9 w-full rounded-xl bg-red-600 px-4 text-[11px] font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {loading ? "Keluar..." : "Ya, Keluar"}
               </button>

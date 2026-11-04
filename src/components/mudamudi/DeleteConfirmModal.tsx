@@ -20,9 +20,9 @@ export default function DeleteConfirmModal({
     <ModalWrapper onClose={onClose} size="sm">
       <div className="flex max-h-[90dvh] min-h-0 w-full flex-col overflow-hidden bg-white">
         {/* Header */}
-        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 sm:px-5">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E5EAE6] px-4 py-3 sm:px-5">
           <div className="flex min-w-0 items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -39,10 +39,10 @@ export default function DeleteConfirmModal({
             </div>
 
             <div className="min-w-0">
-              <h2 className="text-[11px] font-semibold leading-5 text-gray-900">
+              <h2 className="text-[11px] font-semibold leading-5 text-[#202824]">
                 Hapus Data Generus
               </h2>
-              <p className="mt-0.5 text-[9px] leading-4 text-gray-500">
+              <p className="mt-0.5 text-[9px] leading-4 text-[#78827C]">
                 Konfirmasi penghapusan anggota
               </p>
             </div>
@@ -52,7 +52,7 @@ export default function DeleteConfirmModal({
             type="button"
             onClick={onClose}
             aria-label="Tutup"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[#78827C] transition hover:bg-[#F0F4F1] hover:text-[#202824]"
           >
             <svg
               viewBox="0 0 24 24"
@@ -72,19 +72,19 @@ export default function DeleteConfirmModal({
 
         {/* Content */}
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-5 sm:px-5">
-          <p className="text-[10px] leading-relaxed text-gray-600">
+          <p className="text-[10px] leading-relaxed text-[#78827C]">
             Apakah Anda yakin ingin menghapus data Generus atas nama{" "}
-            <span className="font-semibold text-gray-900">{data.nama}</span>?
+            <span className="font-semibold text-[#202824]">{data.nama}</span>?
           </p>
 
-          <p className="rounded-lg border border-amber-200 bg-amber-50/70 p-2.5 text-[9px] leading-relaxed text-amber-800">
+          <p className="rounded-xl border border-amber-200 bg-amber-50/70 p-2.5 text-[9px] leading-relaxed text-amber-800">
             Tindakan ini permanen dan akan menghapus data anggota beserta riwayat presensi terkait. Tindakan ini tidak dapat dibatalkan.
           </p>
 
           {error && (
             <div
               role="alert"
-              className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-[10px] leading-4 text-red-600"
+              className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[10px] leading-4 text-red-600"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -102,11 +102,11 @@ export default function DeleteConfirmModal({
         </div>
 
         {/* Footer */}
-        <footer className="flex shrink-0 items-center justify-end gap-2 border-t border-gray-100 bg-gray-50/60 px-4 py-3 sm:px-5">
+        <footer className="flex shrink-0 items-center justify-end gap-2 border-t border-[#E5EAE6] bg-[#F5F7F5] px-4 py-3 sm:px-5">
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex min-h-9 items-center justify-center rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-[9px] font-semibold text-gray-600 transition hover:bg-gray-50 active:scale-[0.98]"
+            className="inline-flex min-h-9 items-center justify-center rounded-xl border border-[#E5EAE6] bg-white px-3.5 py-2 text-[9px] font-semibold text-[#202824] transition hover:bg-[#F0F4F1] active:scale-[0.98]"
           >
             Batal
           </button>
@@ -114,7 +114,7 @@ export default function DeleteConfirmModal({
           <button
             type="button"
             onClick={onConfirm}
-            className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-[9px] font-semibold text-white transition hover:bg-red-700 active:scale-[0.98]"
+            className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-[9px] font-semibold text-white transition hover:bg-red-700 active:scale-[0.98]"
           >
             <svg
               viewBox="0 0 24 24"

@@ -23,17 +23,17 @@ type KegiatanInfoProps = {
 function KegiatanInfo({ item, compact = false }: KegiatanInfoProps) {
   return (
     <div className="min-w-0">
-      <p className="truncate text-xs font-semibold leading-5 text-gray-800">
+      <p className="truncate text-xs font-semibold leading-5 text-[#202824]">
         {item.nama}
       </p>
 
       <div className="mt-2 grid grid-cols-3 gap-2">
         <div className="min-w-0">
-          <p className="text-[9px] font-medium uppercase tracking-wide text-gray-400">
+          <p className="text-[9px] font-medium uppercase tracking-wide text-[#78827C]">
             Tanggal
           </p>
           <p
-            className={`mt-0.5 text-[10px] leading-4 text-gray-600 ${
+            className={`mt-0.5 text-[10px] leading-4 text-[#202824] ${
               compact ? "whitespace-normal" : "whitespace-nowrap"
             }`}
           >
@@ -45,20 +45,20 @@ function KegiatanInfo({ item, compact = false }: KegiatanInfoProps) {
         </div>
 
         <div className="min-w-0">
-          <p className="text-[9px] font-medium uppercase tracking-wide text-gray-400">
+          <p className="text-[9px] font-medium uppercase tracking-wide text-[#78827C]">
             Waktu
           </p>
-          <p className="mt-0.5 whitespace-nowrap text-[10px] leading-4 text-gray-600">
+          <p className="mt-0.5 whitespace-nowrap text-[10px] leading-4 text-[#202824]">
             {formatJam(item.jam_mulai)} - {formatJam(item.jam_selesai)}
           </p>
         </div>
 
         <div className="min-w-0">
-          <p className="text-[9px] font-medium uppercase tracking-wide text-gray-400">
+          <p className="text-[9px] font-medium uppercase tracking-wide text-[#78827C]">
             Lokasi
           </p>
           <p
-            className="mt-0.5 truncate text-[10px] leading-4 text-gray-600"
+            className="mt-0.5 truncate text-[10px] leading-4 text-[#202824]"
             title={item.lokasi}
           >
             {item.lokasi}
@@ -116,40 +116,40 @@ export default function MonitoringKegiatanSelector({
 
   return (
     <section
-      className={`relative rounded-2xl border border-gray-200/90 bg-white p-4 shadow-[0_3px_12px_rgba(15,23,42,0.035)] transition-all ${
-        open ? "z-30 ring-1 ring-teal-500/20" : "z-10"
+      className={`relative rounded-2xl border border-[#E5EAE6] bg-white p-4 shadow-xs transition-all ${
+        open ? "z-30 ring-1 ring-[#287A50]/20" : "z-10"
       }`}
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-xs font-semibold text-gray-900 sm:text-sm">
+          <h2 className="text-xs font-semibold text-[#202824] sm:text-sm">
             Pilih Kegiatan
           </h2>
-          <p className="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-[11px]">
+          <p className="mt-0.5 text-[10px] leading-4 text-[#78827C] sm:text-[11px]">
             Pilih kegiatan untuk memantau presensi.
           </p>
         </div>
 
         {kegiatan.length > 0 && (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[9px] font-medium text-gray-600">
-            <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E5EAE6] bg-[#F5F7F5] px-2.5 py-1 text-[9px] font-medium text-[#78827C]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#287A50]" />
             {kegiatan.length} kegiatan
           </span>
         )}
       </div>
 
       {kegiatan.length === 0 ? (
-        <div className="rounded-md border border-dashed border-gray-200 bg-gray-50 px-3 py-4 text-center">
-          <p className="text-xs font-medium text-gray-700">
+        <div className="rounded-xl border border-dashed border-[#E5EAE6] bg-[#F5F7F5] px-3 py-4 text-center">
+          <p className="text-xs font-medium text-[#202824]">
             Belum ada kegiatan
           </p>
-          <p className="mt-1 text-[10px] leading-4 text-gray-500">
+          <p className="mt-1 text-[10px] leading-4 text-[#78827C]">
             Tambahkan kegiatan terlebih dahulu melalui menu Kegiatan.
           </p>
         </div>
       ) : (
         <div ref={dropdownRef} className="relative">
-          <label className="mb-1.5 block text-[10px] font-medium text-gray-600 sm:text-[11px]">
+          <label className="mb-1.5 block text-[10px] font-medium text-[#78827C] sm:text-[11px]">
             Kegiatan
           </label>
 
@@ -158,8 +158,8 @@ export default function MonitoringKegiatanSelector({
             onClick={() => setOpen((value) => !value)}
             className={`flex min-h-19 w-full items-start justify-between gap-3 rounded-xl border bg-white px-3 py-2.5 text-left transition-colors ${
               open
-                ? "border-teal-600 ring-2 ring-teal-50"
-                : "border-gray-200 hover:border-gray-300"
+                ? "border-[#287A50] ring-2 ring-[#65B98A]/20"
+                : "border-[#E5EAE6] hover:border-[#65B98A]/40"
             }`}
             aria-haspopup="listbox"
             aria-expanded={open}
@@ -169,13 +169,13 @@ export default function MonitoringKegiatanSelector({
                 <KegiatanInfo item={selectedKegiatan} compact />
               </div>
             ) : (
-              <span className="py-1 text-xs text-gray-400">
+              <span className="py-1 text-xs text-[#9AA39D]">
                 Pilih kegiatan
               </span>
             )}
 
             <svg
-              className={`mt-0.5 h-4 w-4 shrink-0 text-gray-400 transition-transform ${
+              className={`mt-0.5 h-4 w-4 shrink-0 text-[#78827C] transition-transform ${
                 open ? "rotate-180" : ""
               }`}
               viewBox="0 0 20 20"
@@ -192,19 +192,19 @@ export default function MonitoringKegiatanSelector({
 
           {open && (
             <div
-              className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5"
+              className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-xl ring-1 ring-black/5"
               role="listbox"
               aria-label="Daftar kegiatan"
             >
               {kegiatan.length > 4 && (
-                <div className="border-b border-gray-100 p-2">
+                <div className="border-b border-[#E5EAE6] p-2">
                   <div className="relative">
                     <svg
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="1.8"
-                      className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
+                      className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#78827C]"
                     >
                       <circle cx="11" cy="11" r="7" />
                       <path d="m16 16 4 4" />
@@ -214,7 +214,7 @@ export default function MonitoringKegiatanSelector({
                       placeholder="Cari kegiatan..."
                       value={searchKegiatan}
                       onChange={(e) => setSearchKegiatan(e.target.value)}
-                      className="h-8 w-full rounded-lg border border-gray-200 bg-gray-50/70 pl-8 pr-2 text-[11px] text-gray-700 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-1 focus:ring-teal-100"
+                      className="h-8 w-full rounded-xl border border-[#E5EAE6] bg-[#F5F7F5] pl-8 pr-2 text-[11px] text-[#202824] outline-none transition focus:border-[#287A50] focus:bg-white focus:ring-1 focus:ring-[#65B98A]/20"
                     />
                   </div>
                 </div>
@@ -222,7 +222,7 @@ export default function MonitoringKegiatanSelector({
 
               <div className="max-h-80 overflow-y-auto overscroll-contain p-1.5">
                 {filteredKegiatan.length === 0 ? (
-                  <p className="px-3 py-4 text-center text-xs text-gray-400">
+                  <p className="px-3 py-4 text-center text-xs text-[#78827C]">
                     Tidak ada kegiatan yang cocok
                   </p>
                 ) : (
@@ -239,10 +239,10 @@ export default function MonitoringKegiatanSelector({
                           handleSelect(item.id);
                           setSearchKegiatan("");
                         }}
-                        className={`w-full rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                        className={`w-full rounded-xl border px-3 py-2.5 text-left transition-colors ${
                           isSelected
-                            ? "border-teal-100 bg-teal-50/70"
-                            : "border-transparent hover:bg-gray-50"
+                            ? "border-[#65B98A]/30 bg-[#E6F2EA]"
+                            : "border-transparent hover:bg-[#F5F7F5]"
                         }`}
                       >
                         <div className="flex items-start gap-2.5">
@@ -252,7 +252,7 @@ export default function MonitoringKegiatanSelector({
 
                           {isSelected && (
                             <svg
-                              className="mt-1 h-4 w-4 shrink-0 text-teal-600"
+                              className="mt-1 h-4 w-4 shrink-0 text-[#287A50]"
                               viewBox="0 0 20 20"
                               fill="currentColor"
                               aria-hidden="true"

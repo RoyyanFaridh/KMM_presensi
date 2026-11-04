@@ -45,7 +45,7 @@ export default function SearchFilterBar({
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9AA39D]"
           >
             <circle cx="11" cy="11" r="7" />
             <path d="m20 20-3.5-3.5" />
@@ -56,7 +56,7 @@ export default function SearchFilterBar({
             placeholder="Cari kegiatan..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-10 w-full rounded-xl border border-gray-200 bg-white pl-9.5 pr-8 text-[12px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            className="h-10 w-full rounded-xl border border-[#E5EAE6] bg-white pl-9.5 pr-8 text-[12px] text-[#202824] outline-none transition placeholder:text-[#9AA39D] focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20"
           />
 
           {search.length > 0 && (
@@ -64,7 +64,7 @@ export default function SearchFilterBar({
               type="button"
               onClick={() => setSearch("")}
               aria-label="Hapus pencarian"
-              className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+              className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-[#9AA39D] transition hover:bg-[#F0F4F1] hover:text-[#78827C]"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -89,8 +89,8 @@ export default function SearchFilterBar({
             transition shadow-xs
             ${
               showFilter || hasActiveFilters
-                ? "border-teal-300 bg-teal-50 text-teal-800 ring-2 ring-teal-100"
-                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300"
+                ? "border-[#65B98A] bg-[#E6F2EA] text-[#287A50] ring-2 ring-[#65B98A]/20"
+                : "border-[#E5EAE6] bg-white text-[#78827C] hover:bg-[#F5F7F5] hover:border-[#D5E0D6]"
             }
           `}
         >
@@ -108,7 +108,7 @@ export default function SearchFilterBar({
           </svg>
           Filter
           {activeFilterCount > 0 && (
-            <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-teal-700 px-1 text-[10px] font-semibold text-white">
+            <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#287A50] px-1 text-[10px] font-semibold text-white">
               {activeFilterCount}
             </span>
           )}
@@ -118,17 +118,17 @@ export default function SearchFilterBar({
       {/* Active filter badges / chips */}
       {(activeFilterCount > 0 || search.trim().length > 0) && (
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-          <span className="text-[11px] font-medium text-gray-400 mr-1">
+          <span className="text-[11px] font-medium text-[#9AA39D] mr-1">
             Filter aktif:
           </span>
 
           {search.trim().length > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50/70 px-2 py-0.5 text-[11px] text-teal-800">
+            <span className="inline-flex items-center gap-1 rounded-lg border border-[#65B98A]/30 bg-[#E6F2EA] px-2 py-0.5 text-[11px] text-[#206440]">
               <span>Cari: &ldquo;{search}&rdquo;</span>
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="hover:text-teal-950 font-bold ml-0.5"
+                className="hover:text-[#287A50] font-bold ml-0.5"
                 title="Hapus filter cari"
               >
                 ×
@@ -137,12 +137,12 @@ export default function SearchFilterBar({
           )}
 
           {filterStatus && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50/70 px-2 py-0.5 text-[11px] text-teal-800">
+            <span className="inline-flex items-center gap-1 rounded-lg border border-[#65B98A]/30 bg-[#E6F2EA] px-2 py-0.5 text-[11px] text-[#206440]">
               <span>Status: {STATUS_LABEL_MAP[filterStatus] ?? filterStatus}</span>
               <button
                 type="button"
                 onClick={() => setFilterStatus("")}
-                className="hover:text-teal-950 font-bold ml-0.5"
+                className="hover:text-[#287A50] font-bold ml-0.5"
                 title="Hapus filter status"
               >
                 ×
@@ -161,14 +161,14 @@ export default function SearchFilterBar({
       )}
 
       {showFilter && (
-        <div className="mt-2.5 rounded-xl border border-gray-200 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
+        <div className="mt-2.5 rounded-xl border border-[#E5EAE6] bg-white p-4 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h3 className="text-[12px] font-semibold text-gray-800">
+              <h3 className="text-[12px] font-semibold text-[#202824]">
                 Filter Kegiatan
               </h3>
 
-              <p className="mt-0.5 text-[10px] text-gray-400">
+              <p className="mt-0.5 text-[10px] text-[#9AA39D]">
                 Pilih kriteria untuk menyaring data kegiatan
               </p>
             </div>
@@ -177,7 +177,7 @@ export default function SearchFilterBar({
               type="button"
               onClick={() => setShowFilter(false)}
               aria-label="Tutup filter"
-              className="flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+              className="flex h-6 w-6 items-center justify-center rounded-md text-[#9AA39D] transition hover:bg-[#F0F4F1] hover:text-[#78827C]"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -195,12 +195,12 @@ export default function SearchFilterBar({
 
           <div className="grid gap-4 md:grid-cols-2 md:gap-6">
             <div>
-              <p className="mb-2 text-[10px] font-medium text-gray-600">
+              <p className="mb-2 text-[10px] font-medium text-[#78827C]">
                 Urutkan
               </p>
 
               <div className="flex flex-wrap gap-x-4 gap-y-2">
-                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-[#78827C]">
                   <input
                     type="radio"
                     name="sort"
@@ -214,12 +214,12 @@ export default function SearchFilterBar({
                         direction: "desc",
                       })
                     }
-                    className="h-3.5 w-3.5 accent-teal-600"
+                    className="h-3.5 w-3.5 accent-[#287A50]"
                   />
                   Terbaru
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-[#78827C]">
                   <input
                     type="radio"
                     name="sort"
@@ -233,12 +233,12 @@ export default function SearchFilterBar({
                         direction: "asc",
                       })
                     }
-                    className="h-3.5 w-3.5 accent-teal-600"
+                    className="h-3.5 w-3.5 accent-[#287A50]"
                   />
                   Tanggal terdekat
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-[#78827C]">
                   <input
                     type="radio"
                     name="sort"
@@ -252,12 +252,12 @@ export default function SearchFilterBar({
                         direction: "asc",
                       })
                     }
-                    className="h-3.5 w-3.5 accent-teal-600"
+                    className="h-3.5 w-3.5 accent-[#287A50]"
                   />
                   Nama A - Z
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-[#78827C]">
                   <input
                     type="radio"
                     name="sort"
@@ -271,63 +271,63 @@ export default function SearchFilterBar({
                         direction: "desc",
                       })
                     }
-                    className="h-3.5 w-3.5 accent-teal-600"
+                    className="h-3.5 w-3.5 accent-[#287A50]"
                   />
                   Nama Z - A
                 </label>
               </div>
             </div>
 
-            <div className="border-t border-gray-100 pt-4 md:border-l md:border-t-0 md:pl-6 md:pt-0">
-              <p className="mb-2 text-[10px] font-medium text-gray-600">
+            <div className="border-t border-[#E5EAE6] pt-4 md:border-l md:border-t-0 md:pl-6 md:pt-0">
+              <p className="mb-2 text-[10px] font-medium text-[#78827C]">
                 Status
               </p>
 
               <div className="flex flex-wrap gap-x-4 gap-y-2">
-                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-[#78827C]">
                   <input
                     type="radio"
                     name="status"
                     value=""
                     checked={filterStatus === ""}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="h-3.5 w-3.5 accent-teal-600"
+                    className="h-3.5 w-3.5 accent-[#287A50]"
                   />
                   Semua
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-[#78827C]">
                   <input
                     type="radio"
                     name="status"
                     value="akan_berlangsung"
                     checked={filterStatus === "akan_berlangsung"}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="h-3.5 w-3.5 accent-teal-600"
+                    className="h-3.5 w-3.5 accent-[#287A50]"
                   />
                   Akan berlangsung
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-[#78827C]">
                   <input
                     type="radio"
                     name="status"
                     value="sedang_berlangsung"
                     checked={filterStatus === "sedang_berlangsung"}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="h-3.5 w-3.5 accent-teal-600"
+                    className="h-3.5 w-3.5 accent-[#287A50]"
                   />
                   Sedang berlangsung
                 </label>
 
-                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-gray-600">
+                <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-[#78827C]">
                   <input
                     type="radio"
                     name="status"
                     value="selesai"
                     checked={filterStatus === "selesai"}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="h-3.5 w-3.5 accent-teal-600"
+                    className="h-3.5 w-3.5 accent-[#287A50]"
                   />
                   Selesai
                 </label>
@@ -335,11 +335,11 @@ export default function SearchFilterBar({
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
+          <div className="mt-4 flex items-center justify-between border-t border-[#E5EAE6] pt-3">
             <button
               type="button"
               onClick={onReset}
-              className="text-[11px] text-gray-500 underline underline-offset-2 transition hover:text-gray-700"
+              className="text-[11px] text-[#78827C] underline underline-offset-2 transition hover:text-[#202824]"
             >
               Reset filter
             </button>
@@ -347,7 +347,7 @@ export default function SearchFilterBar({
             <button
               type="button"
               onClick={() => setShowFilter(false)}
-              className="rounded-lg bg-teal-700 px-3.5 py-2 text-[11px] font-medium text-white transition hover:bg-teal-800"
+              className="rounded-xl bg-[#287A50] px-3.5 py-2 text-[11px] font-medium text-white transition hover:bg-[#206440]"
             >
               Selesai
             </button>

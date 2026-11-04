@@ -11,7 +11,7 @@ export default function FilterCheckboxGroup({
   options,
   selected,
   onChange,
-  colorClass = "border-teal-400 bg-teal-50 text-teal-700",
+  colorClass = "border-[#65B98A] bg-[#E6F2EA] text-[#206440]",
 }: Props) {
   const isSemua = selected.length === 0;
 
@@ -25,16 +25,16 @@ export default function FilterCheckboxGroup({
 
   return (
     <div>
-      <p className="mb-1.5 text-[11px] font-medium text-gray-600">{label}</p>
+      <p className="mb-1.5 text-[11px] font-medium text-[#202824]">{label}</p>
 
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => onChange([])}
-          className={`rounded-lg border px-3 py-1.5 text-[11px] font-medium transition ${
+          className={`rounded-xl border px-3 py-1.5 text-[11px] font-medium transition ${
             isSemua
               ? colorClass
-              : "border-gray-200 text-gray-500 hover:bg-gray-50"
+              : "border-[#E5EAE6] text-[#78827C] hover:bg-[#F5F7F5]"
           }`}
         >
           Semua
@@ -49,10 +49,10 @@ export default function FilterCheckboxGroup({
               type="button"
               onClick={() => toggleOption(option)}
               aria-pressed={isSelected}
-              className={`rounded-lg border px-3 py-1.5 text-[11px] font-medium transition ${
+              className={`rounded-xl border px-3 py-1.5 text-[11px] font-medium transition ${
                 isSelected
                   ? colorClass
-                  : "border-gray-200 text-gray-500 hover:bg-gray-50"
+                  : "border-[#E5EAE6] text-[#78827C] hover:bg-[#F5F7F5]"
               }`}
             >
               {option}

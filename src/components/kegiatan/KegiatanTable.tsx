@@ -276,17 +276,17 @@ export default function KegiatanTable({ initialData }: Props) {
     <>
       <div className="mx-auto max-w-7xl">
         <div className="mb-5">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-teal-600">
+          <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#287A50]">
             Kegiatan
           </p>
 
           <div className="mt-1 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-xl font-semibold tracking-tight text-gray-900">
+              <h1 className="text-xl font-bold tracking-tight text-[#202824]">
                 Data Kegiatan
               </h1>
 
-              <p className="mt-1 max-w-xs text-[10px] leading-4 text-gray-500 sm:max-w-none sm:text-xs">
+              <p className="mt-1 max-w-xs text-[10px] leading-4 text-[#78827C] sm:max-w-none sm:text-xs">
                 Kelola kegiatan yang digunakan untuk presensi.
               </p>
 
@@ -303,7 +303,7 @@ export default function KegiatanTable({ initialData }: Props) {
               disabled={loading || !formContext}
               aria-label="Tambah kegiatan"
               title="Tambah kegiatan"
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-lg font-medium leading-none text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-auto sm:px-4 sm:text-[11px]"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#287A50] text-lg font-medium leading-none text-white transition-colors hover:bg-[#206440] disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-auto sm:px-4 sm:text-[11px]"
             >
               <span className="sm:hidden">+</span>
               <span className="hidden sm:inline">+ Tambah Kegiatan</span>

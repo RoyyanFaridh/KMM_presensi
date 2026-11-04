@@ -383,16 +383,16 @@ export default function RekapitulasiPage({ adminDesa }: Props) {
         <div className="shrink-0">
           <div className="mb-6 flex items-center justify-between gap-3 sm:items-end">
             <div className="min-w-0 flex-1">
-              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-teal-600 sm:text-[10px]">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-[#287A50]">
                 Presensi
               </p>
 
-              <div className="mt-1.5">
-                <h1 className="text-base font-semibold tracking-tight text-gray-900 sm:text-xl">
+              <div className="mt-1">
+                <h1 className="text-lg font-bold tracking-tight text-[#202824] sm:text-xl">
                   Rekapitulasi Presensi
                 </h1>
 
-                <p className="mt-1 max-w-xs text-[10px] leading-4 text-gray-500 sm:max-w-none sm:text-xs">
+                <p className="mt-1 max-w-xs text-xs text-[#78827C] sm:max-w-none">
                   Lihat riwayat kehadiran Generus pada setiap kegiatan.
                 </p>
               </div>
@@ -403,14 +403,14 @@ export default function RekapitulasiPage({ adminDesa }: Props) {
               onClick={openExportModal}
               aria-label="Ekspor Excel"
               title="Ekspor Excel"
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-700 text-white shadow-sm transition hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 sm:h-9 sm:w-auto sm:gap-2 sm:rounded-lg sm:px-4"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#287A50] text-white shadow-xs transition hover:bg-[#206440] focus:outline-none focus:ring-2 focus:ring-[#287A50] focus:ring-offset-2 sm:h-9 sm:w-auto sm:gap-2 sm:px-4"
             >
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={1.8}
-                className="h-5 w-5 sm:h-4 sm:w-4"
+                className="h-4 w-4"
                 aria-hidden="true"
               >
                 <path
@@ -419,7 +419,7 @@ export default function RekapitulasiPage({ adminDesa }: Props) {
                   d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"
                 />
               </svg>
-              <span className="hidden text-[11px] font-semibold sm:inline">
+              <span className="hidden text-xs font-semibold sm:inline">
                 Ekspor Excel
               </span>
             </button>
@@ -428,7 +428,7 @@ export default function RekapitulasiPage({ adminDesa }: Props) {
           {error && (
             <div
               role="alert"
-              className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[11px] leading-5 text-red-700"
+              className="mb-5 flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs leading-5 text-rose-700"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -473,13 +473,13 @@ export default function RekapitulasiPage({ adminDesa }: Props) {
           />
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-[0_3px_12px_rgba(15,23,42,0.035)]">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-sm">
           {loading && hasLoaded && (
             <div
               role="status"
-              className="flex shrink-0 items-center gap-2 border-b border-teal-100 bg-teal-50/70 px-4 py-2 text-[10px] text-teal-800"
+              className="flex shrink-0 items-center gap-2 border-b border-[#65B98A]/30 bg-[#E6F2EA] px-4 py-2 text-xs text-[#206440]"
             >
-              <span className="h-3 w-3 animate-spin rounded-full border-2 border-teal-200 border-t-teal-700" />
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#65B98A]/40 border-t-[#287A50]" />
               Memperbarui rekapitulasi...
             </div>
           )}

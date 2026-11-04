@@ -58,11 +58,11 @@ export default function MudamudiQRModal({ data, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs px-4 py-6">
-      <div className="relative flex max-h-[95vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
-        <div className="shrink-0 border-b border-gray-200 px-5 py-4">
+      <div className="relative flex max-h-[95vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-xl">
+        <div className="shrink-0 border-b border-[#E5EAE6] px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-700">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#E5EAE6] bg-[#E6F2EA] text-[#287A50]">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -80,11 +80,11 @@ export default function MudamudiQRModal({ data, onClose }: Props) {
               </div>
 
               <div className="min-w-0">
-                <h2 className="text-[11px] font-semibold tracking-tight text-gray-800">
+                <h2 className="text-[11px] font-semibold tracking-tight text-[#202824]">
                   Kartu QR Presensi Generus
                 </h2>
 
-                <p className="text-[9px] leading-3.5 text-gray-400">
+                <p className="text-[9px] leading-3.5 text-[#78827C]">
                   QR personal yang digunakan untuk presensi kegiatan GENARA
                 </p>
               </div>
@@ -95,7 +95,7 @@ export default function MudamudiQRModal({ data, onClose }: Props) {
               onClick={onClose}
               aria-label="Tutup"
               title="Tutup"
-              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[#78827C] transition hover:bg-[#F0F4F1] hover:text-[#202824]"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -115,28 +115,28 @@ export default function MudamudiQRModal({ data, onClose }: Props) {
           </div>
         </div>
 
-        <div className="min-h-0 overflow-y-auto bg-gray-50/70 px-5 py-6">
+        <div className="min-h-0 overflow-y-auto bg-[#F5F7F5] px-5 py-6">
           <div className="flex justify-center">
             <div
               ref={cardRef}
-              className="relative aspect-7/10 w-full max-w-75 rounded-[20px] bg-gray-50 p-[4%]"
+              className="relative aspect-7/10 w-full max-w-75 rounded-[20px] bg-[#F5F7F5] p-[4%]"
             >
-              <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+              <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
                 <div className="flex h-full w-full flex-col px-[8%] py-[7%]">
                   <div className="text-center">
-                    <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-teal-600">
+                    <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-[#287A50]">
                       GENARA
                     </p>
 
-                    <h3 className="mt-1 text-[15px] font-semibold tracking-tight text-gray-900">
+                    <h3 className="mt-1 text-[15px] font-semibold tracking-tight text-[#202824]">
                       Kartu QR Presensi
                     </h3>
 
-                    <div className="mx-auto mt-2 h-0.5 w-7 rounded-full bg-teal-500" />
+                    <div className="mx-auto mt-2 h-0.5 w-7 rounded-full bg-[#287A50]" />
                   </div>
 
                   <div className="flex flex-1 items-center justify-center">
-                    <div className="rounded-2xl border border-gray-200 bg-white p-[5%] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                    <div className="rounded-2xl border border-[#E5EAE6] bg-white p-[5%] shadow-xs">
                       <QRCodeSVG
                         value={qrValue}
                         level="M"
@@ -147,17 +147,17 @@ export default function MudamudiQRModal({ data, onClose }: Props) {
                   </div>
 
                   <div className="text-center">
-                    <p className="wrap-break-word text-[14px] font-semibold leading-tight text-gray-900">
+                    <p className="wrap-break-word text-[14px] font-semibold leading-tight text-[#202824]">
                       {toTitleCase(data.nama)}
                     </p>
 
-                    <p className="mt-1 text-[9px] leading-3.5 text-gray-500">
+                    <p className="mt-1 text-[9px] leading-3.5 text-[#78827C]">
                       {data.desa} · {data.kelompok}
                     </p>
                   </div>
 
-                  <div className="mt-4 border-t border-gray-100 pt-2.5 text-center">
-                    <p className="font-mono text-[6px] leading-none text-gray-400">
+                  <div className="mt-4 border-t border-[#E5EAE6] pt-2.5 text-center">
+                    <p className="font-mono text-[6px] leading-none text-[#9AA39D]">
                       {data.qr_id}
                     </p>
                   </div>
@@ -167,25 +167,25 @@ export default function MudamudiQRModal({ data, onClose }: Props) {
           </div>
 
           <div className="mt-4 text-center">
-            <p className="text-[9px] text-gray-400">
+            <p className="text-[9px] text-[#78827C]">
               Preview ukuran{" "}
-              <span className="font-medium text-gray-500">70 × 100 mm</span>
+              <span className="font-medium text-[#202824]">70 × 100 mm</span>
             </p>
 
-            <p className="mt-0.5 text-[8px] text-gray-400">
+            <p className="mt-0.5 text-[8px] text-[#9AA39D]">
               Format ID Card · Portrait
             </p>
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-gray-200 bg-white px-5 py-3">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[#E5EAE6] bg-white px-5 py-3">
           <div className="min-w-0">
-            <p className="text-[9px] text-gray-400">
+            <p className="text-[9px] text-[#78827C]">
               QR personal{" "}
-              <span className="font-medium text-gray-500">Generus</span>
+              <span className="font-medium text-[#202824]">Generus</span>
             </p>
 
-            <p className="mt-0.5 text-[8px] text-gray-400">
+            <p className="mt-0.5 text-[8px] text-[#9AA39D]">
               Siap dicetak sebagai ID Card
             </p>
           </div>
@@ -194,7 +194,7 @@ export default function MudamudiQRModal({ data, onClose }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-gray-200 bg-white px-3 text-[10px] font-medium text-gray-600 transition hover:bg-gray-50"
+              className="inline-flex h-8 items-center justify-center rounded-xl border border-[#E5EAE6] bg-white px-3 text-[10px] font-medium text-[#202824] transition hover:bg-[#F0F4F1]"
             >
               Tutup
             </button>
@@ -203,7 +203,7 @@ export default function MudamudiQRModal({ data, onClose }: Props) {
               type="button"
               onClick={handleDownload}
               disabled={isDownloading}
-              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-teal-600 px-3.5 text-[10px] font-semibold text-white transition hover:bg-teal-700 active:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-xl bg-[#287A50] px-3.5 text-[10px] font-semibold text-white transition hover:bg-[#206440] active:bg-[#206440] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isDownloading ? (
                 <>

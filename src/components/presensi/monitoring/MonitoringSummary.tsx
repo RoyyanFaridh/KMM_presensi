@@ -29,7 +29,7 @@ function SummaryCard({
   const safePercentage = Math.min(100, Math.max(0, percentage));
 
   return (
-    <article className="min-w-0 rounded-xl border border-gray-200/80 bg-white px-2.5 py-2.5 shadow-xs transition-colors hover:border-gray-300 sm:px-3 sm:py-3">
+    <article className="min-w-0 rounded-2xl border border-[#E5EAE6] bg-white px-2.5 py-2.5 shadow-xs transition-colors hover:border-[#65B98A]/40 sm:px-3.5 sm:py-3.5">
       <div className="flex min-w-0 items-center gap-1.5">
         <span
           className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}`}
@@ -37,7 +37,7 @@ function SummaryCard({
         />
 
         <p
-          className="truncate text-[10px] font-medium leading-4 text-gray-500 sm:text-[11px]"
+          className="truncate text-[10px] font-medium leading-4 text-[#78827C] sm:text-[11px]"
           title={label}
         >
           {label}
@@ -45,14 +45,14 @@ function SummaryCard({
       </div>
 
       <p
-        className={`mt-2 text-lg font-bold leading-tight tracking-tight text-gray-900 ${valueClass}`}
+        className={`mt-2 text-lg font-bold leading-tight tracking-tight text-[#202824] ${valueClass}`}
       >
         {value.toLocaleString("id-ID")}
       </p>
 
       <div className="mt-2 flex items-center gap-2">
         <div
-          className="h-1 flex-1 overflow-hidden rounded-full bg-gray-100"
+          className="h-1 flex-1 overflow-hidden rounded-full bg-[#F5F7F5]"
           role="progressbar"
           aria-label={`${label}: ${safePercentage.toFixed(1)} persen`}
           aria-valuemin={0}
@@ -65,7 +65,7 @@ function SummaryCard({
           />
         </div>
 
-        <span className="shrink-0 text-[10px] font-semibold tabular-nums text-gray-500">
+        <span className="shrink-0 text-[10px] font-semibold tabular-nums text-[#78827C]">
           {safePercentage.toLocaleString("id-ID", {
             maximumFractionDigits: 1,
           })}
@@ -97,29 +97,29 @@ export default function MonitoringSummary({
       label: "Hadir",
       value: totalHadir,
       percentage: getPercentage(totalHadir),
-      valueClass: "text-emerald-600",
-      dotClass: "bg-emerald-500",
+      valueClass: "text-[#287A50]",
+      dotClass: "bg-[#287A50]",
     },
     {
       label: "Terlambat",
       value: totalTerlambat,
       percentage: getPercentage(totalTerlambat),
-      valueClass: "text-violet-600",
-      dotClass: "bg-violet-500",
+      valueClass: "text-amber-600",
+      dotClass: "bg-amber-500",
     },
     {
       label: "Izin",
       value: totalIzin,
       percentage: getPercentage(totalIzin),
-      valueClass: "text-amber-600",
-      dotClass: "bg-amber-500",
+      valueClass: "text-blue-600",
+      dotClass: "bg-blue-500",
     },
     {
       label: "Sakit",
       value: totalSakit,
       percentage: getPercentage(totalSakit),
-      valueClass: "text-blue-600",
-      dotClass: "bg-blue-500",
+      valueClass: "text-purple-600",
+      dotClass: "bg-purple-500",
     },
     {
       label: "Alpa",
@@ -134,8 +134,8 @@ export default function MonitoringSummary({
     label: "Belum Hadir",
     value: totalBelumHadir,
     percentage: getPercentage(totalBelumHadir),
-    valueClass: "text-slate-700",
-    dotClass: "bg-slate-400",
+    valueClass: "text-[#78827C]",
+    dotClass: "bg-[#9AA39D]",
   };
 
   return (
@@ -149,8 +149,8 @@ export default function MonitoringSummary({
           label="Total Generus"
           value={totalPeserta}
           percentage={safeTotal > 0 ? 100 : 0}
-          valueClass="text-gray-900"
-          dotClass="bg-teal-600"
+          valueClass="text-[#202824]"
+          dotClass="bg-[#287A50]"
         />
 
         <div className="hidden sm:block">

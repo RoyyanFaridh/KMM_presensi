@@ -240,21 +240,21 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#F5F7F5]">
       <div className="mx-auto w-full px-4 py-6 sm:px-6 md:px-7 lg:px-8">
-        <header className="border-b border-gray-200 pb-5">
+        <header className="border-b border-[#E5EAE6] pb-5">
           <div className="mb-5">
-            <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-teal-600">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#287A50]">
               Generus
             </p>
 
             <div className="mt-1 flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h1 className="text-xl font-semibold tracking-tight text-gray-900">
+                <h1 className="text-xl font-bold tracking-tight text-[#202824]">
                   Data Generus
                 </h1>
 
-                <p className="mt-1 max-w-xs text-[10px] leading-4 text-gray-500 sm:max-w-none sm:text-xs">
+                <p className="mt-1 max-w-xs text-[11px] leading-4 text-[#78827C] sm:max-w-none sm:text-xs">
                   Kelola data anggota Generus yang digunakan untuk presensi.
                 </p>
               </div>
@@ -265,7 +265,7 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
                   onClick={() => setShowImportModal(true)}
                   aria-label="Import data"
                   title="Import data"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-700 transition-colors hover:bg-amber-100 active:bg-amber-200 md:h-9 md:w-auto md:gap-1.5 md:px-3.5 md:text-[11px] md:font-medium"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5EAE6] bg-white text-[#202824] shadow-xs transition-colors hover:bg-[#F0F4F1] active:bg-[#E5EAE6] md:h-9 md:w-auto md:gap-1.5 md:px-3.5 md:text-[11px] md:font-medium"
                 >
                   <UploadIcon />
 
@@ -277,7 +277,7 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
                   onClick={() => setShowExportModal(true)}
                   aria-label="Export data"
                   title="Export data"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-sky-200 bg-sky-50 text-sky-700 transition-colors hover:bg-sky-100 active:bg-sky-200 md:h-9 md:w-auto md:gap-1.5 md:px-3.5 md:text-[11px] md:font-medium"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5EAE6] bg-white text-[#202824] shadow-xs transition-colors hover:bg-[#F0F4F1] active:bg-[#E5EAE6] md:h-9 md:w-auto md:gap-1.5 md:px-3.5 md:text-[11px] md:font-medium"
                 >
                   <DownloadIcon />
 
@@ -289,7 +289,7 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
                   onClick={openAddModal}
                   aria-label="Tambah Generus"
                   title="Tambah Generus"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-teal-700 text-lg font-medium leading-none text-white shadow-xs transition-colors hover:bg-teal-800 active:bg-teal-900 md:h-9 md:w-auto md:px-4 md:text-[11px]"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#287A50] text-lg font-medium leading-none text-white shadow-xs transition-colors hover:bg-[#206440] active:bg-[#181C1B] md:h-9 md:w-auto md:px-4 md:text-[11px] md:font-semibold"
                 >
                   <span className="md:hidden">+</span>
 

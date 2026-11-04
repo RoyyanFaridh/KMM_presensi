@@ -9,16 +9,16 @@ export type DesaDistribusi = {
   kelompok: KelompokDistribusi[];
 };
 
-// Hex supaya bisa dipakai untuk border, isi tipis, dan garis miring.
+// Hex warna kelompok selaras dengan Charcoal & Green palette
 const KELOMPOK_COLORS = [
-  "#14b8a6", // teal
-  "#0ea5e9", // sky
-  "#6366f1", // indigo
-  "#d946ef", // fuchsia
-  "#f59e0b", // amber
-  "#10b981", // emerald
-  "#f43f5e", // rose
-  "#06b6d4", // cyan
+  "#287A50", // Forest Green (Primary)
+  "#65B98A", // Accent Green
+  "#262D29", // Dark Surface / Charcoal
+  "#206440", // Hover Green
+  "#3B82F6", // Blue
+  "#F59E0B", // Amber
+  "#10B981", // Emerald
+  "#8B5CF6", // Purple
 ];
 
 function hatchStyle(color: string, active = false): CSSProperties {
@@ -158,7 +158,7 @@ export default function NestedBarChart({
                               {isActive && (
                                 <span
                                   role="tooltip"
-                                  className={`pointer-events-none absolute top-0 z-20 block whitespace-nowrap rounded-md bg-gray-900 px-2 py-1.5 text-left text-[10px] leading-4 text-white shadow-lg ${tooltipAlign}`}
+                                  className={`pointer-events-none absolute top-0 z-20 block whitespace-nowrap rounded-lg border border-[#333C37] bg-[#181C1B] px-2.5 py-1.5 text-left text-[10px] leading-4 text-white shadow-xl ${tooltipAlign}`}
                                 >
                                   <span className="block font-semibold">
                                     {kelompok.label}
@@ -273,7 +273,7 @@ export default function NestedBarChart({
                       {isActive && (
                         <span
                           role="tooltip"
-                          className="pointer-events-none absolute left-2 top-full z-20 mt-0.5 block whitespace-nowrap rounded-md bg-gray-900 px-2 py-1.5 text-left text-[10px] leading-4 text-white shadow-lg"
+                          className="pointer-events-none absolute left-2 top-full z-20 mt-0.5 block whitespace-nowrap rounded-lg border border-[#333C37] bg-[#181C1B] px-2.5 py-1.5 text-left text-[10px] leading-4 text-white shadow-xl"
                         >
                           <span className="block font-semibold">
                             {kelompok.label}

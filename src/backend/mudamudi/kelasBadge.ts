@@ -10,7 +10,7 @@ export function getKelasBadgeClass(kelas: string): string {
       return "border-blue-200 bg-blue-50 text-blue-600";
 
     case "Remaja":
-      return "border-teal-200 bg-teal-50 text-teal-600";
+      return "border-[#65B98A]/40 bg-[#E6F2EA] text-[#206440]";
 
     case "Usia Nikah":
       return "border-orange-200 bg-orange-50 text-orange-600";

@@ -109,7 +109,7 @@ export default function SearchFilterBar({
             placeholder="Cari nama Generus..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-10 w-full rounded-xl border border-gray-200 bg-white pl-9.5 pr-8 text-[12px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            className="h-10 w-full rounded-xl border border-[#E5EAE6] bg-white pl-9.5 pr-8 text-[12px] text-[#202824] outline-none transition placeholder:text-[#78827C] focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20"
           />
 
           {search.length > 0 && (
@@ -117,7 +117,7 @@ export default function SearchFilterBar({
               type="button"
               onClick={() => setSearch("")}
               aria-label="Hapus pencarian"
-              className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+              className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-[#78827C] transition hover:bg-[#F0F4F1] hover:text-[#202824]"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -142,8 +142,8 @@ export default function SearchFilterBar({
             transition shadow-xs
             ${
               showFilter || hasActiveFilters
-                ? "border-teal-300 bg-teal-50 text-teal-800 ring-2 ring-teal-100"
-                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300"
+                ? "border-[#65B98A] bg-[#E6F2EA] text-[#287A50] ring-2 ring-[#65B98A]/20"
+                : "border-[#E5EAE6] bg-white text-[#202824] hover:bg-[#F0F4F1] hover:border-[#65B98A]/40"
             }
           `}
         >
@@ -161,7 +161,7 @@ export default function SearchFilterBar({
           </svg>
           Filter
           {activeFilterCount > 0 && (
-            <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-teal-700 px-1 text-[10px] font-semibold text-white">
+            <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#287A50] px-1 text-[10px] font-bold text-white">
               {activeFilterCount}
             </span>
           )}
@@ -171,17 +171,17 @@ export default function SearchFilterBar({
       {/* Active filter badges / chips */}
       {(activeFilterCount > 0 || search.trim().length > 0) && (
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-          <span className="text-[11px] font-medium text-gray-400 mr-1">
+          <span className="text-[11px] font-medium text-[#78827C] mr-1">
             Filter aktif:
           </span>
 
           {search.trim().length > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50/70 px-2 py-0.5 text-[11px] text-teal-800">
+            <span className="inline-flex items-center gap-1 rounded-lg border border-[#E5EAE6] bg-[#E6F2EA] px-2 py-0.5 text-[11px] font-medium text-[#206440]">
               <span>Cari: &ldquo;{search}&rdquo;</span>
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="hover:text-teal-950 font-bold ml-0.5"
+                className="hover:text-[#181C1B] font-bold ml-0.5"
                 title="Hapus filter cari"
               >
                 ×
@@ -190,12 +190,12 @@ export default function SearchFilterBar({
           )}
 
           {isSuperAdmin && filterDesa && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50/70 px-2 py-0.5 text-[11px] text-teal-800">
+            <span className="inline-flex items-center gap-1 rounded-lg border border-[#E5EAE6] bg-[#E6F2EA] px-2 py-0.5 text-[11px] font-medium text-[#206440]">
               <span>Desa: {filterDesa}</span>
               <button
                 type="button"
                 onClick={() => handleDesaChange("")}
-                className="hover:text-teal-950 font-bold ml-0.5"
+                className="hover:text-[#181C1B] font-bold ml-0.5"
                 title="Hapus filter desa"
               >
                 ×
@@ -204,12 +204,12 @@ export default function SearchFilterBar({
           )}
 
           {filterKelompok && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50/70 px-2 py-0.5 text-[11px] text-teal-800">
+            <span className="inline-flex items-center gap-1 rounded-lg border border-[#E5EAE6] bg-[#E6F2EA] px-2 py-0.5 text-[11px] font-medium text-[#206440]">
               <span>Kelompok: {filterKelompok}</span>
               <button
                 type="button"
                 onClick={() => setFilterKelompok("")}
-                className="hover:text-teal-950 font-bold ml-0.5"
+                className="hover:text-[#181C1B] font-bold ml-0.5"
                 title="Hapus filter kelompok"
               >
                 ×
@@ -218,12 +218,12 @@ export default function SearchFilterBar({
           )}
 
           {filterJenisKelamin && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50/70 px-2 py-0.5 text-[11px] text-teal-800">
+            <span className="inline-flex items-center gap-1 rounded-lg border border-[#E5EAE6] bg-[#E6F2EA] px-2 py-0.5 text-[11px] font-medium text-[#206440]">
               <span>JK: {filterJenisKelamin}</span>
               <button
                 type="button"
                 onClick={() => setFilterJenisKelamin("")}
-                className="hover:text-teal-950 font-bold ml-0.5"
+                className="hover:text-[#181C1B] font-bold ml-0.5"
                 title="Hapus filter jenis kelamin"
               >
                 ×
@@ -232,12 +232,12 @@ export default function SearchFilterBar({
           )}
 
           {filterkelas && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50/70 px-2 py-0.5 text-[11px] text-teal-800">
+            <span className="inline-flex items-center gap-1 rounded-lg border border-[#E5EAE6] bg-[#E6F2EA] px-2 py-0.5 text-[11px] font-medium text-[#206440]">
               <span>Kelas: {filterkelas}</span>
               <button
                 type="button"
                 onClick={() => setFilterkelas("")}
-                className="hover:text-teal-950 font-bold ml-0.5"
+                className="hover:text-[#181C1B] font-bold ml-0.5"
                 title="Hapus filter kelas"
               >
                 ×
@@ -248,7 +248,7 @@ export default function SearchFilterBar({
           <button
             type="button"
             onClick={handleReset}
-            className="text-[11px] font-medium text-red-600 hover:text-red-700 ml-1 transition"
+            className="text-[11px] font-semibold text-red-600 hover:text-red-700 ml-1 transition"
           >
             Reset Semua
           </button>
@@ -256,14 +256,14 @@ export default function SearchFilterBar({
       )}
 
       {showFilter && (
-        <div className="mt-2.5 rounded-xl border border-gray-200 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
+        <div className="mt-2.5 rounded-2xl border border-[#E5EAE6] bg-white p-4 shadow-lg shadow-black/5">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h3 className="text-[12px] font-semibold text-gray-800">
+              <h3 className="text-[12px] font-bold text-[#202824]">
                 Filter Data Generus
               </h3>
 
-              <p className="mt-0.5 text-[10px] text-gray-400">
+              <p className="mt-0.5 text-[10px] text-[#78827C]">
                 Pilih kriteria untuk menyaring data Generus
               </p>
             </div>
@@ -319,7 +319,7 @@ export default function SearchFilterBar({
                           direction: "desc",
                         })
                       }
-                      className="h-3.5 w-3.5 accent-teal-600"
+                      className="h-3.5 w-3.5 accent-[#287A50]"
                     />
                     Terbaru
                   </label>
@@ -338,7 +338,7 @@ export default function SearchFilterBar({
                           direction: "asc",
                         })
                       }
-                      className="h-3.5 w-3.5 accent-teal-600"
+                      className="h-3.5 w-3.5 accent-[#287A50]"
                     />
                     Nama A - Z
                   </label>
@@ -357,7 +357,7 @@ export default function SearchFilterBar({
                           direction: "desc",
                         })
                       }
-                      className="h-3.5 w-3.5 accent-teal-600"
+                      className="h-3.5 w-3.5 accent-[#287A50]"
                     />
                     Nama Z - A
                   </label>
@@ -375,7 +375,7 @@ export default function SearchFilterBar({
                       value=""
                       checked={filterDesa === ""}
                       onChange={() => handleDesaChange("")}
-                      className="h-3.5 w-3.5 accent-teal-600"
+                      className="h-3.5 w-3.5 accent-[#287A50]"
                     />
                     Semua
                   </label>
@@ -391,7 +391,7 @@ export default function SearchFilterBar({
                         value={desa}
                         checked={filterDesa === desa}
                         onChange={() => handleDesaChange(desa)}
-                        className="h-3.5 w-3.5 accent-teal-600"
+                        className="h-3.5 w-3.5 accent-[#287A50]"
                       />
 
                       {desa}
@@ -424,7 +424,7 @@ export default function SearchFilterBar({
                     value=""
                     checked={filterJenisKelamin === ""}
                     onChange={(e) => setFilterJenisKelamin(e.target.value)}
-                    className="h-3.5 w-3.5 accent-teal-600"
+                    className="h-3.5 w-3.5 accent-[#287A50]"
                   />
                   Semua
                 </label>
@@ -440,7 +440,7 @@ export default function SearchFilterBar({
                       value={jk}
                       checked={filterJenisKelamin === jk}
                       onChange={(e) => setFilterJenisKelamin(e.target.value)}
-                      className="h-3.5 w-3.5 accent-teal-600"
+                      className="h-3.5 w-3.5 accent-[#287A50]"
                     />
 
                     {jk}
@@ -462,7 +462,7 @@ export default function SearchFilterBar({
                     value=""
                     checked={filterkelas === ""}
                     onChange={(e) => setFilterkelas(e.target.value)}
-                    className="h-3.5 w-3.5 accent-teal-600"
+                    className="h-3.5 w-3.5 accent-[#287A50]"
                   />
                   Semua
                 </label>
@@ -478,7 +478,7 @@ export default function SearchFilterBar({
                       value={kelas}
                       checked={filterkelas === kelas}
                       onChange={(e) => setFilterkelas(e.target.value)}
-                      className="h-3.5 w-3.5 accent-teal-600"
+                      className="h-3.5 w-3.5 accent-[#287A50]"
                     />
 
                     {kelas}
@@ -500,7 +500,7 @@ export default function SearchFilterBar({
                     value=""
                     checked={filterKelompok === ""}
                     onChange={(e) => setFilterKelompok(e.target.value)}
-                    className="h-3.5 w-3.5 accent-teal-600"
+                    className="h-3.5 w-3.5 accent-[#287A50]"
                   />
                   Semua
                 </label>
@@ -516,7 +516,7 @@ export default function SearchFilterBar({
                       value={kelompok}
                       checked={filterKelompok === kelompok}
                       onChange={(e) => setFilterKelompok(e.target.value)}
-                      className="h-3.5 w-3.5 accent-teal-600"
+                      className="h-3.5 w-3.5 accent-[#287A50]"
                     />
 
                     {kelompok}
@@ -538,7 +538,7 @@ export default function SearchFilterBar({
             <button
               type="button"
               onClick={() => setShowFilter(false)}
-              className="rounded-lg bg-teal-700 px-3.5 py-2 text-[11px] font-medium text-white transition hover:bg-teal-800"
+              className="rounded-xl bg-[#287A50] px-4 py-2 text-[11px] font-semibold text-white shadow-xs transition hover:bg-[#206440]"
             >
               Selesai
             </button>

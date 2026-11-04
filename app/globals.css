@@ -1,25 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F5F7F5;
+  --foreground: #202824;
+
+  /* GENARA Charcoal & Green Palette Tokens */
+  --charcoal: #181C1B;
+  --dark-surface: #262D29;
+  --primary-green: #287A50;
+  --hover-green: #206440;
+  --accent-green: #65B98A;
+  --light-green: #E6F2EA;
+  --main-bg: #F5F7F5;
+  --card-bg: #FFFFFF;
+  --primary-text: #202824;
+  --secondary-text: #78827C;
+  --border-green: #E5EAE6;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-poppins);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme {
+  --color-charcoal: #181C1B;
+  --color-dark-surface: #262D29;
+  --color-primary-green: #287A50;
+  --color-hover-green: #206440;
+  --color-accent-green: #65B98A;
+  --color-light-green: #E6F2EA;
+  --color-main-bg: #F5F7F5;
+  --color-card-bg: #FFFFFF;
+  --color-primary-text: #202824;
+  --color-secondary-text: #78827C;
+  --color-border-green: #E5EAE6;
+  --font-sans: var(--font-poppins), system-ui, -apple-system, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-poppins), sans-serif;
+  background-color: #F5F7F5;
+  color: #202824;
+  font-family: var(--font-poppins), system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
 }

@@ -132,8 +132,8 @@ const STATUS_STYLES = {
     dotClassName: "bg-amber-500",
   },
   selesai: {
-    className: "bg-gray-100 text-gray-600 ring-gray-500/20",
-    dotClassName: "bg-gray-400",
+    className: "bg-[#F5F7F5] text-[#78827C] ring-[#E5EAE6]",
+    dotClassName: "bg-[#9AA39D]",
   },
 } as const;
 
@@ -174,10 +174,10 @@ export function CreatorText({
   return (
     <p
       title={label}
-      className={`text-[10px] leading-4 text-gray-500 ${className}`}
+      className={`text-[10px] leading-4 text-[#78827C] ${className}`}
     >
       Dibuat oleh{" "}
-      <span className={recorded ? "font-medium text-gray-700" : "italic"}>
+      <span className={recorded ? "font-medium text-[#202824]" : "italic"}>
         {label}
       </span>
     </p>
@@ -187,15 +187,15 @@ export function CreatorText({
 export function EmptyState() {
   return (
     <div className="mx-auto flex max-w-sm flex-col items-center px-6 py-8 text-center">
-      <span className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+      <span className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-lg bg-[#E6F2EA] text-[#287A50]">
         <CalendarIcon className="h-4 w-4" />
       </span>
 
-      <p className="text-[11px] font-semibold text-gray-800">
+      <p className="text-[11px] font-semibold text-[#202824]">
         Tidak ada kegiatan
       </p>
 
-      <p className="mt-1 text-[11px] leading-4.5 text-gray-500">
+      <p className="mt-1 text-[11px] leading-4.5 text-[#78827C]">
         Belum ada kegiatan yang tersedia, atau tidak ada yang cocok dengan
         pencarian dan filter saat ini.
       </p>
@@ -220,12 +220,12 @@ export function IconButton({
 }) {
   const sizeClass = size === "lg" ? "h-9 w-9" : "h-8 w-8";
   const borderClass = bordered
-    ? "border-gray-200 bg-white"
+    ? "border-[#E5EAE6] bg-white"
     : "border-transparent";
   const variantClass =
     variant === "danger"
       ? "hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:bg-red-100"
-      : "hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 active:bg-gray-100";
+      : "hover:border-[#E5EAE6] hover:bg-[#F0F4F1] hover:text-[#202824] active:bg-[#F0F4F1]";
 
   return (
     <button
@@ -234,9 +234,9 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={[
-        "inline-flex shrink-0 items-center justify-center rounded-md border text-gray-500",
+        "inline-flex shrink-0 items-center justify-center rounded-lg border text-[#78827C]",
         "transition-colors duration-150",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-1",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#287A50] focus-visible:ring-offset-1",
         sizeClass,
         borderClass,
         variantClass,
@@ -274,11 +274,11 @@ export function ScanButton({
       className={[
         "inline-flex items-center justify-center gap-1.5 rounded-md font-medium",
         "transition-colors duration-150",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-1",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#287A50] focus-visible:ring-offset-1",
         large ? "h-9 w-full flex-1 text-[11px]" : "h-8 px-2.5 text-[10px]",
         disabled
-          ? "cursor-not-allowed bg-gray-100 text-gray-400"
-          : "bg-teal-700 text-white hover:bg-teal-800 active:bg-teal-900",
+          ? "cursor-not-allowed bg-[#F5F7F5] text-[#9AA39D]"
+          : "bg-[#287A50] text-white hover:bg-[#206440] active:bg-[#206440]",
       ].join(" ")}
     >
       <QrIcon />

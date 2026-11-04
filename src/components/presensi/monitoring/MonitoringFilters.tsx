@@ -21,9 +21,9 @@ type Props = {
 };
 
 const CONTROL_CLASS =
-  "h-8 w-full min-w-0 rounded-md border border-gray-200 bg-white px-2 text-[11px] text-gray-700 outline-none transition-colors focus:border-teal-500 focus:ring-1 focus:ring-teal-100";
+  "h-9 w-full min-w-0 rounded-xl border border-[#E5EAE6] bg-white px-3 text-xs text-[#202824] placeholder:text-[#9AA39D] outline-none transition-colors focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20";
 
-const LABEL_CLASS = "mb-1 block text-[10px] font-medium text-gray-500";
+const LABEL_CLASS = "mb-1.5 block text-xs font-medium text-[#78827C]";
 
 type FilterSelectProps = {
   id: string;
@@ -98,10 +98,10 @@ function FilterSelect({
               type="button"
               onClick={() => toggleOption(option)}
               title={`Hapus ${option}`}
-              className="inline-flex max-w-full items-center gap-1 rounded border border-teal-100 bg-teal-50 px-1.5 py-0.5 text-[10px] text-teal-700 transition hover:border-teal-200 hover:bg-teal-100"
+              className="inline-flex max-w-full items-center gap-1 rounded-lg border border-[#65B98A]/30 bg-[#E6F2EA] px-2 py-0.5 text-xs font-medium text-[#206440] transition hover:bg-[#E6F2EA]/80"
             >
               <span className="max-w-37.5 truncate">{option}</span>
-              <span aria-hidden="true" className="shrink-0 text-teal-500">
+              <span aria-hidden="true" className="shrink-0 text-[#287A50] font-bold">
                 ×
               </span>
             </button>
@@ -111,7 +111,7 @@ function FilterSelect({
             <button
               type="button"
               onClick={() => onChange([])}
-              className="px-1 text-[10px] text-gray-400 transition hover:text-red-600"
+              className="px-1 text-xs text-[#9AA39D] transition hover:text-rose-600"
             >
               Hapus semua
             </button>
@@ -120,7 +120,7 @@ function FilterSelect({
       )}
 
       {options.length > 0 && selected.length === options.length && (
-        <p className="mt-1 text-[10px] text-gray-400">
+        <p className="mt-1 text-xs text-[#9AA39D]">
           Semua pilihan telah dipilih
         </p>
       )}
@@ -129,7 +129,7 @@ function FilterSelect({
         <button
           type="button"
           onClick={() => onChange([])}
-          className="mt-1 text-[10px] font-medium text-teal-700 hover:text-teal-900"
+          className="mt-1 text-xs font-medium text-[#287A50] hover:text-[#206440]"
         >
           Reset pilihan
         </button>
@@ -169,9 +169,9 @@ export default function MonitoringFilters({
   const hasActiveCriteria = hasActiveFilter || hasActiveSearch;
 
   return (
-    <section className="mb-2 space-y-2">
-      <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
-        <div className="grid grid-cols-[minmax(0,1fr)_32px] items-end gap-x-3 gap-y-3 lg:grid-cols-[minmax(180px,1fr)_auto]">
+    <section className="mb-4 space-y-3">
+      <div className="rounded-2xl border border-[#E5EAE6] bg-white p-3.5 sm:p-4 shadow-sm">
+        <div className="grid grid-cols-[minmax(0,1fr)_36px] items-end gap-x-3 gap-y-3 lg:grid-cols-[minmax(180px,1fr)_auto]">
           <div className="min-w-0">
             <label htmlFor="monitoring-search" className={LABEL_CLASS}>
               Cari Generus
@@ -183,7 +183,7 @@ export default function MonitoringFilters({
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.8"
-                className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9AA39D]"
                 aria-hidden="true"
               >
                 <circle cx="11" cy="11" r="7" />
@@ -196,7 +196,7 @@ export default function MonitoringFilters({
                 value={search}
                 onChange={(event) => onSearchChange(event.target.value)}
                 placeholder="Cari nama Generus..."
-                className={`${CONTROL_CLASS} pl-8 pr-7`}
+                className={`${CONTROL_CLASS} pl-9 pr-8`}
               />
 
               {search.length > 0 && (
@@ -204,7 +204,7 @@ export default function MonitoringFilters({
                   type="button"
                   onClick={() => onSearchChange("")}
                   aria-label="Hapus pencarian"
-                  className="absolute right-2 top-1/2 flex h-4.5 w-4.5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                  className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-[#9AA39D] transition hover:bg-[#F5F7F5] hover:text-[#202824]"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -212,7 +212,7 @@ export default function MonitoringFilters({
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
-                    className="h-2.5 w-2.5"
+                    className="h-3 w-3"
                   >
                     <path d="M18 6 6 18M6 6l12 12" />
                   </svg>
@@ -230,10 +230,10 @@ export default function MonitoringFilters({
             aria-expanded={showFilter}
             aria-controls="monitoring-filter-panel"
             title="Filter lanjutan"
-            className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition lg:h-8 lg:w-auto lg:min-w-28 lg:gap-1.5 lg:px-2 ${
+            className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors lg:h-9 lg:w-auto lg:min-w-28 lg:gap-2 lg:px-3 ${
               showFilter || hasActiveFilter
-                ? "border-teal-200 bg-teal-50 text-teal-800"
-                : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                ? "border-[#287A50] bg-[#E6F2EA] text-[#287A50] font-medium"
+                : "border-[#E5EAE6] bg-white text-[#78827C] hover:bg-[#F5F7F5] hover:text-[#202824]"
             }`}
           >
             <svg
@@ -247,12 +247,12 @@ export default function MonitoringFilters({
               <path d="M4 7h16M7 12h10m-7 5h4" />
             </svg>
 
-            <span className="hidden text-[11px] font-medium lg:inline">
+            <span className="hidden text-xs font-medium lg:inline">
               Filter
             </span>
 
             {activeFilterCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-teal-600 px-1 text-[9px] font-semibold text-white">
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#287A50] px-1 text-[10px] font-semibold text-white">
                 {activeFilterCount}
               </span>
             )}
@@ -262,7 +262,7 @@ export default function MonitoringFilters({
               fill="none"
               stroke="currentColor"
               strokeWidth="1.8"
-              className={`hidden h-3 w-3 shrink-0 transition-transform lg:inline ${
+              className={`hidden h-3.5 w-3.5 shrink-0 transition-transform lg:inline ${
                 showFilter ? "rotate-180" : ""
               }`}
               aria-hidden="true"
@@ -273,8 +273,8 @@ export default function MonitoringFilters({
         </div>
 
         {hasActiveCriteria && (
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-2">
-            <p className="text-[10px] text-gray-500">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#E5EAE6] pt-2.5">
+            <p className="text-xs text-[#78827C]">
               {hasActiveFilter
                 ? `${activeFilterCount} kategori filter aktif`
                 : "Pencarian aktif"}
@@ -283,7 +283,7 @@ export default function MonitoringFilters({
             <button
               type="button"
               onClick={onReset}
-              className="text-[10px] font-medium text-teal-700 transition hover:text-teal-900"
+              className="text-xs font-medium text-[#287A50] transition hover:text-[#206440]"
             >
               Reset filter
             </button>
@@ -294,14 +294,14 @@ export default function MonitoringFilters({
       {showFilter && (
         <div
           id="monitoring-filter-panel"
-          className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4"
+          className="rounded-2xl border border-[#E5EAE6] bg-white p-4 shadow-sm"
         >
-          <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="mb-3.5 flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="text-[11px] font-semibold text-gray-700">
+              <h3 className="text-xs font-semibold text-[#202824]">
                 Filter lanjutan
               </h3>
-              <p className="mt-0.5 text-[10px] text-gray-400">
+              <p className="mt-0.5 text-xs text-[#78827C]">
                 Pilih satu atau beberapa kriteria presensi
               </p>
             </div>
@@ -315,7 +315,7 @@ export default function MonitoringFilters({
                   onKelasChange([]);
                   onStatusChange([]);
                 }}
-                className="shrink-0 text-[10px] font-medium text-red-600 transition hover:text-red-700"
+                className="shrink-0 text-xs font-medium text-rose-600 transition hover:text-rose-700"
               >
                 Hapus pilihan
               </button>
@@ -356,12 +356,12 @@ export default function MonitoringFilters({
             />
           </div>
 
-          <div className="mt-4 flex items-center justify-between gap-3 border-t border-gray-100 pt-3">
+          <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#E5EAE6] pt-3">
             <button
               type="button"
               onClick={onReset}
               disabled={!hasActiveCriteria}
-              className="text-[10px] font-medium text-gray-500 transition hover:text-gray-700 disabled:cursor-not-allowed disabled:text-gray-300"
+              className="text-xs font-medium text-[#78827C] transition hover:text-[#202824] disabled:cursor-not-allowed disabled:text-[#9AA39D]"
             >
               Reset semua filter
             </button>
@@ -369,7 +369,7 @@ export default function MonitoringFilters({
             <button
               type="button"
               onClick={() => setShowFilter(false)}
-              className="h-8 rounded-md bg-teal-700 px-3 text-[11px] font-medium text-white transition hover:bg-teal-800"
+              className="h-8.5 rounded-xl bg-[#287A50] px-4 text-xs font-medium text-white shadow-sm transition hover:bg-[#206440]"
             >
               Selesai
             </button>

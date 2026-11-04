@@ -168,18 +168,18 @@ export default function ExportModal({ allData, adminDesa, onClose }: Props) {
         className="flex max-h-[90dvh] min-h-0 w-full flex-col overflow-hidden bg-white"
       >
         {/* Header */}
-        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 sm:px-5">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E5EAE6] px-4 py-3 sm:px-5">
           <div className="flex min-w-0 items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#E6F2EA] text-[#287A50]">
               <DownloadIcon className="h-4 w-4" />
             </div>
 
             <div className="min-w-0">
-              <h2 className="text-[11px] font-semibold leading-5 text-gray-900">
+              <h2 className="text-[11px] font-semibold leading-5 text-[#202824]">
                 Ekspor Data Generus
               </h2>
 
-              <p className="mt-0.5 text-[9px] leading-4 text-gray-500">
+              <p className="mt-0.5 text-[9px] leading-4 text-[#78827C]">
                 Pilih kriteria data anggota yang ingin diekspor ke file Excel
               </p>
             </div>
@@ -190,7 +190,7 @@ export default function ExportModal({ allData, adminDesa, onClose }: Props) {
             onClick={onClose}
             disabled={isExporting}
             aria-label="Tutup"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[#78827C] transition hover:bg-[#F0F4F1] hover:text-[#202824] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg
               viewBox="0 0 24 24"
@@ -215,7 +215,7 @@ export default function ExportModal({ allData, adminDesa, onClose }: Props) {
             options={desaOptions}
             selected={selectedDesa}
             onChange={handleDesaChange}
-            colorClass="border-teal-400 bg-teal-50 text-teal-700"
+            colorClass="border-[#65B98A] bg-[#E6F2EA] text-[#206440]"
           />
 
           <FilterCheckboxGroup
@@ -223,7 +223,7 @@ export default function ExportModal({ allData, adminDesa, onClose }: Props) {
             options={kelompokOptions}
             selected={selectedKelompok}
             onChange={handleKelompokChange}
-            colorClass="border-teal-400 bg-teal-50 text-teal-700"
+            colorClass="border-[#65B98A] bg-[#E6F2EA] text-[#206440]"
           />
 
           <FilterCheckboxGroup
@@ -231,7 +231,7 @@ export default function ExportModal({ allData, adminDesa, onClose }: Props) {
             options={[...JENIS_KELAMIN_OPTIONS]}
             selected={selectedJenisKelamin}
             onChange={handleJenisKelaminChange}
-            colorClass="border-teal-400 bg-teal-50 text-teal-700"
+            colorClass="border-[#65B98A] bg-[#E6F2EA] text-[#206440]"
           />
 
           <FilterCheckboxGroup
@@ -239,13 +239,13 @@ export default function ExportModal({ allData, adminDesa, onClose }: Props) {
             options={[...KELAS_OPTIONS]}
             selected={selectedKelas}
             onChange={handleKelasChange}
-            colorClass="border-teal-400 bg-teal-50 text-teal-700"
+            colorClass="border-[#65B98A] bg-[#E6F2EA] text-[#206440]"
           />
 
           {exportError && (
             <div
               role="alert"
-              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[10px] leading-4 text-red-700"
+              className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[10px] leading-4 text-red-700"
             >
               {exportError}
             </div>
@@ -253,12 +253,12 @@ export default function ExportModal({ allData, adminDesa, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <footer className="flex shrink-0 items-center justify-between border-t border-gray-100 bg-gray-50/60 px-4 py-3 sm:px-5">
+        <footer className="flex shrink-0 items-center justify-between border-t border-[#E5EAE6] bg-[#F5F7F5] px-4 py-3 sm:px-5">
           <button
             type="button"
             onClick={onClose}
             disabled={isExporting}
-            className="inline-flex min-h-9 items-center justify-center rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-[9px] font-semibold text-gray-600 transition hover:bg-gray-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex min-h-9 items-center justify-center rounded-xl border border-[#E5EAE6] bg-white px-3.5 py-2 text-[9px] font-semibold text-[#202824] transition hover:bg-[#F0F4F1] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             Batal
           </button>
@@ -266,7 +266,7 @@ export default function ExportModal({ allData, adminDesa, onClose }: Props) {
           <button
             type="submit"
             disabled={isExporting}
-            className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-teal-700 px-4 py-2 text-[9px] font-semibold text-white transition hover:bg-teal-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-[#287A50] px-4 py-2 text-[9px] font-semibold text-white transition hover:bg-[#206440] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isExporting ? (
               <>

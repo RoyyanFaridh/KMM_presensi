@@ -84,13 +84,13 @@ export default function MudamudiFormModal({
   const currentYear = new Date().getFullYear();
 
   const inputClass =
-    "h-9 w-full min-w-0 rounded-lg border border-gray-200 bg-white px-3 text-[10px] text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-50 disabled:cursor-not-allowed disabled:bg-gray-50";
+    "h-9 w-full min-w-0 rounded-xl border border-[#E5EAE6] bg-white px-3 text-[10px] text-[#202824] outline-none transition placeholder:text-[#78827C] focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20 disabled:cursor-not-allowed disabled:bg-[#F5F7F5]";
 
   const selectClass =
-    "h-9 w-full min-w-0 rounded-lg border border-gray-200 bg-white px-3 text-[10px] text-gray-800 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-50 disabled:cursor-not-allowed disabled:bg-gray-50";
+    "h-9 w-full min-w-0 rounded-xl border border-[#E5EAE6] bg-white px-3 text-[10px] text-[#202824] outline-none transition focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20 disabled:cursor-not-allowed disabled:bg-[#F5F7F5]";
 
-  const labelClass = "mb-1.5 block text-[9px] font-semibold leading-4 text-gray-700";
-  const helperClass = "mt-1 text-[9px] leading-4 text-gray-400";
+  const labelClass = "mb-1.5 block text-[9px] font-semibold leading-4 text-[#202824]";
+  const helperClass = "mt-1 text-[9px] leading-4 text-[#78827C]";
 
   return (
     <ModalWrapper onClose={onClose} size="lg">
@@ -100,12 +100,12 @@ export default function MudamudiFormModal({
         className="flex max-h-[90dvh] min-h-0 w-full flex-col overflow-hidden bg-white"
       >
         {/* Header */}
-        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 sm:px-5">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E5EAE6] px-4 py-3 sm:px-5">
           <div className="flex min-w-0 items-center gap-2.5">
             <div
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
                 mode === "add"
-                  ? "bg-teal-50 text-teal-700"
+                  ? "bg-[#E6F2EA] text-[#287A50]"
                   : "bg-blue-50 text-blue-700"
               }`}
             >
@@ -143,10 +143,10 @@ export default function MudamudiFormModal({
             </div>
 
             <div className="min-w-0">
-              <h2 className="text-[11px] font-semibold leading-5 text-gray-900">
+              <h2 className="text-[11px] font-semibold leading-5 text-[#202824]">
                 {mode === "add" ? "Tambah Data Generus" : "Edit Data Generus"}
               </h2>
-              <p className="mt-0.5 text-[9px] leading-4 text-gray-500">
+              <p className="mt-0.5 text-[9px] leading-4 text-[#78827C]">
                 {mode === "add"
                   ? "Tambahkan Generus baru ke database GENARA"
                   : "Perbarui informasi data Generus"}
@@ -158,7 +158,7 @@ export default function MudamudiFormModal({
             type="button"
             onClick={onClose}
             aria-label="Tutup"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[#78827C] transition hover:bg-[#F0F4F1] hover:text-[#202824]"
           >
             <svg
               viewBox="0 0 24 24"
@@ -492,7 +492,7 @@ export default function MudamudiFormModal({
               rows={2}
               placeholder="Masukkan alamat"
               defaultValue={initialData?.alamat ?? ""}
-              className={`w-full min-w-0 resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-[10px] text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-50 ${
+              className={`w-full min-w-0 resize-none rounded-xl border border-[#E5EAE6] bg-white px-3 py-2 text-[10px] text-[#202824] outline-none transition placeholder:text-[#9AA39D] focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20 ${
                 fieldErrors.alamat ? "border-red-300" : ""
               }`}
             />
@@ -505,18 +505,18 @@ export default function MudamudiFormModal({
         </div>
 
         {/* Footer */}
-        <footer className="flex shrink-0 items-center justify-between border-t border-gray-100 bg-gray-50/60 px-4 py-3 sm:px-5">
+        <footer className="flex shrink-0 items-center justify-between border-t border-[#E5EAE6] bg-[#F5F7F5] px-4 py-3 sm:px-5">
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex min-h-9 items-center justify-center rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-[9px] font-semibold text-gray-600 transition hover:bg-gray-50 active:scale-[0.98]"
+            className="inline-flex min-h-9 items-center justify-center rounded-xl border border-[#E5EAE6] bg-white px-3.5 py-2 text-[9px] font-semibold text-[#202824] transition hover:bg-[#F0F4F1] active:scale-[0.98]"
           >
             Batal
           </button>
 
           <button
             type="submit"
-            className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-teal-700 px-4 py-2 text-[9px] font-semibold text-white transition hover:bg-teal-800 active:scale-[0.98]"
+            className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-[#287A50] px-4 py-2 text-[9px] font-semibold text-white transition hover:bg-[#206440] active:scale-[0.98]"
           >
             {mode === "add" ? "Simpan Data" : "Simpan Perubahan"}
           </button>

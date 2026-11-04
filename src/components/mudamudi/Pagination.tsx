@@ -42,8 +42,8 @@ export default function Pagination({
   const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
-    <div className="mt-4 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
+    <div className="mt-4 flex flex-col gap-3 rounded-xl border border-[#E5EAE6] bg-white px-3.5 py-3 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-1.5 text-[11px] text-[#78827C]">
         <label htmlFor="per-page-select">Tampilkan</label>
         <select
           id="per-page-select"
@@ -51,7 +51,7 @@ export default function Pagination({
           onChange={(e) =>
             onItemsPerPageChange(Number(e.target.value) as PerPageOption)
           }
-          className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-[11px] text-gray-600 transition hover:border-gray-300"
+          className="rounded-lg border border-[#E5EAE6] bg-white px-2 py-1 text-[11px] text-[#202824] transition hover:border-[#287A50] outline-none"
         >
           {perPageOptions.map((opt) => (
             <option key={opt} value={opt}>
@@ -64,10 +64,10 @@ export default function Pagination({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between gap-2 sm:justify-end">
-          <p className="text-[10px] text-gray-400 sm:mr-1">
+          <p className="text-[10px] text-[#9AA39D] sm:mr-1">
             Halaman{" "}
-            <span className="font-medium text-gray-600">{currentPage}</span>{" "}
-            dari <span className="font-medium text-gray-600">{totalPages}</span>
+            <span className="font-medium text-[#202824]">{currentPage}</span>{" "}
+            dari <span className="font-medium text-[#202824]">{totalPages}</span>
           </p>
 
           <div className="flex items-center gap-1">
@@ -75,7 +75,7 @@ export default function Pagination({
               type="button"
               onClick={() => onGoToPage(currentPage - 1)}
               disabled={currentPage === 1}
-              className="inline-flex h-7.5 items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 text-[10px] font-medium text-gray-500 transition hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-7.5 items-center gap-1 rounded-lg border border-[#E5EAE6] bg-white px-2.5 text-[10px] font-medium text-[#78827C] transition hover:bg-[#F0F4F1] hover:text-[#202824] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeftIcon className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Sebelumnya</span>
@@ -86,7 +86,7 @@ export default function Pagination({
                 page === "ellipsis" ? (
                   <span
                     key={`ellipsis-${index}`}
-                    className="flex h-7.5 w-7.5 items-center justify-center text-[10px] text-gray-400"
+                    className="flex h-7.5 w-7.5 items-center justify-center text-[10px] text-[#9AA39D]"
                   >
                     …
                   </span>
@@ -98,8 +98,8 @@ export default function Pagination({
                     aria-current={page === currentPage ? "page" : undefined}
                     className={`flex h-7.5 w-7.5 items-center justify-center rounded-lg border text-[10px] font-medium transition ${
                       page === currentPage
-                        ? "border-[#0d7f78] bg-[#0d7f78] text-white"
-                        : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                        ? "border-[#287A50] bg-[#287A50] text-white"
+                        : "border-[#E5EAE6] bg-white text-[#78827C] hover:bg-[#E6F2EA] hover:text-[#287A50]"
                     }`}
                   >
                     {page}
@@ -112,7 +112,7 @@ export default function Pagination({
               type="button"
               onClick={() => onGoToPage(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="inline-flex h-7.5 items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 text-[10px] font-medium text-gray-500 transition hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-7.5 items-center gap-1 rounded-lg border border-[#E5EAE6] bg-white px-2.5 text-[10px] font-medium text-[#78827C] transition hover:bg-[#F0F4F1] hover:text-[#202824] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <span className="hidden sm:inline">Berikutnya</span>
               <ChevronRightIcon className="h-3.5 w-3.5" />

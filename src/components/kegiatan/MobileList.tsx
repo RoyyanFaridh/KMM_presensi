@@ -89,7 +89,7 @@ function DetailColumn({
 }) {
   return (
     <div className="min-w-0">
-      <div className="mb-1.5 flex min-w-0 items-center gap-1 text-gray-400">
+      <div className="mb-1.5 flex min-w-0 items-center gap-1 text-[#9AA39D]">
         <span className="flex shrink-0 items-center justify-center [&>svg]:h-3 [&>svg]:w-3">
           {icon}
         </span>
@@ -99,7 +99,7 @@ function DetailColumn({
         </span>
       </div>
 
-      <div className="min-w-0 text-[9px] leading-4 text-gray-700">
+      <div className="min-w-0 text-[9px] leading-4 text-[#78827C]">
         {children}
       </div>
     </div>
@@ -124,7 +124,7 @@ export default function MobileList({
 
   if (data.length === 0) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_3px_12px_rgba(15,23,42,0.035)] md:hidden">
+      <div className="overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-xs md:hidden">
         <EmptyState />
       </div>
     );
@@ -153,16 +153,16 @@ export default function MobileList({
           return (
             <li
               key={item.id}
-              className="group overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-[0_3px_12px_rgba(15,23,42,0.035)] transition-colors duration-150 hover:border-teal-200"
+              className="group overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-xs transition-colors duration-150 hover:border-[#65B98A]/50"
             >
               <div className="p-3.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="mb-0.5 text-[8px] font-semibold uppercase tracking-widest text-teal-700">
+                    <p className="mb-0.5 text-[8px] font-semibold uppercase tracking-widest text-[#287A50]">
                       Kegiatan
                     </p>
 
-                    <h3 className="wrap-break-word text-[13px] font-bold leading-normal tracking-[-0.01em] text-gray-900 transition-colors group-hover:text-teal-800">
+                    <h3 className="wrap-break-word text-[13px] font-bold leading-normal tracking-[-0.01em] text-[#202824] transition-colors group-hover:text-[#287A50]">
                       {item.nama}
                     </h3>
                   </div>
@@ -174,39 +174,39 @@ export default function MobileList({
 
                 <div
                   aria-hidden="true"
-                  className="mt-2 mb-3 h-px w-full bg-gray-200"
+                  className="mt-2 mb-3 h-px w-full bg-[#E5EAE6]"
                 />
 
                 <div className="grid grid-cols-3 gap-2">
                   <DetailColumn icon={<CalendarIcon />} label="Tanggal">
-                    <p className="wrap-break-word font-semibold text-gray-700">
+                    <p className="wrap-break-word font-semibold text-[#202824]">
                       {tanggalMulai}
                     </p>
 
                     {tanggalSelesai && (
-                      <p className="mt-0.5 wrap-break-word text-[8px] text-gray-400">
+                      <p className="mt-0.5 wrap-break-word text-[8px] text-[#9AA39D]">
                         s.d. {tanggalSelesai}
                       </p>
                     )}
                   </DetailColumn>
 
-                  <div className="min-w-0 border-l border-gray-100 pl-2">
+                  <div className="min-w-0 border-l border-[#E5EAE6] pl-2">
                     <DetailColumn icon={<ClockIcon />} label="Waktu">
-                      <p className="wrap-break-word font-semibold tabular-nums text-gray-700">
+                      <p className="wrap-break-word font-semibold tabular-nums text-[#202824]">
                         {formatJam(item.jam_mulai)}
                       </p>
 
-                      <p className="wrap-break-word text-[8px] text-gray-400">
+                      <p className="wrap-break-word text-[8px] text-[#9AA39D]">
                         s.d. {formatJam(item.jam_selesai)}
                       </p>
                     </DetailColumn>
                   </div>
 
-                  <div className="min-w-0 border-l border-gray-100 pl-2">
+                  <div className="min-w-0 border-l border-[#E5EAE6] pl-2">
                     <DetailColumn icon={<LocationIcon />} label="Lokasi">
-                      <p className="wrap-break-word text-gray-700">
+                      <p className="wrap-break-word text-[#78827C]">
                         {item.lokasi || (
-                          <span className="italic text-gray-400">
+                          <span className="italic text-[#9AA39D]">
                             Belum ditentukan
                           </span>
                         )}
@@ -215,15 +215,15 @@ export default function MobileList({
                   </div>
                 </div>
 
-                <div className="mt-3 border-t border-gray-100 pt-2.5">
+                <div className="mt-3 border-t border-[#E5EAE6] pt-2.5">
                   <CreatorText
                     kegiatan={item}
-                    className="text-[9px] leading-4 text-gray-400"
+                    className="text-[9px] leading-4 text-[#9AA39D]"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 border-t border-gray-100 bg-gray-50/60 p-3">
+              <div className="flex items-center gap-2 border-t border-[#E5EAE6] bg-[#F5F7F5] p-3">
                 <div className="min-w-0 flex-1">
                   <ScanButton
                     label={scanWindow.enabled ? "Scan QR" : scanWindow.reason}
@@ -252,7 +252,7 @@ export default function MobileList({
         })}
       </ul>
 
-      <p className="mt-3 text-center text-[9px] leading-4 text-gray-400">
+      <p className="mt-3 text-center text-[9px] leading-4 text-[#9AA39D]">
         Menampilkan {data.length} kegiatan
       </p>
     </div>

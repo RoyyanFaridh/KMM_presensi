@@ -16,20 +16,20 @@ function SummaryCard({
   icon: React.ReactNode;
 }) {
   const styles = {
-    orange: { dot: "bg-amber-500", box: "bg-amber-50 text-amber-700 border-amber-100" },
-    teal: { dot: "bg-teal-500", box: "bg-teal-50 text-teal-700 border-teal-100" },
-    blue: { dot: "bg-sky-500", box: "bg-sky-50 text-sky-700 border-sky-100" },
-    violet: { dot: "bg-purple-500", box: "bg-purple-50 text-purple-700 border-purple-100" },
+    orange: { dot: "bg-[#287A50]", box: "bg-[#E6F2EA] text-[#287A50] border-[#E5EAE6]" },
+    teal: { dot: "bg-[#206440]", box: "bg-[#E6F2EA] text-[#206440] border-[#E5EAE6]" },
+    blue: { dot: "bg-[#181C1B]", box: "bg-[#F0F4F1] text-[#202824] border-[#E5EAE6]" },
+    violet: { dot: "bg-[#65B98A]", box: "bg-[#E6F2EA] text-[#287A50] border-[#E5EAE6]" },
   };
 
   const current = styles[variant];
 
   return (
-    <div className="flex flex-col justify-between rounded-2xl border border-gray-200/90 bg-white p-4 shadow-[0_3px_12px_rgba(15,23,42,0.035)] transition-all hover:border-gray-300 hover:shadow-md">
+    <div className="flex flex-col justify-between rounded-2xl border border-[#E5EAE6] bg-white p-4 shadow-xs transition-all hover:border-[#65B98A]/50 hover:shadow-sm">
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${current.dot}`} />
-          <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+          <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-[#78827C]">
             {label}
           </p>
         </div>
@@ -40,10 +40,10 @@ function SummaryCard({
       </div>
 
       <div className="mt-2.5">
-        <p className="text-2xl font-bold tracking-tight text-gray-900">
+        <p className="text-2xl font-bold tracking-tight text-[#202824]">
           {value.toLocaleString("id-ID")}
         </p>
-        <p className="mt-0.5 truncate text-[10px] text-gray-400">{description}</p>
+        <p className="mt-0.5 truncate text-[10px] text-[#78827C]">{description}</p>
       </div>
     </div>
   );
@@ -59,15 +59,15 @@ function PanelHeader({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 px-5 py-3.5">
+    <div className="flex shrink-0 items-center gap-3 border-b border-[#E5EAE6] px-5 py-3.5">
       {icon && (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-700">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#E5EAE6] bg-[#E6F2EA] text-[#287A50]">
           {icon}
         </div>
       )}
       <div className="min-w-0">
-        <h2 className="text-[11px] font-semibold tracking-tight text-gray-800">{title}</h2>
-        <p className="text-[9px] leading-3.5 text-gray-400">{description}</p>
+        <h2 className="text-[12px] font-bold tracking-tight text-[#202824]">{title}</h2>
+        <p className="text-[10px] leading-4 text-[#78827C]">{description}</p>
       </div>
     </div>
   );
@@ -79,11 +79,11 @@ function AttendanceChart({
   data: { label: string; jumlah: number }[];
 }) {
   const colors: Record<string, string> = {
-    Hadir: "bg-teal-500",
-    Terlambat: "bg-amber-400",
-    Izin: "bg-blue-400",
-    Sakit: "bg-violet-400",
-    Alpa: "bg-rose-400",
+    Hadir: "bg-[#287A50]",
+    Terlambat: "bg-amber-500",
+    Izin: "bg-blue-500",
+    Sakit: "bg-purple-500",
+    Alpa: "bg-rose-500",
   };
 
   const total = data.reduce((sum, item) => sum + item.jumlah, 0);
@@ -92,15 +92,15 @@ function AttendanceChart({
     <div className="space-y-3">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-[10px] text-gray-500">Total presensi tercatat</p>
-          <p className="mt-1 text-2xl font-semibold text-gray-900">
+          <p className="text-[10px] font-medium text-[#78827C]">Total presensi tercatat</p>
+          <p className="mt-1 text-2xl font-bold text-[#202824]">
             {total.toLocaleString("id-ID")}
           </p>
         </div>
-        <p className="text-[10px] text-gray-400">Semua kegiatan</p>
+        <p className="text-[10px] text-[#78827C]">Semua kegiatan</p>
       </div>
 
-      <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-100">
+      <div className="flex h-3 w-full overflow-hidden rounded-full bg-[#E5EAE6]">
         {data.map((item) => (
           <div
             key={item.label}
@@ -122,8 +122,8 @@ function AttendanceChart({
               }`}
             />
             <div className="min-w-0">
-              <p className="text-[10px] text-gray-500">{item.label}</p>
-              <p className="mt-0.5 text-sm font-semibold text-gray-800">
+              <p className="text-[10px] text-[#78827C]">{item.label}</p>
+              <p className="mt-0.5 text-sm font-semibold text-[#202824]">
                 {item.jumlah.toLocaleString("id-ID")}
               </p>
             </div>
@@ -132,7 +132,7 @@ function AttendanceChart({
       </div>
 
       {total === 0 && (
-        <p className="pt-1 text-[10px] text-gray-400">
+        <p className="pt-1 text-[10px] text-[#78827C]">
           Belum ada presensi dengan status yang sudah ditetapkan.
         </p>
       )}
@@ -152,18 +152,18 @@ export default async function AdminPage() {
     : "Jumlah Generus di setiap kelompok pada desa Anda. Arahkan kursor atau ketuk bar untuk detail.";
 
   return (
-    <main className="min-h-dvh bg-gray-50 lg:h-dvh lg:min-h-0 lg:overflow-hidden">
+    <main className="min-h-dvh bg-[#F5F7F5] lg:h-dvh lg:min-h-0 lg:overflow-hidden">
       <div className="mx-auto flex w-full flex-col px-4 py-5 sm:px-6 md:px-7 lg:h-full lg:min-h-0 lg:px-8 lg:py-5">
         <header className="mb-4 shrink-0">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-teal-600">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#287A50]">
             Dashboard
           </p>
 
-          <h1 className="mt-1 text-xl font-semibold tracking-tight text-gray-900">
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-[#202824]">
             Ringkasan Dashboard
           </h1>
 
-          <p className="mt-1 text-[10px] leading-4 text-gray-500 sm:text-xs">
+          <p className="mt-1 text-[11px] leading-4 text-[#78827C] sm:text-xs">
             Ringkasan data anggota, kegiatan, dan aktivitas presensi.
           </p>
         </header>
@@ -230,7 +230,7 @@ export default async function AdminPage() {
         </div>
 
         <div className="mt-4 grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-2 lg:grid-rows-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-          <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-[0_3px_12px_rgba(15,23,42,0.035)]">
+          <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-xs">
             <PanelHeader
               title="Kegiatan Terdekat"
               description="Kegiatan yang belum melewati waktu selesai."
@@ -244,20 +244,20 @@ export default async function AdminPage() {
 
             <div className="min-h-0 flex-1 overflow-y-auto">
               {data.kegiatanTerdekat.length === 0 ? (
-                <div className="flex h-full min-h-20 items-center justify-center px-4 py-6 text-center text-[11px] text-gray-500">
+                <div className="flex h-full min-h-20 items-center justify-center px-4 py-6 text-center text-[11px] text-[#78827C]">
                   Belum ada kegiatan terdekat.
                 </div>
               ) : (
                 data.kegiatanTerdekat.map((kegiatan) => (
                   <div
                     key={kegiatan.id}
-                    className="border-b border-gray-100 px-5 py-3 transition-colors hover:bg-teal-50/25 last:border-b-0"
+                    className="border-b border-[#E5EAE6] px-5 py-3 transition-colors hover:bg-[#F5F7F5] last:border-b-0"
                   >
-                    <p className="truncate text-[11px] font-semibold text-gray-800">
+                    <p className="truncate text-[12px] font-semibold text-[#202824]">
                       {kegiatan.nama}
                     </p>
 
-                    <p className="mt-1 text-[10px] text-gray-500">
+                    <p className="mt-1 text-[11px] text-[#78827C]">
                       {formatRentangTanggal(
                         kegiatan.tanggal_mulai,
                         kegiatan.tanggal_selesai,
@@ -269,7 +269,7 @@ export default async function AdminPage() {
                     </p>
 
                     {kegiatan.lokasi && (
-                      <p className="mt-0.5 truncate text-[10px] text-gray-400">
+                      <p className="mt-0.5 truncate text-[10px] text-[#78827C]/80">
                         {kegiatan.lokasi}
                       </p>
                     )}
@@ -279,7 +279,7 @@ export default async function AdminPage() {
             </div>
           </section>
 
-          <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-[0_3px_12px_rgba(15,23,42,0.035)]">
+          <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-xs">
             <PanelHeader
               title="Distribusi Status Presensi"
               description="Jumlah catatan berdasarkan status pada seluruh kegiatan."
@@ -295,7 +295,7 @@ export default async function AdminPage() {
             </div>
           </section>
 
-          <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-[0_3px_12px_rgba(15,23,42,0.035)] lg:col-span-2">
+          <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-xs lg:col-span-2">
             <PanelHeader
               title={judulAnggota}
               description={deskripsiAnggota}

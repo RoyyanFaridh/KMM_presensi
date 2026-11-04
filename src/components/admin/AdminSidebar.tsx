@@ -93,9 +93,9 @@ function ChevronIcon({ open }: { open: boolean }) {
       stroke="currentColor"
       strokeWidth="1.8"
       className={[
-        "h-4 w-4 shrink-0 text-gray-400",
+        "h-4 w-4 shrink-0 text-[#78827C]",
         "transition-transform duration-200",
-        open ? "rotate-180 text-gray-500" : "",
+        open ? "rotate-180 text-[#65B98A]" : "",
       ].join(" ")}
       aria-hidden="true"
     >
@@ -199,20 +199,20 @@ function MenuLinks({ onNavigate }: { onNavigate?: () => void }) {
             href={item.href}
             onClick={onNavigate}
             className={[
-              "group flex items-center gap-3 rounded-lg px-3 py-2.5",
-              "text-[11px] font-medium transition-colors",
+              "group flex items-center gap-3 rounded-xl px-3 py-2.5",
+              "text-[12px] font-medium transition-all duration-150",
               active
-                ? "bg-teal-50 text-teal-700"
-                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                ? "bg-[#287A50] text-white shadow-xs"
+                : "text-[#A0ABA5] hover:bg-[#262D29] hover:text-white",
             ].join(" ")}
           >
             <span
               className={[
-                "flex h-7 w-7 shrink-0 items-center justify-center rounded-md",
+                "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
                 "transition-colors",
                 active
-                  ? "bg-white text-teal-700 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
-                  : "text-gray-400 group-hover:text-gray-600",
+                  ? "bg-white/15 text-white"
+                  : "text-[#78827C] group-hover:text-white",
               ].join(" ")}
             >
               {item.icon}
@@ -230,20 +230,20 @@ function MenuLinks({ onNavigate }: { onNavigate?: () => void }) {
           onClick={() => setPresensiOpen((current) => !current)}
           aria-expanded={presensiOpen}
           className={[
-            "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5",
-            "text-[11px] font-medium transition-colors",
+            "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5",
+            "text-[12px] font-medium transition-all duration-150",
             presensiActive
-              ? "bg-teal-50 text-teal-700"
-              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+              ? "bg-[#287A50] text-white shadow-xs"
+              : "text-[#A0ABA5] hover:bg-[#262D29] hover:text-white",
           ].join(" ")}
         >
           <span
             className={[
-              "flex h-7 w-7 shrink-0 items-center justify-center rounded-md",
+              "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
               "transition-colors",
               presensiActive
-                ? "bg-white text-teal-700 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
-                : "text-gray-400 group-hover:text-gray-600",
+                ? "bg-white/15 text-white"
+                : "text-[#78827C] group-hover:text-white",
             ].join(" ")}
           >
             <PresensiIcon />
@@ -255,7 +255,7 @@ function MenuLinks({ onNavigate }: { onNavigate?: () => void }) {
         </button>
 
         {presensiOpen && (
-          <div className="ml-5 mt-1 space-y-0.5 border-l border-gray-200 pl-3">
+          <div className="ml-5 mt-1.5 space-y-1 border-l border-[#262D29] pl-3">
             {presensiSubmenu.map((item) => {
               const active = pathname === item.href;
 
@@ -265,11 +265,11 @@ function MenuLinks({ onNavigate }: { onNavigate?: () => void }) {
                   href={item.href}
                   onClick={onNavigate}
                   className={[
-                    "block rounded-md px-3 py-2 text-[11px] font-medium",
+                    "block rounded-lg px-3 py-2 text-[11px] font-medium",
                     "transition-colors",
                     active
-                      ? "bg-teal-50 text-teal-700"
-                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-800",
+                      ? "bg-[#262D29] text-[#65B98A] font-semibold"
+                      : "text-[#8E9892] hover:bg-[#262D29] hover:text-white",
                   ].join(" ")}
                 >
                   {item.label}
@@ -286,20 +286,20 @@ function MenuLinks({ onNavigate }: { onNavigate?: () => void }) {
 function Brand() {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-700 text-[11px] font-bold tracking-tight text-white shadow-sm">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#287A50] text-[11px] font-bold tracking-tight text-white shadow-sm ring-1 ring-white/10">
         GN
       </div>
 
       <div className="min-w-0">
-        <h1 className="truncate text-[14px] font-semibold tracking-tight text-gray-900">
+        <h1 className="truncate text-[14px] font-bold tracking-tight text-white">
           GENARA
         </h1>
 
-        <p className="truncate text-[9px] leading-4 text-gray-500">
+        <p className="truncate text-[9px] font-medium leading-4 text-[#8E9892]">
           Generus Administrasi
         </p>
 
-        <p className="truncate text-[9px] leading-3 text-gray-500">
+        <p className="truncate text-[9px] font-medium leading-3 text-[#8E9892]">
           dan Presensi
         </p>
       </div>
@@ -362,8 +362,8 @@ function AccountSection({
   }
 
   return (
-    <div ref={accountRef} className="relative border-t border-gray-200 p-3">
-      <p className="mb-2 px-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+    <div ref={accountRef} className="relative border-t border-[#262D29] p-3">
+      <p className="mb-2 px-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#6B7570]">
         Akun
       </p>
 
@@ -373,12 +373,12 @@ function AccountSection({
           className={[
             "absolute z-60",
             "bottom-3 left-full ml-2",
-            "w-44",
+            "w-48",
             "md:bottom-3 md:left-full md:ml-2",
             "max-md:bottom-full max-md:left-3 max-md:right-3 max-md:mb-2 max-md:w-auto max-md:ml-0",
           ].join(" ")}
         >
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white p-1.5 shadow-xl shadow-gray-900/10">
+          <div className="overflow-hidden rounded-xl border border-[#333C37] bg-[#262D29] p-1.5 shadow-2xl shadow-black/40">
             <Link
               href="/admin/profil"
               onClick={handleNavigate}
@@ -387,16 +387,16 @@ function AccountSection({
                 "px-2.5 py-2",
                 "text-[11px] font-medium transition-colors",
                 profileActive
-                  ? "bg-teal-50 text-teal-700"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                  ? "bg-[#287A50] text-white"
+                  : "text-[#CAD3CE] hover:bg-[#181C1B] hover:text-white",
               ].join(" ")}
             >
               <span
                 className={[
                   "flex h-7 w-7 shrink-0 items-center justify-center rounded-md",
                   profileActive
-                    ? "bg-white text-teal-700"
-                    : "bg-gray-50 text-gray-400 group-hover:text-gray-600",
+                    ? "bg-white/20 text-white"
+                    : "bg-[#181C1B] text-[#78827C] group-hover:text-white",
                 ].join(" ")}
               >
                 <ProfileIcon />
@@ -422,21 +422,21 @@ function AccountSection({
         aria-expanded={accountOpen}
         aria-haspopup="menu"
         className={[
-          "group flex w-full items-center gap-3 rounded-lg",
+          "group flex w-full items-center gap-3 rounded-xl",
           "px-2.5 py-2.5 text-left transition-colors",
-          accountOpen ? "bg-gray-50" : "hover:bg-gray-50",
+          accountOpen ? "bg-[#262D29]" : "hover:bg-[#262D29]",
         ].join(" ")}
       >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-50 text-[10px] font-semibold text-teal-700">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#287A50] text-[10px] font-bold text-white shadow-xs">
           {initials}
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-semibold text-gray-800">
+          <p className="truncate text-[11px] font-semibold text-white">
             {accountLabel}
           </p>
 
-          <p className="mt-0.5 truncate text-[9px] text-gray-400">
+          <p className="mt-0.5 truncate text-[9px] text-[#8E9892]">
             {account.email || "Akun administrator"}
           </p>
         </div>
@@ -455,13 +455,13 @@ function SidebarContent({
   onNavigate?: () => void;
 }) {
   return (
-    <div className="flex h-full flex-col">
-      <div className="border-b border-gray-200 px-4 py-4">
+    <div className="flex h-full flex-col bg-[#181C1B]">
+      <div className="border-b border-[#262D29] px-4 py-4">
         <Brand />
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-5">
-        <p className="mb-2 px-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+        <p className="mb-2 px-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#6B7570]">
           Menu Utama
         </p>
 
@@ -527,12 +527,12 @@ export default function AdminSidebar() {
   return (
     <>
       {/* MOBILE TOP BAR */}
-      <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center border-b border-gray-200 bg-white px-4 md:hidden">
+      <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center border-b border-[#262D29] bg-[#181C1B] px-4 md:hidden">
         <button
           type="button"
           onClick={() => setIsOpen(true)}
           aria-label="Buka menu"
-          className="relative z-50 flex h-8 w-8 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-50 hover:text-gray-900 active:bg-gray-100"
+          className="relative z-50 flex h-8 w-8 items-center justify-center rounded-lg text-white transition hover:bg-[#262D29] active:bg-[#2D3530]"
         >
           <svg
             viewBox="0 0 20 20"
@@ -547,18 +547,18 @@ export default function AdminSidebar() {
         </button>
 
         <div className="ml-2.5 min-w-0">
-          <p className="truncate text-[12px] font-semibold text-gray-900">
+          <p className="truncate text-[12px] font-bold text-white">
             GENARA
           </p>
 
-          <p className="truncate text-[9px] text-gray-500">
+          <p className="truncate text-[9px] text-[#8E9892]">
             Generus Administrasi & Presensi
           </p>
         </div>
       </header>
 
       {/* DESKTOP SIDEBAR */}
-      <aside className="hidden h-screen w-60 shrink-0 flex-col border-r border-gray-200 bg-white md:flex">
+      <aside className="hidden h-screen w-60 shrink-0 flex-col border-r border-[#262D29] bg-[#181C1B] md:flex">
         <SidebarContent account={account} />
       </aside>
 
@@ -569,18 +569,18 @@ export default function AdminSidebar() {
             type="button"
             aria-label="Tutup menu"
             onClick={closeMobileMenu}
-            className="absolute inset-0 bg-black/20"
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs"
           />
 
-          <aside className="relative flex h-full w-72 flex-col bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4">
+          <aside className="relative flex h-full w-72 flex-col bg-[#181C1B] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#262D29] px-4 py-4">
               <Brand />
 
               <button
                 type="button"
                 onClick={closeMobileMenu}
                 aria-label="Tutup menu"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-50 hover:text-gray-700 active:bg-gray-100"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#8E9892] transition hover:bg-[#262D29] hover:text-white"
               >
                 <svg
                   viewBox="0 0 20 20"
@@ -596,7 +596,7 @@ export default function AdminSidebar() {
             </div>
 
             <nav className="flex-1 overflow-y-auto px-3 py-5">
-              <p className="mb-2 px-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+              <p className="mb-2 px-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#6B7570]">
                 Menu Utama
               </p>
 

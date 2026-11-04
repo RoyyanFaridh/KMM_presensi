@@ -223,18 +223,18 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
   return (
     <ModalWrapper onClose={loading ? () => {} : onClose}>
       <div className="flex max-h-[90dvh] w-full max-w-150 flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
-        <div className="flex items-start justify-between border-b border-gray-100 px-5 py-4">
+        <div className="flex items-start justify-between border-b border-[#E5EAE6] px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-teal-700">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#E5EAE6] bg-[#E6F2EA] text-[#287A50]">
               <UploadIcon className="h-4 w-4" />
             </div>
 
             <div className="min-w-0">
-              <h2 className="text-[11px] font-semibold tracking-tight text-gray-800">
+              <h2 className="text-[11px] font-semibold tracking-tight text-[#202824]">
                 Import Data Generus
               </h2>
 
-              <p className="text-[9px] leading-3.5 text-gray-400">
+              <p className="text-[9px] leading-3.5 text-[#78827C]">
                 Tambahkan data baru atau perbarui data yang sudah terdaftar
               </p>
             </div>
@@ -245,7 +245,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
             onClick={onClose}
             disabled={loading}
             aria-label="Tutup"
-            className="ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[#78827C] transition hover:bg-[#F0F4F1] hover:text-[#202824] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -296,9 +296,9 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                 type="button"
                 disabled={loading}
                 onClick={() => inputRef.current?.click()}
-                className="flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 px-5 py-8 text-center transition hover:border-teal-400 hover:bg-teal-50/30 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full flex-col items-center justify-center rounded-2xl border border-dashed border-[#E5EAE6] bg-[#F5F7F5] px-5 py-8 text-center transition hover:border-[#65B98A]/50 hover:bg-[#E6F2EA]/20 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-teal-600 shadow-sm ring-1 ring-gray-100">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#287A50] shadow-xs border border-[#E5EAE6]">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -325,11 +325,11 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                   </svg>
                 </div>
 
-                <p className="mt-3 break-all text-[11px] font-medium text-gray-700">
+                <p className="mt-3 break-all text-[11px] font-medium text-[#202824]">
                   {file ? file.name : "Pilih file Excel"}
                 </p>
 
-                <p className="mt-1 text-[10px] text-gray-400">
+                <p className="mt-1 text-[10px] text-[#78827C]">
                   Format yang didukung: .xlsx
                 </p>
               </button>
@@ -380,16 +380,16 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
           {step === "preview" && (
             <>
               <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-lg border border-teal-100 bg-teal-50 px-3 py-2.5">
-                  <p className="text-[9px] font-medium uppercase tracking-wide text-teal-600">
+                <div className="rounded-xl border border-[#65B98A]/30 bg-[#E6F2EA] px-3 py-2.5">
+                  <p className="text-[9px] font-medium uppercase tracking-wide text-[#206440]">
                     Data Baru
                   </p>
 
-                  <p className="mt-0.5 text-lg font-semibold text-teal-700">
+                  <p className="mt-0.5 text-lg font-semibold text-[#287A50]">
                     {newCount}
                   </p>
 
-                  <p className="text-[9px] text-teal-600">ditambahkan</p>
+                  <p className="text-[9px] text-[#206440]">ditambahkan</p>
                 </div>
 
                 <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5">
@@ -668,7 +668,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                                   Perbarui Data
                                 </span>
                               ) : (
-                                <span className="inline-flex whitespace-nowrap rounded-md bg-teal-50 px-2 py-1 font-medium text-teal-700">
+                                <span className="inline-flex whitespace-nowrap rounded-md bg-[#E6F2EA] px-2 py-1 font-medium text-[#206440]">
                                   Data Baru
                                 </span>
                               )}
@@ -680,7 +680,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                   </div>
 
                   {previewData.length > 8 && (
-                    <div className="border-t border-gray-100 px-3 py-2 text-[9px] text-gray-400">
+                    <div className="border-t border-[#E5EAE6] px-3 py-2 text-[9px] text-[#78827C]">
                       Menampilkan 8 dari {previewData.length} baris yang dapat
                       diproses.
                     </div>
@@ -691,8 +691,8 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
           )}
         </div>
 
-        <div className="relative z-10 flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 bg-white px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[9px] leading-4 text-gray-400">
+        <div className="relative z-10 flex shrink-0 flex-col-reverse gap-2 border-t border-[#E5EAE6] bg-[#F5F7F5] px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[9px] leading-4 text-[#78827C]">
             {step === "preview"
               ? `${totalReady} baris siap diproses`
               : "Periksa data sebelum menjalankan impor."}
@@ -703,7 +703,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
               type="button"
               onClick={step === "preview" ? resetFile : onClose}
               disabled={loading}
-              className="h-9 rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-9 rounded-xl border border-[#E5EAE6] bg-white px-4 text-[11px] font-medium text-[#202824] transition hover:bg-[#F0F4F1] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {step === "preview" ? "Ganti File" : "Batal"}
             </button>
@@ -713,7 +713,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                 type="button"
                 onClick={handlePreview}
                 disabled={!file || loading}
-                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-teal-700 px-5 text-[11px] font-semibold text-white shadow-xs transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-[#287A50] px-5 text-[11px] font-semibold text-white shadow-xs transition hover:bg-[#206440] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? "Memeriksa..." : "Periksa Data"}
               </button>
@@ -722,7 +722,7 @@ export default function ImportModal({ onClose, onSuccess }: Props) {
                 type="button"
                 onClick={handleImport}
                 disabled={!canImport}
-                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-teal-700 px-5 text-[11px] font-semibold text-white shadow-xs transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-[#287A50] px-5 text-[11px] font-semibold text-white shadow-xs transition hover:bg-[#206440] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? "Mengimpor..." : `Proses ${totalReady} Data`}
               </button>

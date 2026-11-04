@@ -27,10 +27,10 @@ const DEFAULT_PEMATERI_ROW: PemateriRow = {
 };
 
 const INPUT_CLASS =
-  "mt-1 h-8 w-full rounded-lg border border-gray-200 bg-white px-2.5 text-[11px] text-gray-700 outline-none transition placeholder:text-gray-400 hover:border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400";
+  "mt-1 h-9 w-full rounded-xl border border-[#E5EAE6] bg-white px-3 text-xs text-[#202824] outline-none transition placeholder:text-[#9AA39D] hover:border-[#65B98A]/40 focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20 disabled:cursor-not-allowed disabled:bg-[#F5F7F5] disabled:text-[#9AA39D]";
 
 const LABEL_CLASS =
-  "block text-[10px] font-semibold tracking-wide text-gray-600";
+  "block text-xs font-medium text-[#78827C]";
 
 export default function BeritaAcaraModal({
   kegiatan,
@@ -162,17 +162,17 @@ export default function BeritaAcaraModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="berita-acara-modal-title"
-      className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/40 p-0 backdrop-blur-xs sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-xs sm:items-center sm:p-4"
     >
-      <div className="flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-gray-100 bg-white shadow-xl sm:rounded-2xl">
+      <div className="flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-[#E5EAE6] bg-white shadow-xl sm:rounded-2xl">
         <form
           onSubmit={handleDownload}
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           {/* Header Modal */}
-          <div className="flex shrink-0 items-start justify-between border-b border-gray-100 px-4 py-3.5 sm:px-5">
+          <div className="flex shrink-0 items-start justify-between border-b border-[#E5EAE6] px-4 py-3.5 sm:px-5">
             <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#65B98A]/30 bg-[#E6F2EA] text-[#287A50]">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -197,11 +197,11 @@ export default function BeritaAcaraModal({
               <div className="min-w-0">
                 <h2
                   id="berita-acara-modal-title"
-                  className="truncate text-[11px] font-semibold text-gray-800 sm:text-xs"
+                  className="truncate text-xs font-semibold text-[#202824]"
                 >
                   Unduh Berita Acara Kegiatan
                 </h2>
-                <p className="mt-0.5 truncate text-[9px] text-gray-400 sm:text-[10px]">
+                <p className="mt-0.5 truncate text-[10px] text-[#78827C]">
                   {kegiatan.nama} ·{" "}
                   {formatRentangTanggalBeritaAcara(
                     kegiatan.tanggal_mulai,
@@ -216,7 +216,7 @@ export default function BeritaAcaraModal({
               onClick={onClose}
               disabled={loading}
               aria-label="Tutup modal"
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[#9AA39D] transition hover:bg-[#F5F7F5] hover:text-[#202824] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -237,20 +237,20 @@ export default function BeritaAcaraModal({
 
           {/* Body Form */}
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
-            <div className="flex items-start gap-2 rounded-lg border border-teal-100 bg-teal-50/60 px-3 py-2.5">
+            <div className="flex items-start gap-2 rounded-xl border border-[#65B98A]/30 bg-[#E6F2EA]/60 px-3.5 py-2.5">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={1.8}
-                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700"
+                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#287A50]"
                 aria-hidden="true"
               >
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 11v5m0-8h.01" />
               </svg>
 
-              <p className="text-[10px] leading-4 text-teal-900">
+              <p className="text-xs leading-4 text-[#206440]">
                 Dokumen Berita Acara akan dibuat dalam format Word (.docx) portrait
                 yang rapi dan dapat diedit kembali sebelum dicetak atau ditandatangani.
               </p>
@@ -259,10 +259,10 @@ export default function BeritaAcaraModal({
             {/* Bagian 1: Identitas & Petugas */}
             <div>
               <div className="mb-2 flex items-center justify-between gap-2">
-                <h3 className="text-[10px] font-semibold text-gray-800">
+                <h3 className="text-xs font-semibold text-[#202824]">
                   Petugas Acara & Penandatangan
                 </h3>
-                <span className="text-[9px] text-red-500">* Wajib diisi</span>
+                <span className="text-[10px] text-rose-500">* Wajib diisi</span>
               </div>
 
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-4">
@@ -336,13 +336,13 @@ export default function BeritaAcaraModal({
             </div>
 
             {/* Bagian 2: Daftar Pemateri */}
-            <div className="border-t border-gray-100 pt-3">
+            <div className="border-t border-[#E5EAE6] pt-3">
               <div className="mb-2.5 flex items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-[10px] font-semibold text-gray-800">
+                  <h3 className="text-xs font-semibold text-[#202824]">
                     Daftar Pemateri
                   </h3>
-                  <p className="mt-0.5 text-[9px] text-gray-400">
+                  <p className="mt-0.5 text-[10px] text-[#78827C]">
                     Isi sesi materi atau biarkan kosong jika ingin diisi manual saat dicetak.
                   </p>
                 </div>
@@ -351,7 +351,7 @@ export default function BeritaAcaraModal({
                   type="button"
                   onClick={handleAddPemateriRow}
                   disabled={loading}
-                  className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[9px] font-medium text-teal-700 transition hover:bg-teal-50 hover:border-teal-200 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded-xl border border-[#65B98A]/30 bg-[#E6F2EA] px-2.5 py-1 text-xs font-medium text-[#206440] transition hover:bg-[#E6F2EA]/80 disabled:opacity-50"
                 >
                   <svg
                     viewBox="0 0 20 20"
@@ -366,10 +366,10 @@ export default function BeritaAcaraModal({
               </div>
 
               {/* Table Container dengan responsive scroll horizontal */}
-              <div className="overflow-x-auto rounded-lg border border-gray-200">
-                <table className="w-full min-w-[500px] border-collapse text-left text-[10px]">
+              <div className="overflow-x-auto rounded-xl border border-[#E5EAE6]">
+                <table className="w-full min-w-[500px] border-collapse text-left text-xs">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50/80 text-[9px] font-semibold text-gray-600">
+                    <tr className="border-b border-[#E5EAE6] bg-[#F5F7F5] text-[10px] font-semibold text-[#78827C]">
                       <th className="w-8 px-2.5 py-2 text-center">No</th>
                       <th className="w-24 px-2 py-2">Waktu</th>
                       <th className="px-2 py-2">Materi</th>
@@ -378,10 +378,10 @@ export default function BeritaAcaraModal({
                       <th className="w-8 px-2 py-2 text-center">Aksi</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
+                  <tbody className="divide-y divide-[#E5EAE6] bg-white">
                     {pemateriList.map((row, index) => (
-                      <tr key={index} className="hover:bg-gray-50/50">
-                        <td className="px-2.5 py-1.5 text-center font-medium text-gray-500">
+                      <tr key={index} className="hover:bg-[#F5F7F5]/50">
+                        <td className="px-2.5 py-1.5 text-center font-medium text-[#78827C]">
                           {index + 1}
                         </td>
                         <td className="px-1.5 py-1.5">
@@ -393,7 +393,7 @@ export default function BeritaAcaraModal({
                             }
                             placeholder="08:00 - 09:00"
                             disabled={loading}
-                            className="h-7 w-full rounded border border-gray-200 px-2 text-[10px] text-gray-700 outline-none focus:border-teal-500"
+                            className="h-8 w-full rounded-lg border border-[#E5EAE6] px-2 text-xs text-[#202824] outline-none focus:border-[#287A50]"
                           />
                         </td>
                         <td className="px-1.5 py-1.5">
@@ -405,7 +405,7 @@ export default function BeritaAcaraModal({
                             }
                             placeholder="Judul materi pengajian"
                             disabled={loading}
-                            className="h-7 w-full rounded border border-gray-200 px-2 text-[10px] text-gray-700 outline-none focus:border-teal-500"
+                            className="h-8 w-full rounded-lg border border-[#E5EAE6] px-2 text-xs text-[#202824] outline-none focus:border-[#287A50]"
                           />
                         </td>
                         <td className="px-1.5 py-1.5">
@@ -417,7 +417,7 @@ export default function BeritaAcaraModal({
                             }
                             placeholder="Nama ustadz / penceramah"
                             disabled={loading}
-                            className="h-7 w-full rounded border border-gray-200 px-2 text-[10px] text-gray-700 outline-none focus:border-teal-500"
+                            className="h-8 w-full rounded-lg border border-[#E5EAE6] px-2 text-xs text-[#202824] outline-none focus:border-[#287A50]"
                           />
                         </td>
                         <td className="px-1.5 py-1.5">
@@ -433,7 +433,7 @@ export default function BeritaAcaraModal({
                             }
                             placeholder="Keterangan"
                             disabled={loading}
-                            className="h-7 w-full rounded border border-gray-200 px-2 text-[10px] text-gray-700 outline-none focus:border-teal-500"
+                            className="h-8 w-full rounded-lg border border-[#E5EAE6] px-2 text-xs text-[#202824] outline-none focus:border-[#287A50]"
                           />
                         </td>
                         <td className="px-1 py-1.5 text-center">
@@ -442,7 +442,7 @@ export default function BeritaAcaraModal({
                             onClick={() => handleRemovePemateriRow(index)}
                             disabled={loading}
                             title="Hapus baris"
-                            className="inline-flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                            className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-[#9AA39D] hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
                           >
                             <svg
                               viewBox="0 0 20 20"
@@ -466,12 +466,12 @@ export default function BeritaAcaraModal({
             </div>
 
             {/* Bagian 3: Rekapitulasi Infak */}
-            <div className="border-t border-gray-100 pt-3">
+            <div className="border-t border-[#E5EAE6] pt-3">
               <div className="mb-2.5 flex items-center justify-between gap-2">
-                <h3 className="text-[10px] font-semibold text-gray-800">
+                <h3 className="text-xs font-semibold text-[#202824]">
                   Rekapitulasi Infak
                 </h3>
-                <span className="text-[9px] text-gray-400">Opsional</span>
+                <span className="text-[10px] text-[#78827C]">Opsional</span>
               </div>
 
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
@@ -480,7 +480,7 @@ export default function BeritaAcaraModal({
                     Infaq Amplop
                   </label>
                   <div className="relative mt-1">
-                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[10px] text-gray-400">
+                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-[#9AA39D]">
                       Rp
                     </span>
                     <input
@@ -493,7 +493,7 @@ export default function BeritaAcaraModal({
                       }
                       placeholder="0"
                       disabled={loading}
-                      className="h-8 w-full rounded-lg border border-gray-200 bg-white pl-8 pr-2.5 text-[11px] text-gray-700 outline-none transition placeholder:text-gray-400 hover:border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-50"
+                      className="h-9 w-full rounded-xl border border-[#E5EAE6] bg-white pl-8 pr-3 text-xs text-[#202824] outline-none transition placeholder:text-[#9AA39D] hover:border-[#65B98A]/40 focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20"
                     />
                   </div>
                 </div>
@@ -503,7 +503,7 @@ export default function BeritaAcaraModal({
                     Infaq PPG
                   </label>
                   <div className="relative mt-1">
-                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[10px] text-gray-400">
+                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-[#9AA39D]">
                       Rp
                     </span>
                     <input
@@ -516,7 +516,7 @@ export default function BeritaAcaraModal({
                       }
                       placeholder="0"
                       disabled={loading}
-                      className="h-8 w-full rounded-lg border border-gray-200 bg-white pl-8 pr-2.5 text-[11px] text-gray-700 outline-none transition placeholder:text-gray-400 hover:border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-50"
+                      className="h-9 w-full rounded-xl border border-[#E5EAE6] bg-white pl-8 pr-3 text-xs text-[#202824] outline-none transition placeholder:text-[#9AA39D] hover:border-[#65B98A]/40 focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20"
                     />
                   </div>
                 </div>
@@ -526,7 +526,7 @@ export default function BeritaAcaraModal({
                     Infaq Presensi
                   </label>
                   <div className="relative mt-1">
-                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[10px] text-gray-400">
+                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-[#9AA39D]">
                       Rp
                     </span>
                     <input
@@ -541,16 +541,16 @@ export default function BeritaAcaraModal({
                       }
                       placeholder="0"
                       disabled={loading}
-                      className="h-8 w-full rounded-lg border border-gray-200 bg-white pl-8 pr-2.5 text-[11px] text-gray-700 outline-none transition placeholder:text-gray-400 hover:border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-50"
+                      className="h-9 w-full rounded-xl border border-[#E5EAE6] bg-white pl-8 pr-3 text-xs text-[#202824] outline-none transition placeholder:text-[#9AA39D] hover:border-[#65B98A]/40 focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Box Total Infak */}
-              <div className="mt-2.5 flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50/70 px-3 py-2 text-[10px]">
-                <span className="font-semibold text-gray-700">Jumlah Total Infak</span>
-                <span className="font-bold text-teal-800">
+              <div className="mt-2.5 flex items-center justify-between rounded-xl border border-[#E5EAE6] bg-[#F5F7F5] px-3.5 py-2.5 text-xs">
+                <span className="font-semibold text-[#202824]">Jumlah Total Infak</span>
+                <span className="font-bold text-[#287A50]">
                   {formatRupiahIndonesia(totalInfaq)}
                 </span>
               </div>
@@ -559,7 +559,7 @@ export default function BeritaAcaraModal({
             {error && (
               <div
                 role="alert"
-                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-[10px] leading-4 text-red-700"
+                className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs leading-4 text-rose-700"
               >
                 {error}
               </div>
@@ -567,12 +567,12 @@ export default function BeritaAcaraModal({
           </div>
 
           {/* Footer Modal */}
-          <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-end sm:px-5">
+          <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-[#E5EAE6] bg-[#F5F7F5]/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-end sm:px-5">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="inline-flex h-9 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-[11px] font-semibold text-gray-600 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-9 items-center justify-center rounded-xl border border-[#E5EAE6] bg-white px-4 text-xs font-medium text-[#78827C] transition hover:bg-[#F5F7F5] hover:text-[#202824] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Batal
             </button>
@@ -580,7 +580,7 @@ export default function BeritaAcaraModal({
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-teal-700 px-4 text-[11px] font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-[#287A50] px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-[#206440] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? (
                 <>

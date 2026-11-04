@@ -50,9 +50,9 @@ export default function MobileList({
 }: Props) {
   if (data.length === 0) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-[0_3px_12px_rgba(15,23,42,0.035)] md:hidden">
+      <div className="overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white p-6 text-center shadow-xs md:hidden">
         <div className="mx-auto flex max-w-sm flex-col items-center">
-          <span className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+          <span className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl bg-[#E6F2EA] text-[#287A50]">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -74,10 +74,10 @@ export default function MobileList({
               />
             </svg>
           </span>
-          <p className="text-[11px] font-semibold text-gray-800">
+          <p className="text-[11px] font-semibold text-[#202824]">
             Tidak ada data
           </p>
-          <p className="mt-1 text-[11px] leading-4.5 text-gray-500">
+          <p className="mt-1 text-[11px] leading-4.5 text-[#78827C]">
             Belum ada data anggota yang cocok dengan filter atau pencarian saat ini.
           </p>
         </div>
@@ -94,13 +94,13 @@ export default function MobileList({
           return (
             <li
               key={s.id}
-              className="group overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-[0_3px_12px_rgba(15,23,42,0.035)] transition-colors duration-150 hover:border-teal-200"
+              className="group overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-xs transition-colors duration-150 hover:border-[#65B98A]/40"
             >
               <div className="p-3.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 flex-1 items-center gap-2.5">
                     <div
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-medium text-white ring-2 ${avatarColor.ring}`}
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ${avatarColor.ring}`}
                       style={{
                         backgroundColor: avatarColor.bg,
                       }}
@@ -109,11 +109,11 @@ export default function MobileList({
                     </div>
 
                     <div className="min-w-0">
-                      <p className="mb-0.5 text-[8px] font-semibold uppercase tracking-widest text-teal-700">
+                      <p className="mb-0.5 text-[8px] font-bold uppercase tracking-widest text-[#287A50]">
                         Generus
                       </p>
 
-                      <h3 className="wrap-break-word text-[13px] font-bold leading-normal tracking-[-0.01em] text-gray-900 transition-colors group-hover:text-teal-800">
+                      <h3 className="wrap-break-word text-[13px] font-bold leading-normal tracking-[-0.01em] text-[#202824] transition-colors group-hover:text-[#287A50]">
                         {toTitleCase(s.nama)}
                       </h3>
                     </div>
@@ -132,27 +132,27 @@ export default function MobileList({
 
                 <div
                   aria-hidden="true"
-                  className="mt-2.5 mb-3 h-px w-full bg-gray-200"
+                  className="mt-2.5 mb-3 h-px w-full bg-[#E5EAE6]"
                 />
 
                 <div className="grid grid-cols-3 gap-2">
                   <DetailColumn label="Desa">
-                    <p className="wrap-break-word font-semibold text-gray-700">
+                    <p className="wrap-break-word font-semibold text-[#202824]">
                       {s.desa || "-"}
                     </p>
                   </DetailColumn>
 
-                  <div className="min-w-0 border-l border-gray-100 pl-2">
+                  <div className="min-w-0 border-l border-[#E5EAE6] pl-2">
                     <DetailColumn label="Kelompok">
-                      <p className="wrap-break-word font-semibold text-gray-700">
+                      <p className="wrap-break-word font-semibold text-[#202824]">
                         {s.kelompok || "-"}
                       </p>
                     </DetailColumn>
                   </div>
 
-                  <div className="min-w-0 border-l border-gray-100 pl-2">
+                  <div className="min-w-0 border-l border-[#E5EAE6] pl-2">
                     <DetailColumn label="JK / Tahun">
-                      <p className="wrap-break-word text-gray-700">
+                      <p className="wrap-break-word text-[#78827C]">
                         {s.jenis_kelamin ?? "-"}
                         {s.tahun_lahir ? ` (${s.tahun_lahir})` : ""}
                       </p>
@@ -161,13 +161,13 @@ export default function MobileList({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 border-t border-gray-100 bg-gray-50/60 p-3">
+              <div className="flex items-center gap-2 border-t border-[#E5EAE6] bg-[#F5F7F5] p-3">
                 <button
                   type="button"
                   onClick={() => onShowQR(s)}
                   aria-label={`Tampilkan QR ${s.nama}`}
                   title="Tampilkan QR"
-                  className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md bg-teal-700 text-[11px] font-medium text-white transition hover:bg-teal-800 active:bg-teal-900"
+                  className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#287A50] text-[11px] font-semibold text-white shadow-xs transition hover:bg-[#206440] active:bg-[#181C1B]"
                 >
                   <svg
                     viewBox="0 0 20 20"
@@ -240,7 +240,7 @@ export default function MobileList({
         })}
       </ul>
 
-      <p className="mt-3 text-center text-[9px] leading-4 text-gray-400">
+      <p className="mt-3 text-center text-[9px] leading-4 text-[#78827C]">
         Menampilkan {data.length} Generus
       </p>
     </div>
