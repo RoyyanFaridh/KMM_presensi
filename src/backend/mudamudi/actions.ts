@@ -8,7 +8,7 @@ import {
   DESA_OPTIONS,
   KELOMPOK_BY_DESA,
   JENIS_KELAMIN_OPTIONS,
-  KELAS_OPTIONS,
+  JENJANG_OPTIONS,
 } from "./constants";
 import {
   parseImportExcel,
@@ -73,22 +73,18 @@ function isValidJenisKelamin(jenisKelamin: string): boolean {
   );
 }
 
-function isValidKelas(kelas: string): boolean {
-  return KELAS_OPTIONS.includes(kelas as (typeof KELAS_OPTIONS)[number]);
+function isValidJenjang(jenjang: string): boolean {
+  return JENJANG_OPTIONS.includes(jenjang as (typeof JENJANG_OPTIONS)[number]);
 }
 
-function calculateKelas(tahunLahir: number | null): string {
-  if (tahunLahir === null) return "";
-
-  const currentYear = new Date().getFullYear();
-  const umur = currentYear - tahunLahir;
-
-  if (umur >= 5 && umur <= 6) return "PAUD";
-  if (umur >= 7 && umur <= 12) return "Caberawit";
-  if (umur >= 13 && umur <= 15) return "Pra Remaja";
-  if (umur >= 16 && umur <= 18) return "Remaja";
-  if (umur >= 19) return "Usia Nikah";
-
+function calculateKelasFromJenjang(jenjang: string): string {
+  if (jenjang === "Belum Sekolah" || jenjang === "PAUD") return "PAUD";
+  if (jenjang === "TK") return "TK";
+  if (["SD-1", "SD-2", "SD-3"].includes(jenjang)) return "Caberawit A";
+  if (["SD-4", "SD-5", "SD-6"].includes(jenjang)) return "Caberawit B";
+  if (["SMP-1", "SMP-2", "SMP-3"].includes(jenjang)) return "Pra Remaja";
+  if (["SMA-1", "SMA-2", "SMA-3"].includes(jenjang)) return "Remaja";
+  if (jenjang === "Kuliah" || jenjang === "Kerja") return "Usia Nikah";
   return "";
 }
 
@@ -97,7 +93,7 @@ function validate(
   desa: string,
   kelompok: string,
   jenisKelamin: string,
-  kelas: string,
+  jenjang: string,
   tahunLahirRaw: string,
 ): string | null {
   if (!nama.trim()) return "Nama wajib diisi";
@@ -116,8 +112,8 @@ function validate(
     return "Jenis kelamin wajib dipilih";
   }
 
-  if (!isValidKelas(kelas)) {
-    return "Kelas wajib dipilih dan harus sesuai dengan pilihan yang tersedia";
+  if (!isValidJenjang(jenjang)) {
+    return "Jenjang wajib dipilih dan harus sesuai dengan pilihan yang tersedia";
   }
 
   if (tahunLahirRaw !== "") {
@@ -153,20 +149,18 @@ function readFormData(formData: FormData) {
   const desa = String(formData.get("desa") ?? "").trim();
   const kelompok = String(formData.get("kelompok") ?? "").trim();
   const jenisKelamin = String(formData.get("jenis_kelamin") ?? "").trim();
-  const kelasRaw = String(formData.get("kelas") ?? "").trim();
+  const jenjang = String(formData.get("jenjang") ?? "").trim();
   const tahunLahirRaw = String(formData.get("tahun_lahir") ?? "").trim();
 
-  const tahunLahir =
-    tahunLahirRaw === "" ? null : Number(tahunLahirRaw);
-
-  const kelasOtomatis = tahunLahir !== null ? calculateKelas(tahunLahir) : "";
-  const kelas = kelasOtomatis || kelasRaw;
+  const tahunLahir = tahunLahirRaw === "" ? null : Number(tahunLahirRaw);
+  const kelas = isValidJenjang(jenjang) ? calculateKelasFromJenjang(jenjang) : "";
 
   return {
     nama,
     desa,
     kelompok,
     jenisKelamin,
+    jenjang,
     kelas,
     tahunLahir,
     tahunLahirRaw,
@@ -183,7 +177,7 @@ function validateFormData(data: ReturnType<typeof readFormData>) {
     data.desa,
     data.kelompok,
     data.jenisKelamin,
-    data.kelas,
+    data.jenjang,
     data.tahunLahirRaw,
   );
 }
@@ -194,11 +188,12 @@ function mapImportRow(row: ImportRow) {
     desa: row.desa.trim(),
     kelompok: row.kelompok.trim(),
     jenis_kelamin: row.jenis_kelamin.trim(),
+    jenjang: row.jenjang,
     tempat_lahir: row.tempat_lahir?.trim() || null,
     tahun_lahir: row.tahun_lahir ?? null,
     no_hp: row.no_hp?.trim() || null,
     pekerjaan: row.pekerjaan?.trim() || null,
-    kelas: row.kelas?.trim() || null,
+    kelas: row.kelas,
     alamat: row.alamat?.trim() || null,
   };
 }
@@ -211,6 +206,12 @@ function mapImportUpdate(row: ImportRow): Record<string, unknown> {
     if (Object.prototype.hasOwnProperty.call(mapped, field)) {
       payload[field] = mapped[field as keyof typeof mapped];
     }
+  }
+
+  // Kelas selalu mengikuti jenjang, sehingga keduanya diperbarui bersama.
+  if (row.presentFields?.includes("jenjang")) {
+    payload.jenjang = mapped.jenjang;
+    payload.kelas = mapped.kelas;
   }
 
   return payload;
@@ -336,6 +337,7 @@ export async function addMudamudi(formData: FormData): Promise<ActionResult> {
     jenis_kelamin: data.jenisKelamin,
     tempat_lahir: data.tempatLahir,
     tahun_lahir: data.tahunLahir,
+    jenjang: data.jenjang,
     kelas: data.kelas,
     no_hp: data.noHp,
     pekerjaan: data.pekerjaan,
@@ -452,6 +454,7 @@ export async function updateMudamudi(
       jenis_kelamin: data.jenisKelamin,
       tempat_lahir: data.tempatLahir,
       tahun_lahir: data.tahunLahir,
+      jenjang: data.jenjang,
       kelas: data.kelas,
       no_hp: data.noHp,
       pekerjaan: data.pekerjaan,
@@ -596,18 +599,18 @@ export async function previewImportMudamudi(
   try {
     const result = await parseImportExcel(file);
 
-    const classErrors = result.data
-      .filter((row) => !isValidKelas(String(row.kelas ?? "").trim()))
+    const invalidJenjangRows = result.data
+      .filter((row) => !isValidJenjang(String(row.jenjang ?? "").trim()))
       .map((row) => ({
         rowNumber: 0,
-        message: `Kelas untuk data "${row.nama}" wajib diisi dengan nilai yang tersedia.`,
+        message: `Jenjang untuk data "${row.nama}" wajib diisi dengan nilai yang tersedia.`,
       }));
 
     const validRows = result.data.filter((row) =>
-      isValidKelas(String(row.kelas ?? "").trim()),
+      isValidJenjang(String(row.jenjang ?? "").trim()),
     );
 
-    const errors = [...result.errors, ...classErrors];
+    const errors = [...result.errors, ...invalidJenjangRows];
     const scopedRows: ImportRow[] = [];
 
     for (const row of validRows) {
@@ -732,17 +735,17 @@ export async function importMudamudi(
       };
     }
 
-    const invalidClassRows = result.data.filter(
-      (row) => !isValidKelas(String(row.kelas ?? "").trim()),
+    const invalidJenjangRows = result.data.filter(
+      (row) => !isValidJenjang(String(row.jenjang ?? "").trim()),
     );
 
-    if (invalidClassRows.length > 0) {
+    if (invalidJenjangRows.length > 0) {
       return {
         error:
-          "Import dibatalkan karena ada data yang kelasnya kosong atau tidak valid. Lengkapi kelas pada file Excel, termasuk pilihan MT jika sesuai.",
+          "Import dibatalkan karena terdapat data dengan jenjang kosong atau tidak valid. Periksa kolom JENJANG pada file Excel.",
         imported: 0,
         updated: 0,
-        skipped: invalidClassRows.length + result.errors.length,
+        skipped: invalidJenjangRows.length + result.errors.length,
         warnings: result.warnings,
       };
     }

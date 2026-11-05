@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -26,6 +26,7 @@ import DetailModal from "./DetailModal";
 import ExportModal from "./ExportModal";
 import ImportModal from "./ImportModal";
 import MudamudiQRModal from "./MudamudiQRModal";
+import ReminderModal from "./ReminderModal";
 
 type Props = {
   initialData: Mudamudi[];
@@ -82,6 +83,18 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
   const [error, setError] = useState("");
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  const missingJenjangCount = initialData.filter(
+    (item) => !item.jenjang?.trim(),
+  ).length;
+
+  const [showReminder, setShowReminder] = useState(
+    () => missingJenjangCount > 0,
+  );
+
+  useEffect(() => {
+    setShowReminder(missingJenjangCount > 0);
+  }, [missingJenjangCount]);
 
   const filter = useMudamudiFilter(initialData, adminDesa);
 
@@ -242,7 +255,7 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
   return (
     <main className="min-h-screen bg-[#F5F7F5]">
       <div className="mx-auto w-full px-4 py-6 sm:px-6 md:px-7 lg:px-8">
-        <header className="border-b border-[#E5EAE6] pb-5">
+        <header className="pb-5">
           <div className="mb-5">
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#287A50]">
               Generus
@@ -250,11 +263,11 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
 
             <div className="mt-1 flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h1 className="text-xl font-bold tracking-tight text-[#202824]">
+                <h1 className="text-2xl font-bold tracking-tight text-[#202824]">
                   Data Generus
                 </h1>
 
-                <p className="mt-1 max-w-xs text-[11px] leading-4 text-[#78827C] sm:max-w-none sm:text-xs">
+                <p className="mt-1 max-w-xs text-[12px] leading-4 text-[#78827C] sm:max-w-none sm:text-xs">
                   Kelola data anggota Generus yang digunakan untuk presensi.
                 </p>
               </div>
@@ -306,8 +319,10 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
             setSearch={filter.setSearch}
             filterDesa={filter.filterDesa}
             setFilterDesa={filter.setFilterDesa}
-            filterkelas={filter.filterkelas}
-            setFilterkelas={filter.setFilterkelas}
+            filterJenjang={filter.filterJenjang}
+            setFilterJenjang={filter.setFilterJenjang}
+            filterKelas={filter.filterKelas}
+            setFilterKelas={filter.setFilterKelas}
             filterKelompok={filter.filterKelompok}
             setFilterKelompok={filter.setFilterKelompok}
             filterJenisKelamin={filter.filterJenisKelamin}
@@ -332,6 +347,18 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
           />
         </section>
       </div>
+
+      {showReminder && missingJenjangCount > 0 && (
+        <ReminderModal
+          title="Pembaruan Data Jenjang"
+          description="Terdapat data Generus yang belum memiliki jenjang pendidikan. Silakan lengkapi data jenjang setiap Generus agar informasi anggota tetap sesuai dan dapat digunakan dalam pengelolaan data."
+          count={missingJenjangCount}
+          countLabel="Generus belum memiliki data jenjang."
+          note="Pengingat ini akan muncul kembali saat menu Generus dibuka selama masih terdapat data jenjang yang belum dilengkapi."
+          buttonLabel="Mengerti"
+          onClose={() => setShowReminder(false)}
+        />
+      )}
 
       {detailData && (
         <DetailModal data={detailData} onClose={closeDetailModal} />

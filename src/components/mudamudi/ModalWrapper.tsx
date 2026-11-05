@@ -1,7 +1,8 @@
+
 type Props = {
   children: React.ReactNode;
   onClose: () => void;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "sm" | "md" | "lg" | "xl" | "2xl";
 };
 
 export default function ModalWrapper({
@@ -14,6 +15,7 @@ export default function ModalWrapper({
     md: "max-w-md",
     lg: "max-w-3xl",
     xl: "max-w-5xl",
+    "2xl": "max-w-[1440px]",
   }[size];
 
   return (

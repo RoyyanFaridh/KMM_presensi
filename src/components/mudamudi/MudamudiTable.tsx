@@ -1,6 +1,6 @@
 "use client";
 
-import { Mudamudi } from "../../backend/mudamudi/types";
+import type { Mudamudi } from "../../backend/mudamudi/types";
 import SearchFilterBar from "./SearchFilterBar";
 import MudamudiTableView from "./MudamudiTableView";
 
@@ -9,29 +9,36 @@ type Props = {
   totalCount: number;
   search: string;
   setSearch: (v: string) => void;
-  filterDesa: string;
-  setFilterDesa: (v: string) => void;
-  filterkelas: string;
-  setFilterkelas: (v: string) => void;
-  filterKelompok: string;
-  setFilterKelompok: (v: string) => void;
-  filterJenisKelamin: string;
-  setFilterJenisKelamin: (v: string) => void;
+
+  filterDesa: string[];
+  setFilterDesa: (v: string[]) => void;
+
+  filterJenjang: string[];
+  setFilterJenjang: (v: string[]) => void;
+
+  filterKelas: string[];
+  setFilterKelas: (v: string[]) => void;
+
+  filterKelompok: string[];
+  setFilterKelompok: (v: string[]) => void;
+
+  filterJenisKelamin: string[];
+  setFilterJenisKelamin: (v: string[]) => void;
+
   kelompokFilterOptions: string[];
   hasActiveFilters: boolean;
+
   sortConfig: Parameters<typeof SearchFilterBar>[0]["sortConfig"];
   setSortConfig: Parameters<typeof SearchFilterBar>[0]["setSortConfig"];
+
   onReset: () => void;
   adminDesa: string | null;
-  sortIndicator: (
-    key: Parameters<typeof MudamudiTableView>[0]["sortIndicator"] extends (
-      key: infer K,
-    ) => string
-      ? K
-      : never,
-  ) => string;
+
+  sortIndicator: Parameters<typeof MudamudiTableView>[0]["sortIndicator"];
   toggleSort: Parameters<typeof MudamudiTableView>[0]["toggleSort"];
+
   filterKey: string;
+
   onDetail: (data: Mudamudi) => void;
   onEdit: (data: Mudamudi) => void;
   onDelete: (data: Mudamudi) => void;
@@ -45,13 +52,14 @@ export default function MudamudiTable({
   setSearch,
   filterDesa,
   setFilterDesa,
-  filterkelas,
-  setFilterkelas,
+  filterJenjang,
+  setFilterJenjang,
+  filterKelas,
+  setFilterKelas,
   filterKelompok,
   setFilterKelompok,
   filterJenisKelamin,
   setFilterJenisKelamin,
-  kelompokFilterOptions,
   hasActiveFilters,
   sortConfig,
   setSortConfig,
@@ -72,12 +80,14 @@ export default function MudamudiTable({
         setSearch={setSearch}
         filterDesa={filterDesa}
         setFilterDesa={setFilterDesa}
-        filterkelas={filterkelas}
-        setFilterkelas={setFilterkelas}
         filterKelompok={filterKelompok}
         setFilterKelompok={setFilterKelompok}
         filterJenisKelamin={filterJenisKelamin}
         setFilterJenisKelamin={setFilterJenisKelamin}
+        filterJenjang={filterJenjang}
+        setFilterJenjang={setFilterJenjang}
+        filterKelas={filterKelas}
+        setFilterKelas={setFilterKelas}
         sortConfig={sortConfig}
         setSortConfig={setSortConfig}
         hasActiveFilters={hasActiveFilters}

@@ -1,25 +1,35 @@
+
 "use client";
 
 import { useState } from "react";
 import {
   DESA_OPTIONS,
+  JENJANG_OPTIONS,
   KELAS_OPTIONS,
   KELOMPOK_BY_DESA,
   JENIS_KELAMIN_OPTIONS,
 } from "../../backend/mudamudi/constants";
-import { SortConfig } from "../../backend/mudamudi/types";
+import type { SortConfig, SortKey } from "../../backend/mudamudi/types";
+
+type SortOption = {
+  label: string;
+  key: SortKey;
+  direction: "asc" | "desc";
+};
 
 type Props = {
   search: string;
   setSearch: (v: string) => void;
-  filterDesa: string;
-  setFilterDesa: (v: string) => void;
-  filterkelas: string;
-  setFilterkelas: (v: string) => void;
-  filterKelompok: string;
-  setFilterKelompok: (v: string) => void;
-  filterJenisKelamin: string;
-  setFilterJenisKelamin: (v: string) => void;
+  filterDesa: string[];
+  setFilterDesa: (v: string[]) => void;
+  filterKelompok: string[];
+  setFilterKelompok: (v: string[]) => void;
+  filterJenisKelamin: string[];
+  setFilterJenisKelamin: (v: string[]) => void;
+  filterJenjang: string[];
+  setFilterJenjang: (v: string[]) => void;
+  filterKelas: string[];
+  setFilterKelas: (v: string[]) => void;
   hasActiveFilters: boolean;
   sortConfig: SortConfig;
   setSortConfig: (config: SortConfig) => void;
@@ -27,17 +37,32 @@ type Props = {
   adminDesa: string | null;
 };
 
+const SORT_OPTIONS: SortOption[] = [
+  { label: "Terbaru", key: "created_at", direction: "desc" },
+  { label: "Nama A - Z", key: "nama", direction: "asc" },
+  { label: "Nama Z - A", key: "nama", direction: "desc" },
+];
+
+const KELOMPOK_OPTIONS_BY_DESA: Record<string, readonly string[]> =
+  KELOMPOK_BY_DESA;
+
+const ALL_KELOMPOK_OPTIONS: string[] = Object.values(
+  KELOMPOK_OPTIONS_BY_DESA,
+).flat();
+
 export default function SearchFilterBar({
   search,
   setSearch,
   filterDesa,
   setFilterDesa,
-  filterkelas,
-  setFilterkelas,
   filterKelompok,
   setFilterKelompok,
   filterJenisKelamin,
   setFilterJenisKelamin,
+  filterJenjang,
+  setFilterJenjang,
+  filterKelas,
+  setFilterKelas,
   sortConfig,
   setSortConfig,
   hasActiveFilters,
@@ -48,44 +73,113 @@ export default function SearchFilterBar({
 
   const isSuperAdmin = adminDesa === null;
 
-  const kelompokOptions = adminDesa
-    ? (KELOMPOK_BY_DESA[adminDesa as keyof typeof KELOMPOK_BY_DESA] ?? [])
-    : filterDesa
-      ? (KELOMPOK_BY_DESA[filterDesa as keyof typeof KELOMPOK_BY_DESA] ?? [])
-      : Object.values(KELOMPOK_BY_DESA).flat();
+  const kelompokOptions: string[] = isSuperAdmin
+    ? filterDesa.length > 0
+      ? filterDesa.flatMap(
+        (desa) => [...(KELOMPOK_OPTIONS_BY_DESA[desa] ?? [])],
+      )
+      : [...ALL_KELOMPOK_OPTIONS]
+    : [...(KELOMPOK_OPTIONS_BY_DESA[adminDesa] ?? [])];
 
-  const activeFilterCount = [
-    filterJenisKelamin,
-    filterkelas,
-    filterKelompok,
-    isSuperAdmin ? filterDesa : "",
-  ].filter(Boolean).length;
+  const uniqueKelompokOptions = [...new Set(kelompokOptions)];
+
+  const activeFilterCount =
+    filterDesa.length +
+    filterKelompok.length +
+    filterJenisKelamin.length +
+    filterJenjang.length +
+    filterKelas.length;
+
+  function toggleArrayValue(
+    value: string,
+    current: string[],
+    setter: (values: string[]) => void,
+  ) {
+    setter(
+      current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value],
+    );
+  }
 
   function handleDesaChange(desa: string) {
-    setFilterDesa(desa);
+    const nextDesa = filterDesa.includes(desa)
+      ? filterDesa.filter((item) => item !== desa)
+      : [...filterDesa, desa];
 
-    if (
-      filterKelompok &&
-      desa &&
-      !(KELOMPOK_BY_DESA[desa as keyof typeof KELOMPOK_BY_DESA] ?? []).includes(
-        filterKelompok as never,
-      )
-    ) {
-      setFilterKelompok("");
+    setFilterDesa(nextDesa);
+
+    if (isSuperAdmin) {
+      const allowedKelompok: string[] =
+        nextDesa.length > 0
+          ? nextDesa.flatMap(
+            (item) => KELOMPOK_OPTIONS_BY_DESA[item] ?? [],
+          )
+          : ALL_KELOMPOK_OPTIONS;
+
+      setFilterKelompok(
+        filterKelompok.filter((kelompok) =>
+          allowedKelompok.includes(kelompok),
+        ),
+      );
     }
   }
 
-  function handleReset() {
-    if (isSuperAdmin) {
-      onReset();
-      return;
-    }
+  function handleKelompokChange(kelompok: string) {
+    toggleArrayValue(
+      kelompok,
+      filterKelompok,
+      setFilterKelompok,
+    );
+  }
 
-    setFilterDesa("");
-    setFilterKelompok("");
-    setFilterJenisKelamin("");
-    setFilterkelas("");
-    setSearch("");
+  function removeChip(
+    value: string,
+    current: string[],
+    setter: (values: string[]) => void,
+  ) {
+    setter(current.filter((item) => item !== value));
+  }
+
+  function handleReset() {
+    onReset();
+  }
+
+  const checkboxClass =
+    "h-3.5 w-3.5 shrink-0 rounded accent-[#287A50]";
+
+  const optionClass =
+    "flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600";
+
+  const sectionTitleClass =
+    "mb-1.5 text-[11px] font-semibold text-gray-700";
+
+  const sectionClass =
+    "min-w-0 border-t border-gray-100 pt-3 first:border-t-0 first:pt-0";
+
+  const optionGridClass =
+    "grid grid-cols-2 gap-x-3 gap-y-2 lg:grid-cols-3 2xl:grid-cols-4";
+
+  function renderChips(
+    label: string,
+    values: string[],
+    setter: (values: string[]) => void,
+  ) {
+    return values.map((value) => (
+      <span
+        key={`${label}-${value}`}
+        className="inline-flex items-center gap-1 rounded-lg border border-[#E5EAE6] bg-[#E6F2EA] px-2 py-0.5 text-[11px] font-medium text-[#206440]"
+      >
+        {label}: {value}
+        <button
+          type="button"
+          onClick={() => removeChip(value, values, setter)}
+          aria-label={`Hapus filter ${label} ${value}`}
+        >
+          ×
+        </button>
+      </span>
+    ));
   }
 
   return (
@@ -119,16 +213,7 @@ export default function SearchFilterBar({
               aria-label="Hapus pencarian"
               className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-[#78827C] transition hover:bg-[#F0F4F1] hover:text-[#202824]"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="h-3 w-3"
-              >
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg>
+              ×
             </button>
           )}
         </div>
@@ -136,30 +221,13 @@ export default function SearchFilterBar({
         <button
           type="button"
           onClick={() => setShowFilter((prev) => !prev)}
-          className={`
-            flex h-10 items-center justify-center gap-1.5
-            rounded-xl border px-3.5 text-[12px] font-medium
-            transition shadow-xs
-            ${
-              showFilter || hasActiveFilters
-                ? "border-[#65B98A] bg-[#E6F2EA] text-[#287A50] ring-2 ring-[#65B98A]/20"
-                : "border-[#E5EAE6] bg-white text-[#202824] hover:bg-[#F0F4F1] hover:border-[#65B98A]/40"
-            }
-          `}
+          className={`flex h-10 items-center justify-center gap-1.5 rounded-xl border px-3.5 text-[12px] font-medium shadow-xs transition ${showFilter || hasActiveFilters
+              ? "border-[#65B98A] bg-[#E6F2EA] text-[#287A50] ring-2 ring-[#65B98A]/20"
+              : "border-[#E5EAE6] bg-white text-[#202824] hover:border-[#65B98A]/40 hover:bg-[#F0F4F1]"
+            }`}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            className="h-3.5 w-3.5"
-          >
-            <path d="M4 6h16" />
-            <path d="M7 12h10" />
-            <path d="M10 18h4" />
-          </svg>
           Filter
+
           {activeFilterCount > 0 && (
             <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#287A50] px-1 text-[10px] font-bold text-white">
               {activeFilterCount}
@@ -168,87 +236,38 @@ export default function SearchFilterBar({
         </button>
       </div>
 
-      {/* Active filter badges / chips */}
       {(activeFilterCount > 0 || search.trim().length > 0) && (
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-          <span className="text-[11px] font-medium text-[#78827C] mr-1">
+          <span className="mr-1 text-[11px] font-medium text-[#78827C]">
             Filter aktif:
           </span>
 
-          {search.trim().length > 0 && (
+          {search.trim() && (
             <span className="inline-flex items-center gap-1 rounded-lg border border-[#E5EAE6] bg-[#E6F2EA] px-2 py-0.5 text-[11px] font-medium text-[#206440]">
-              <span>Cari: &ldquo;{search}&rdquo;</span>
+              Cari: &ldquo;{search}&rdquo;
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="hover:text-[#181C1B] font-bold ml-0.5"
-                title="Hapus filter cari"
               >
                 ×
               </button>
             </span>
           )}
 
-          {isSuperAdmin && filterDesa && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-[#E5EAE6] bg-[#E6F2EA] px-2 py-0.5 text-[11px] font-medium text-[#206440]">
-              <span>Desa: {filterDesa}</span>
-              <button
-                type="button"
-                onClick={() => handleDesaChange("")}
-                className="hover:text-[#181C1B] font-bold ml-0.5"
-                title="Hapus filter desa"
-              >
-                ×
-              </button>
-            </span>
+          {renderChips("Desa", filterDesa, setFilterDesa)}
+          {renderChips("Kelompok", filterKelompok, setFilterKelompok)}
+          {renderChips(
+            "Jenis Kelamin",
+            filterJenisKelamin,
+            setFilterJenisKelamin,
           )}
-
-          {filterKelompok && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-[#E5EAE6] bg-[#E6F2EA] px-2 py-0.5 text-[11px] font-medium text-[#206440]">
-              <span>Kelompok: {filterKelompok}</span>
-              <button
-                type="button"
-                onClick={() => setFilterKelompok("")}
-                className="hover:text-[#181C1B] font-bold ml-0.5"
-                title="Hapus filter kelompok"
-              >
-                ×
-              </button>
-            </span>
-          )}
-
-          {filterJenisKelamin && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-[#E5EAE6] bg-[#E6F2EA] px-2 py-0.5 text-[11px] font-medium text-[#206440]">
-              <span>JK: {filterJenisKelamin}</span>
-              <button
-                type="button"
-                onClick={() => setFilterJenisKelamin("")}
-                className="hover:text-[#181C1B] font-bold ml-0.5"
-                title="Hapus filter jenis kelamin"
-              >
-                ×
-              </button>
-            </span>
-          )}
-
-          {filterkelas && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-[#E5EAE6] bg-[#E6F2EA] px-2 py-0.5 text-[11px] font-medium text-[#206440]">
-              <span>Kelas: {filterkelas}</span>
-              <button
-                type="button"
-                onClick={() => setFilterkelas("")}
-                className="hover:text-[#181C1B] font-bold ml-0.5"
-                title="Hapus filter kelas"
-              >
-                ×
-              </button>
-            </span>
-          )}
+          {renderChips("Jenjang", filterJenjang, setFilterJenjang)}
+          {renderChips("Kelas", filterKelas, setFilterKelas)}
 
           <button
             type="button"
             onClick={handleReset}
-            className="text-[11px] font-semibold text-red-600 hover:text-red-700 ml-1 transition"
+            className="ml-1 text-[11px] font-semibold text-red-600 transition hover:text-red-700"
           >
             Reset Semua
           </button>
@@ -256,15 +275,14 @@ export default function SearchFilterBar({
       )}
 
       {showFilter && (
-        <div className="mt-2.5 rounded-2xl border border-[#E5EAE6] bg-white p-4 shadow-lg shadow-black/5">
-          <div className="mb-4 flex items-center justify-between">
+        <div className="mt-2.5 flex max-h-[48vh] flex-col overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-lg shadow-black/5">
+          <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-2.5">
             <div>
               <h3 className="text-[12px] font-bold text-[#202824]">
                 Filter Data Generus
               </h3>
-
               <p className="mt-0.5 text-[10px] text-[#78827C]">
-                Pilih kriteria untuk menyaring data Generus
+                Pilih satu atau beberapa kriteria filter
               </p>
             </div>
 
@@ -274,259 +292,183 @@ export default function SearchFilterBar({
               aria-label="Tutup filter"
               className="flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                className="h-4 w-4"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 6l12 12"
-                />
-
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M18 6L6 18"
-                />
-              </svg>
+              ×
             </button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-4 md:gap-6">
-            <div>
-              <div className="mb-4 border-b border-gray-100 pb-4">
-                <p className="mb-2 text-[11px] font-medium text-gray-600">
-                  Urutkan
-                </p>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-4 lg:grid-cols-2 lg:gap-x-8">
+              <div className="min-w-0 space-y-3">
+                <section className={sectionClass}>
+                  <p className={sectionTitleClass}>Urutkan</p>
 
-                <div className="flex flex-wrap gap-x-4 gap-y-2">
-                  <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
-                    <input
-                      type="radio"
-                      name="sort"
-                      checked={
-                        sortConfig?.key === "created_at" &&
-                        sortConfig?.direction === "desc"
-                      }
-                      onChange={() =>
-                        setSortConfig({
-                          key: "created_at",
-                          direction: "desc",
-                        })
-                      }
-                      className="h-3.5 w-3.5 accent-[#287A50]"
-                    />
-                    Terbaru
-                  </label>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                    {SORT_OPTIONS.map((option) => (
+                      <label
+                        key={option.label}
+                        className={optionClass}
+                      >
+                        <input
+                          type="radio"
+                          name="sort"
+                          checked={
+                            sortConfig?.key === option.key &&
+                            sortConfig?.direction === option.direction
+                          }
+                          onChange={() =>
+                            setSortConfig({
+                              key: option.key,
+                              direction: option.direction,
+                            })
+                          }
+                          className="h-3.5 w-3.5 shrink-0 accent-[#287A50]"
+                        />
+                        {option.label}
+                      </label>
+                    ))}
+                  </div>
+                </section>
 
-                  <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
-                    <input
-                      type="radio"
-                      name="sort"
-                      checked={
-                        sortConfig?.key === "nama" &&
-                        sortConfig?.direction === "asc"
-                      }
-                      onChange={() =>
-                        setSortConfig({
-                          key: "nama",
-                          direction: "asc",
-                        })
-                      }
-                      className="h-3.5 w-3.5 accent-[#287A50]"
-                    />
-                    Nama A - Z
-                  </label>
+                <section className={sectionClass}>
+                  <p className={sectionTitleClass}>Desa</p>
 
-                  <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
-                    <input
-                      type="radio"
-                      name="sort"
-                      checked={
-                        sortConfig?.key === "nama" &&
-                        sortConfig?.direction === "desc"
-                      }
-                      onChange={() =>
-                        setSortConfig({
-                          key: "nama",
-                          direction: "desc",
-                        })
-                      }
-                      className="h-3.5 w-3.5 accent-[#287A50]"
-                    />
-                    Nama Z - A
-                  </label>
-                </div>
+                  {isSuperAdmin ? (
+                    <div className={optionGridClass}>
+                      {DESA_OPTIONS.map((desa) => (
+                        <label
+                          key={desa}
+                          className={optionClass}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={filterDesa.includes(desa)}
+                            onChange={() => handleDesaChange(desa)}
+                            className={checkboxClass}
+                          />
+                          {desa}
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-[#D5EBDD] bg-[#E6F2EA] px-3 py-2">
+                      <p className="text-[11px] font-medium text-[#287A50]">
+                        {adminDesa}
+                      </p>
+                      <p className="mt-0.5 text-[9px] text-[#287A50]/70">
+                        Mengikuti wilayah akun
+                      </p>
+                    </div>
+                  )}
+                </section>
+
+                <section className={sectionClass}>
+                  <p className={sectionTitleClass}>Kelompok</p>
+
+                  <div className={optionGridClass}>
+                    {uniqueKelompokOptions.map((kelompok) => (
+                      <label
+                        key={kelompok}
+                        className={optionClass}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={filterKelompok.includes(kelompok)}
+                          onChange={() => handleKelompokChange(kelompok)}
+                          className={checkboxClass}
+                        />
+                        <span>{kelompok}</span>
+                      </label>
+                    ))}
+                  </div>
+                </section>
               </div>
 
-              <p className="mb-2 text-[11px] font-medium text-gray-600">Desa</p>
+              <div className="min-w-0 space-y-3 border-t border-gray-100 pt-3 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+                <section className={sectionClass}>
+                  <p className={sectionTitleClass}>Jenis Kelamin</p>
 
-              {isSuperAdmin ? (
-                <div className="flex flex-wrap gap-x-4 gap-y-2">
-                  <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
-                    <input
-                      type="radio"
-                      name="desa"
-                      value=""
-                      checked={filterDesa === ""}
-                      onChange={() => handleDesaChange("")}
-                      className="h-3.5 w-3.5 accent-[#287A50]"
-                    />
-                    Semua
-                  </label>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                    {JENIS_KELAMIN_OPTIONS.map((jk) => (
+                      <label
+                        key={jk}
+                        className={optionClass}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={filterJenisKelamin.includes(jk)}
+                          onChange={() =>
+                            toggleArrayValue(
+                              jk,
+                              filterJenisKelamin,
+                              setFilterJenisKelamin,
+                            )
+                          }
+                          className={checkboxClass}
+                        />
+                        {jk}
+                      </label>
+                    ))}
+                  </div>
+                </section>
 
-                  {DESA_OPTIONS.map((desa) => (
-                    <label
-                      key={desa}
-                      className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600"
-                    >
-                      <input
-                        type="radio"
-                        name="desa"
-                        value={desa}
-                        checked={filterDesa === desa}
-                        onChange={() => handleDesaChange(desa)}
-                        className="h-3.5 w-3.5 accent-[#287A50]"
-                      />
+                <section className={sectionClass}>
+                  <p className={sectionTitleClass}>Jenjang</p>
 
-                      {desa}
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-lg border border-teal-100 bg-teal-50 px-3 py-2">
-                  <p className="text-[11px] font-medium text-teal-700">
-                    {adminDesa}
-                  </p>
+                  <div className={optionGridClass}>
+                    {JENJANG_OPTIONS.map((jenjang) => (
+                      <label
+                        key={jenjang}
+                        className={optionClass}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={filterJenjang.includes(jenjang)}
+                          onChange={() =>
+                            toggleArrayValue(
+                              jenjang,
+                              filterJenjang,
+                              setFilterJenjang,
+                            )
+                          }
+                          className={checkboxClass}
+                        />
+                        <span>{jenjang}</span>
+                      </label>
+                    ))}
+                  </div>
+                </section>
 
-                  <p className="mt-0.5 text-[9px] text-teal-600/70">
-                    Mengikuti wilayah akun
-                  </p>
-                </div>
-              )}
-            </div>
+                <section className={sectionClass}>
+                  <p className={sectionTitleClass}>Kelas</p>
 
-            <div className="border-t border-gray-100 pt-4 md:border-t-0 md:border-l md:pl-6 md:pt-0">
-              <p className="mb-2 text-[11px] font-medium text-gray-600">
-                Jenis Kelamin
-              </p>
-
-              <div className="flex flex-wrap gap-x-4 gap-y-2">
-                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
-                  <input
-                    type="radio"
-                    name="jenis-kelamin"
-                    value=""
-                    checked={filterJenisKelamin === ""}
-                    onChange={(e) => setFilterJenisKelamin(e.target.value)}
-                    className="h-3.5 w-3.5 accent-[#287A50]"
-                  />
-                  Semua
-                </label>
-
-                {JENIS_KELAMIN_OPTIONS.map((jk) => (
-                  <label
-                    key={jk}
-                    className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600"
-                  >
-                    <input
-                      type="radio"
-                      name="jenis-kelamin"
-                      value={jk}
-                      checked={filterJenisKelamin === jk}
-                      onChange={(e) => setFilterJenisKelamin(e.target.value)}
-                      className="h-3.5 w-3.5 accent-[#287A50]"
-                    />
-
-                    {jk}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t border-gray-100 pt-4 md:border-t-0 md:border-l md:pl-6 md:pt-0">
-              <p className="mb-2 text-[11px] font-medium text-gray-600">
-                Kelas
-              </p>
-
-              <div className="flex flex-wrap gap-x-4 gap-y-2">
-                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
-                  <input
-                    type="radio"
-                    name="kelas"
-                    value=""
-                    checked={filterkelas === ""}
-                    onChange={(e) => setFilterkelas(e.target.value)}
-                    className="h-3.5 w-3.5 accent-[#287A50]"
-                  />
-                  Semua
-                </label>
-
-                {KELAS_OPTIONS.map((kelas) => (
-                  <label
-                    key={kelas}
-                    className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600"
-                  >
-                    <input
-                      type="radio"
-                      name="kelas"
-                      value={kelas}
-                      checked={filterkelas === kelas}
-                      onChange={(e) => setFilterkelas(e.target.value)}
-                      className="h-3.5 w-3.5 accent-[#287A50]"
-                    />
-
-                    {kelas}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t border-gray-100 pt-4 md:border-l md:border-t-0 md:pl-6 md:pt-0">
-              <p className="mb-2 text-[11px] font-medium text-gray-600">
-                Kelompok
-              </p>
-
-              <div className="flex flex-wrap gap-x-4 gap-y-2">
-                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
-                  <input
-                    type="radio"
-                    name="kelompok"
-                    value=""
-                    checked={filterKelompok === ""}
-                    onChange={(e) => setFilterKelompok(e.target.value)}
-                    className="h-3.5 w-3.5 accent-[#287A50]"
-                  />
-                  Semua
-                </label>
-
-                {kelompokOptions.map((kelompok) => (
-                  <label
-                    key={kelompok}
-                    className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600"
-                  >
-                    <input
-                      type="radio"
-                      name="kelompok"
-                      value={kelompok}
-                      checked={filterKelompok === kelompok}
-                      onChange={(e) => setFilterKelompok(e.target.value)}
-                      className="h-3.5 w-3.5 accent-[#287A50]"
-                    />
-
-                    {kelompok}
-                  </label>
-                ))}
+                  <div className={optionGridClass}>
+                    {KELAS_OPTIONS.map((kelas) => (
+                      <label
+                        key={kelas}
+                        className={optionClass}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={filterKelas.includes(kelas)}
+                          onChange={() =>
+                            toggleArrayValue(
+                              kelas,
+                              filterKelas,
+                              setFilterKelas,
+                            )
+                          }
+                          className={checkboxClass}
+                        />
+                        <span>{kelas}</span>
+                      </label>
+                    ))}
+                  </div>
+                </section>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
+          <div className="flex shrink-0 items-center justify-between border-t border-gray-100 bg-white px-4 py-2.5">
             <button
               type="button"
               onClick={handleReset}

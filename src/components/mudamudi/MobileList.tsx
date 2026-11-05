@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Mudamudi } from "../../backend/mudamudi/types";
@@ -6,7 +7,6 @@ import {
   getInitials,
   getAvatarColor,
 } from "../../backend/mudamudi/format";
-import { getKelasBadgeClass } from "../../backend/mudamudi/kelasBadge";
 import { DetailIcon, EditIcon, DeleteIcon } from "./icons";
 import { IconButton } from "../kegiatan/shared";
 
@@ -74,11 +74,14 @@ export default function MobileList({
               />
             </svg>
           </span>
+
           <p className="text-[11px] font-semibold text-[#202824]">
             Tidak ada data
           </p>
+
           <p className="mt-1 text-[11px] leading-4.5 text-[#78827C]">
-            Belum ada data anggota yang cocok dengan filter atau pencarian saat ini.
+            Belum ada data anggota yang cocok dengan filter atau pencarian saat
+            ini.
           </p>
         </div>
       </div>
@@ -97,6 +100,7 @@ export default function MobileList({
               className="group overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-xs transition-colors duration-150 hover:border-[#65B98A]/40"
             >
               <div className="p-3.5">
+                {/* Identitas Generus */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 flex-1 items-center gap-2.5">
                     <div
@@ -119,13 +123,10 @@ export default function MobileList({
                     </div>
                   </div>
 
-                  <div className="shrink-0 pt-0.5">
-                    <span
-                      className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-medium ${getKelasBadgeClass(
-                        s.kelas,
-                      )}`}
-                    >
-                      {s.kelas}
+                  {/* Jenjang */}
+                  <div className="max-w-[42%] shrink-0 pt-0.5">
+                    <span className="inline-flex max-w-full rounded-full border border-[#E5EAE6] bg-[#F5F7F5] px-2 py-0.5 text-[9px] font-medium text-[#526159]">
+                      <span className="truncate">{s.jenjang || "-"}</span>
                     </span>
                   </div>
                 </div>
@@ -135,6 +136,7 @@ export default function MobileList({
                   className="mt-2.5 mb-3 h-px w-full bg-[#E5EAE6]"
                 />
 
+                {/* Informasi Singkat */}
                 <div className="grid grid-cols-3 gap-2">
                   <DetailColumn label="Desa">
                     <p className="wrap-break-word font-semibold text-[#202824]">
@@ -153,7 +155,11 @@ export default function MobileList({
                   <div className="min-w-0 border-l border-[#E5EAE6] pl-2">
                     <DetailColumn label="JK / Tahun">
                       <p className="wrap-break-word text-[#78827C]">
-                        {s.jenis_kelamin ?? "-"}
+                        {s.jenis_kelamin === "Laki-laki"
+                          ? "Laki-laki"
+                          : s.jenis_kelamin === "Perempuan"
+                            ? "Perempuan"
+                            : "-"}
                         {s.tahun_lahir ? ` (${s.tahun_lahir})` : ""}
                       </p>
                     </DetailColumn>
@@ -161,6 +167,7 @@ export default function MobileList({
                 </div>
               </div>
 
+              {/* Actions */}
               <div className="flex items-center gap-2 border-t border-[#E5EAE6] bg-[#F5F7F5] p-3">
                 <button
                   type="button"
@@ -210,6 +217,7 @@ export default function MobileList({
                       strokeLinejoin="round"
                     />
                   </svg>
+
                   <span>Tampilkan QR</span>
                 </button>
 

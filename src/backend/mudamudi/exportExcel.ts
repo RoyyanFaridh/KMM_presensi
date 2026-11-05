@@ -1,6 +1,12 @@
+
 import ExcelJS from "exceljs";
 import { Mudamudi } from "./types";
-import { DESA_OPTIONS, KELOMPOK_BY_DESA } from "./constants";
+import {
+  DESA_OPTIONS,
+  KELOMPOK_BY_DESA,
+  JENJANG_OPTIONS,
+  KELAS_OPTIONS,
+} from "./constants";
 
 type ExportOptions = {
   data: Mudamudi[];
@@ -17,6 +23,7 @@ const HEADER = [
   "Tahun Lahir",
   "No HP",
   "Pekerjaan",
+  "Jenjang",
   "Kelas",
   "Alamat",
 ] as const;
@@ -26,15 +33,6 @@ const FONT_SIZE = 10;
 const VALIDATION_LAST_ROW = 1000;
 
 const JENIS_KELAMIN_OPTIONS = ["Laki-laki", "Perempuan"] as const;
-
-const KELAS_OPTIONS = [
-  "PAUD",
-  "Caberawit",
-  "Pra Remaja",
-  "Remaja",
-  "Usia Nikah",
-  "MT",
-] as const;
 
 const BORDER_STYLE: Partial<ExcelJS.Borders> = {
   top: { style: "thin", color: { argb: "FFD9D9D9" } },
@@ -117,7 +115,7 @@ function setCellAlignment(
 
 function applyDataValidation(
   sheet: ExcelJS.Worksheet,
-  column: "E" | "J",
+  column: "E" | "J" | "K",
   values: readonly string[],
   promptTitle: string,
   prompt: string,
@@ -182,6 +180,7 @@ export async function exportPresensiExcel({
     { key: "tahun_lahir", width: 14 },
     { key: "no_hp", width: 18 },
     { key: "pekerjaan", width: 22 },
+    { key: "jenjang", width: 16 },
     { key: "kelas", width: 18 },
     { key: "alamat", width: 38 },
   ];
@@ -204,8 +203,6 @@ export async function exportPresensiExcel({
 
   // Data
   sorted.forEach((item, index) => {
-    const rowNumber = index + 2;
-
     const row = sheet.addRow([
       index + 1,
       item.desa ?? "",
@@ -216,6 +213,7 @@ export async function exportPresensiExcel({
       item.tahun_lahir !== null ? item.tahun_lahir : "",
       item.no_hp == null ? "" : String(item.no_hp),
       item.pekerjaan ?? "",
+      item.jenjang ?? "",
       item.kelas ?? "",
       item.alamat ?? "",
     ]);
@@ -231,7 +229,7 @@ export async function exportPresensiExcel({
 
       cell.border = BORDER_STYLE;
 
-      const leftAlignedColumns = [4, 11];
+      const leftAlignedColumns = [4, 12];
 
       setCellAlignment(
         cell,
@@ -243,6 +241,7 @@ export async function exportPresensiExcel({
     row.getCell(8).numFmt = "@";
   });
 
+  // Dropdown Jenis Kelamin
   applyDataValidation(
     sheet,
     "E",
@@ -251,9 +250,19 @@ export async function exportPresensiExcel({
     "Pilih Laki-laki atau Perempuan.",
   );
 
+  // Dropdown Jenjang
   applyDataValidation(
     sheet,
     "J",
+    JENJANG_OPTIONS,
+    "Jenjang Pendidikan",
+    "Pilih jenjang pendidikan dari daftar yang tersedia.",
+  );
+
+  // Dropdown Kelas
+  applyDataValidation(
+    sheet,
+    "K",
     KELAS_OPTIONS,
     "Kelas",
     "Pilih kelas dari daftar yang tersedia.",
@@ -261,7 +270,7 @@ export async function exportPresensiExcel({
 
   sheet.autoFilter = {
     from: "A1",
-    to: `K${Math.max(sorted.length + 1, 1)}`,
+    to: `L${Math.max(sorted.length + 1, 1)}`,
   };
 
   const buffer = await workbook.xlsx.writeBuffer();

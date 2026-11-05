@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Mudamudi, SortKey } from "../../backend/mudamudi/types";
@@ -6,7 +7,6 @@ import {
   getInitials,
   getAvatarColor,
 } from "../../backend/mudamudi/format";
-import { getKelasBadgeClass } from "../../backend/mudamudi/kelasBadge";
 import { DetailIcon, EditIcon, DeleteIcon } from "./icons";
 import { IconButton } from "../kegiatan/shared";
 
@@ -175,11 +175,7 @@ export default function DesktopTable({
                 const active = Boolean(indicator);
 
                 return (
-                  <th
-                    key={column.key}
-                    scope="col"
-                    className={HEADER_CELL}
-                  >
+                  <th key={column.key} scope="col" className={HEADER_CELL}>
                     <button
                       type="button"
                       onClick={() => toggleSort(column.key)}
@@ -203,21 +199,24 @@ export default function DesktopTable({
                 JK
               </th>
 
+              {/* Jenjang */}
               <th scope="col" className={`${HEADER_CELL} text-center`}>
                 <button
                   type="button"
-                  onClick={() => toggleSort("kelas")}
-                  aria-label="Urutkan berdasarkan kelas"
+                  onClick={() => toggleSort("jenjang")}
+                  aria-label="Urutkan berdasarkan jenjang"
                   className={[
                     "group inline-flex min-h-7 items-center justify-center gap-1.5 rounded-md",
                     "transition-colors hover:text-[#287A50]",
                     "focus-visible:outline-none focus-visible:ring-2",
                     "focus-visible:ring-[#287A50] focus-visible:ring-offset-2",
-                    sortIndicator("kelas") ? "text-[#287A50] font-bold" : "",
+                    sortIndicator("jenjang")
+                      ? "text-[#287A50] font-bold"
+                      : "",
                   ].join(" ")}
                 >
-                  <span>Kelas</span>
-                  <SortIndicator indicator={sortIndicator("kelas")} />
+                  <span>Jenjang</span>
+                  <SortIndicator indicator={sortIndicator("jenjang")} />
                 </button>
               </th>
 
@@ -311,13 +310,10 @@ export default function DesktopTable({
                           : "-"}
                     </td>
 
+                    {/* Jenjang */}
                     <td className="px-3.5 py-3 text-center align-middle">
-                      <span
-                        className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-normal ${getKelasBadgeClass(
-                          s.kelas,
-                        )}`}
-                      >
-                        {s.kelas}
+                      <span className="inline-flex max-w-full rounded-full border border-[#E5EAE6] bg-[#F5F7F5] px-2 py-0.5 text-[9px] font-medium text-[#526159]">
+                        {s.jenjang || "-"}
                       </span>
                     </td>
 

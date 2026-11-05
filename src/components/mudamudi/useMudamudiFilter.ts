@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Mudamudi, SortKey, SortConfig } from "../../backend/mudamudi/types";
+import type { Mudamudi, SortKey, SortConfig } from "../../backend/mudamudi/types";
 import {
   DESA_OPTIONS,
   KELOMPOK_BY_DESA,
@@ -15,24 +15,36 @@ export function useMudamudiFilter(
   adminDesa: string | null,
 ) {
   const [search, setSearch] = useState("");
-  const [filterDesa, setFilterDesa] = useState("");
-  const [filterJenisKelamin, setFilterJenisKelamin] = useState("");
-  const [filterkelas, setFilterkelas] = useState("");
-  const [filterKelompok, setFilterKelompok] = useState("");
+
+  const [filterDesa, setFilterDesa] = useState<string[]>([]);
+  const [filterJenisKelamin, setFilterJenisKelamin] = useState<string[]>([]);
+  const [filterJenjang, setFilterJenjang] = useState<string[]>([]);
+  const [filterKelas, setFilterKelas] = useState<string[]>([]);
+  const [filterKelompok, setFilterKelompok] = useState<string[]>([]);
+
   const [sortConfig, setSortConfig] = useState<SortConfig>(DEFAULT_SORT);
 
   const isSuperAdmin = adminDesa === null;
 
   const kelompokFilterOptions = useMemo(() => {
     if (adminDesa) {
-      return KELOMPOK_BY_DESA[adminDesa as keyof typeof KELOMPOK_BY_DESA] ?? [];
+      return (
+        KELOMPOK_BY_DESA[
+        adminDesa as keyof typeof KELOMPOK_BY_DESA
+        ] ?? []
+      );
     }
 
-    if (!filterDesa) {
+    if (filterDesa.length === 0) {
       return Object.values(KELOMPOK_BY_DESA).flat();
     }
 
-    return KELOMPOK_BY_DESA[filterDesa as keyof typeof KELOMPOK_BY_DESA] ?? [];
+    return filterDesa.flatMap(
+      (desa) =>
+        KELOMPOK_BY_DESA[
+        desa as keyof typeof KELOMPOK_BY_DESA
+        ] ?? [],
+    );
   }, [adminDesa, filterDesa]);
 
   const displayedData = useMemo(() => {
@@ -45,23 +57,39 @@ export function useMudamudiFilter(
     if (search.trim()) {
       const keyword = search.trim().toLowerCase();
 
-      result = result.filter((s) => s.nama.toLowerCase().includes(keyword));
+      result = result.filter((s) =>
+        s.nama.toLowerCase().includes(keyword),
+      );
     }
 
-    if (isSuperAdmin && filterDesa) {
-      result = result.filter((s) => s.desa === filterDesa);
+    if (isSuperAdmin && filterDesa.length > 0) {
+      result = result.filter((s) =>
+        filterDesa.includes(s.desa),
+      );
     }
 
-    if (filterJenisKelamin) {
-      result = result.filter((s) => s.jenis_kelamin === filterJenisKelamin);
+    if (filterJenisKelamin.length > 0) {
+      result = result.filter((s) =>
+        filterJenisKelamin.includes(s.jenis_kelamin ?? ""),
+      );
     }
 
-    if (filterkelas) {
-      result = result.filter((s) => s.kelas === filterkelas);
+    if (filterJenjang.length > 0) {
+      result = result.filter((s) =>
+        filterJenjang.includes(s.jenjang ?? ""),
+      );
     }
 
-    if (filterKelompok) {
-      result = result.filter((s) => s.kelompok === filterKelompok);
+    if (filterKelas.length > 0) {
+      result = result.filter((s) =>
+        filterKelas.includes(s.kelas ?? ""),
+      );
+    }
+
+    if (filterKelompok.length > 0) {
+      result = result.filter((s) =>
+        filterKelompok.includes(s.kelompok),
+      );
     }
 
     if (sortConfig) {
@@ -70,7 +98,9 @@ export function useMudamudiFilter(
           const dateA = new Date(a.created_at).getTime();
           const dateB = new Date(b.created_at).getTime();
 
-          return sortConfig.direction === "asc" ? dateA - dateB : dateB - dateA;
+          return sortConfig.direction === "asc"
+            ? dateA - dateB
+            : dateB - dateA;
         }
 
         if (sortConfig.key === "nama") {
@@ -78,7 +108,9 @@ export function useMudamudiFilter(
             sensitivity: "base",
           });
 
-          return sortConfig.direction === "asc" ? comparison : -comparison;
+          return sortConfig.direction === "asc"
+            ? comparison
+            : -comparison;
         }
 
         const valueA = a[sortConfig.key];
@@ -87,12 +119,12 @@ export function useMudamudiFilter(
         const comparison = String(valueA ?? "").localeCompare(
           String(valueB ?? ""),
           "id",
-          {
-            sensitivity: "base",
-          },
+          { sensitivity: "base" },
         );
 
-        return sortConfig.direction === "asc" ? comparison : -comparison;
+        return sortConfig.direction === "asc"
+          ? comparison
+          : -comparison;
       });
     }
 
@@ -104,7 +136,8 @@ export function useMudamudiFilter(
     search,
     filterDesa,
     filterJenisKelamin,
-    filterkelas,
+    filterJenjang,
+    filterKelas,
     filterKelompok,
     sortConfig,
   ]);
@@ -112,17 +145,11 @@ export function useMudamudiFilter(
   function toggleSort(key: SortKey) {
     setSortConfig((prev) => {
       if (!prev || prev.key !== key) {
-        return {
-          key,
-          direction: "asc",
-        };
+        return { key, direction: "asc" };
       }
 
       if (prev.direction === "asc") {
-        return {
-          key,
-          direction: "desc",
-        };
+        return { key, direction: "desc" };
       }
 
       return DEFAULT_SORT;
@@ -139,32 +166,30 @@ export function useMudamudiFilter(
 
   function resetAll() {
     setSearch("");
-    setFilterJenisKelamin("");
-    setFilterkelas("");
-    setFilterKelompok("");
+    setFilterJenisKelamin([]);
+    setFilterJenjang([]);
+    setFilterKelas([]);
+    setFilterKelompok([]);
+    setFilterDesa([]);
     setSortConfig(DEFAULT_SORT);
-
-    if (isSuperAdmin) {
-      setFilterDesa("");
-    } else {
-      setFilterDesa("");
-    }
   }
 
-  const hasActiveFilters = !!(
-    search ||
-    filterJenisKelamin ||
-    filterkelas ||
-    filterKelompok ||
-    (isSuperAdmin && filterDesa)
+  const hasActiveFilters = Boolean(
+    search.trim() ||
+    filterJenisKelamin.length > 0 ||
+    filterJenjang.length > 0 ||
+    filterKelas.length > 0 ||
+    filterKelompok.length > 0 ||
+    (isSuperAdmin && filterDesa.length > 0),
   );
 
   const filterKey = [
     search,
-    filterDesa,
-    filterJenisKelamin,
-    filterkelas,
-    filterKelompok,
+    filterDesa.join(","),
+    filterJenisKelamin.join(","),
+    filterJenjang.join(","),
+    filterKelas.join(","),
+    filterKelompok.join(","),
     sortConfig?.key ?? "",
     sortConfig?.direction ?? "",
   ].join("|");
@@ -172,31 +197,27 @@ export function useMudamudiFilter(
   return {
     search,
     setSearch,
-
     filterDesa,
     setFilterDesa,
-
     filterJenisKelamin,
     setFilterJenisKelamin,
-
-    filterkelas,
-    setFilterkelas,
-
+    filterJenjang,
+    setFilterJenjang,
+    filterKelas,
+    setFilterKelas,
     filterKelompok,
     setFilterKelompok,
-
     kelompokFilterOptions,
-
-    desaOptions: isSuperAdmin ? DESA_OPTIONS : adminDesa ? [adminDesa] : [],
-
+    desaOptions: isSuperAdmin
+      ? DESA_OPTIONS
+      : adminDesa
+        ? [adminDesa]
+        : [],
     sortConfig,
     setSortConfig,
-
     displayedData,
-
     toggleSort,
     sortIndicator,
-
     resetAll,
     hasActiveFilters,
     filterKey,

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,7 +7,7 @@ import {
   DESA_OPTIONS,
   KELOMPOK_BY_DESA,
   JENIS_KELAMIN_OPTIONS,
-  KELAS_OPTIONS,
+  JENJANG_OPTIONS,
 } from "../../backend/mudamudi/constants";
 import ModalWrapper from "./ModalWrapper";
 
@@ -20,18 +21,14 @@ type Props = {
   onClose: () => void;
 };
 
-function calculateKelas(tahunLahir: number | null): string {
-  if (tahunLahir === null) return "";
-
-  const currentYear = new Date().getFullYear();
-  const umur = currentYear - tahunLahir;
-
-  if (umur >= 5 && umur <= 6) return "PAUD";
-  if (umur >= 7 && umur <= 12) return "Caberawit";
-  if (umur >= 13 && umur <= 15) return "Pra Remaja";
-  if (umur >= 16 && umur <= 18) return "Remaja";
-  if (umur >= 19) return "Usia Nikah";
-
+function calculateKelasFromJenjang(jenjang: string): string {
+  if (jenjang === "Belum Sekolah" || jenjang === "PAUD") return "PAUD";
+  if (jenjang === "TK") return "TK";
+  if (["SD-1", "SD-2", "SD-3"].includes(jenjang)) return "Caberawit A";
+  if (["SD-4", "SD-5", "SD-6"].includes(jenjang)) return "Caberawit B";
+  if (["SMP-1", "SMP-2", "SMP-3"].includes(jenjang)) return "Pra Remaja";
+  if (["SMA-1", "SMA-2", "SMA-3"].includes(jenjang)) return "Remaja";
+  if (jenjang === "Kuliah" || jenjang === "Kerja") return "Usia Nikah";
   return "";
 }
 
@@ -47,11 +44,10 @@ export default function MudamudiFormModal({
   const isAdminDesa = adminDesa !== null;
 
   const [desa, setDesa] = useState(adminDesa ?? initialData?.desa ?? "");
-  const [tahunLahirRaw, setTahunLahirRaw] = useState(
-    initialData?.tahun_lahir != null ? String(initialData.tahun_lahir) : "",
-  );
   const [kelompok, setKelompok] = useState(initialData?.kelompok ?? "");
-  const [kelasManual, setKelasManual] = useState(initialData?.kelas ?? "");
+  const [jenjang, setJenjang] = useState(initialData?.jenjang ?? "");
+
+  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     if (adminDesa !== null) {
@@ -60,6 +56,10 @@ export default function MudamudiFormModal({
       setDesa(initialData.desa);
     }
   }, [adminDesa, mode, initialData?.desa]);
+
+  useEffect(() => {
+    setJenjang(initialData?.jenjang ?? "");
+  }, [initialData?.id, initialData?.jenjang]);
 
   const kelompokOptions = desa
     ? (KELOMPOK_BY_DESA[desa as keyof typeof KELOMPOK_BY_DESA] ?? [])
@@ -71,17 +71,7 @@ export default function MudamudiFormModal({
     }
   }, [desa]);
 
-  const tahunLahir =
-    tahunLahirRaw.trim() !== "" ? Number(tahunLahirRaw.trim()) : null;
-  const kelasOtomatis = calculateKelas(tahunLahir);
-  const kelasOtomatisTersedia =
-    tahunLahir !== null &&
-    !Number.isNaN(tahunLahir) &&
-    kelasOtomatis !== "";
-
-  const kelas = kelasOtomatisTersedia ? kelasOtomatis : kelasManual;
-
-  const currentYear = new Date().getFullYear();
+  const kelasOtomatis = calculateKelasFromJenjang(jenjang);
 
   const inputClass =
     "h-9 w-full min-w-0 rounded-xl border border-[#E5EAE6] bg-white px-3 text-[10px] text-[#202824] outline-none transition placeholder:text-[#78827C] focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20 disabled:cursor-not-allowed disabled:bg-[#F5F7F5]";
@@ -89,8 +79,11 @@ export default function MudamudiFormModal({
   const selectClass =
     "h-9 w-full min-w-0 rounded-xl border border-[#E5EAE6] bg-white px-3 text-[10px] text-[#202824] outline-none transition focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20 disabled:cursor-not-allowed disabled:bg-[#F5F7F5]";
 
-  const labelClass = "mb-1.5 block text-[9px] font-semibold leading-4 text-[#202824]";
-  const helperClass = "mt-1 text-[9px] leading-4 text-[#78827C]";
+  const labelClass =
+    "mb-1.5 block text-[9px] font-semibold leading-4 text-[#202824]";
+
+  const helperClass =
+    "mt-1 text-[9px] leading-4 text-[#78827C]";
 
   return (
     <ModalWrapper onClose={onClose} size="lg">
@@ -103,11 +96,10 @@ export default function MudamudiFormModal({
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E5EAE6] px-4 py-3 sm:px-5">
           <div className="flex min-w-0 items-center gap-2.5">
             <div
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
-                mode === "add"
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${mode === "add"
                   ? "bg-[#E6F2EA] text-[#287A50]"
                   : "bg-blue-50 text-blue-700"
-              }`}
+                }`}
             >
               {mode === "add" ? (
                 <svg
@@ -176,8 +168,8 @@ export default function MudamudiFormModal({
           </button>
         </header>
 
-        {/* Content */}
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
+        {/* Form Content */}
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3.5 sm:space-y-4 sm:px-5 sm:py-4">
           {error && (
             <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
               <svg
@@ -198,6 +190,7 @@ export default function MudamudiFormModal({
             </div>
           )}
 
+          {/* Nama Lengkap */}
           <div>
             <label htmlFor="nama" className={labelClass}>
               Nama Lengkap <span className="text-red-500">*</span>
@@ -209,11 +202,10 @@ export default function MudamudiFormModal({
               required
               placeholder="Masukkan nama lengkap"
               defaultValue={initialData?.nama ?? ""}
-              className={`${inputClass} ${
-                fieldErrors.nama
+              className={`${inputClass} ${fieldErrors.nama
                   ? "border-red-300 focus:border-red-400 focus:ring-red-50"
                   : ""
-              }`}
+                }`}
             />
             {fieldErrors.nama && (
               <p className="mt-1 text-[9px] text-red-500">
@@ -222,15 +214,16 @@ export default function MudamudiFormModal({
             )}
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
+          {/* Desa dan Kelompok */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="min-w-0">
               <label htmlFor="desa" className={labelClass}>
                 Desa <span className="text-red-500">*</span>
               </label>
 
               {isAdminDesa ? (
                 <>
-                  <div className="flex h-9 w-full items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-[10px] text-gray-600">
+                  <div className="flex h-9 w-full min-w-0 items-center truncate rounded-lg border border-gray-200 bg-gray-50 px-3 text-[10px] text-gray-600">
                     {adminDesa}
                   </div>
                   <input type="hidden" name="desa" value={desa} />
@@ -245,9 +238,8 @@ export default function MudamudiFormModal({
                     setDesa(e.target.value);
                     setKelompok("");
                   }}
-                  className={`${selectClass} ${
-                    fieldErrors.desa ? "border-red-300" : ""
-                  }`}
+                  className={`${selectClass} ${fieldErrors.desa ? "border-red-300" : ""
+                    }`}
                 >
                   <option value="">Pilih desa</option>
                   {DESA_OPTIONS.map((option) => (
@@ -265,11 +257,13 @@ export default function MudamudiFormModal({
               )}
 
               {isAdminDesa && (
-                <p className={helperClass}>Mengikuti wilayah admin desa.</p>
+                <p className={helperClass}>
+                  Mengikuti wilayah admin desa.
+                </p>
               )}
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label htmlFor="kelompok" className={labelClass}>
                 Kelompok <span className="text-red-500">*</span>
               </label>
@@ -280,11 +274,9 @@ export default function MudamudiFormModal({
                 required
                 onChange={(e) => setKelompok(e.target.value)}
                 disabled={!desa}
-                className={`${selectClass} ${
-                  fieldErrors.kelompok ? "border-red-300" : ""
-                } ${
-                  !desa ? "cursor-not-allowed bg-gray-50 text-gray-400" : ""
-                }`}
+                className={`${selectClass} ${fieldErrors.kelompok ? "border-red-300" : ""
+                  } ${!desa ? "cursor-not-allowed bg-gray-50 text-gray-400" : ""
+                  }`}
               >
                 <option value="">
                   {desa ? "Pilih kelompok" : "Pilih desa dahulu"}
@@ -295,6 +287,7 @@ export default function MudamudiFormModal({
                   </option>
                 ))}
               </select>
+
               {fieldErrors.kelompok && (
                 <p className="mt-1 text-[9px] text-red-500">
                   {fieldErrors.kelompok}
@@ -303,35 +296,36 @@ export default function MudamudiFormModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label htmlFor="jenis_kelamin" className={labelClass}>
-                Jenis Kelamin <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="jenis_kelamin"
-                name="jenis_kelamin"
-                required
-                defaultValue={initialData?.jenis_kelamin ?? ""}
-                className={`${selectClass} ${
-                  fieldErrors.jenis_kelamin ? "border-red-300" : ""
+          {/* Jenis Kelamin */}
+          <div>
+            <label htmlFor="jenis_kelamin" className={labelClass}>
+              Jenis Kelamin <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="jenis_kelamin"
+              name="jenis_kelamin"
+              required
+              defaultValue={initialData?.jenis_kelamin ?? ""}
+              className={`${selectClass} ${fieldErrors.jenis_kelamin ? "border-red-300" : ""
                 }`}
-              >
-                <option value="">Pilih jenis kelamin</option>
-                {JENIS_KELAMIN_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.jenis_kelamin && (
-                <p className="mt-1 text-[9px] text-red-500">
-                  {fieldErrors.jenis_kelamin}
-                </p>
-              )}
-            </div>
+            >
+              <option value="">Pilih jenis kelamin</option>
+              {JENIS_KELAMIN_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.jenis_kelamin && (
+              <p className="mt-1 text-[9px] text-red-500">
+                {fieldErrors.jenis_kelamin}
+              </p>
+            )}
+          </div>
 
-            <div>
+          {/* Tempat Lahir dan Tahun Lahir */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="min-w-0">
               <label htmlFor="tempat_lahir" className={labelClass}>
                 Tempat Lahir
               </label>
@@ -339,11 +333,10 @@ export default function MudamudiFormModal({
                 id="tempat_lahir"
                 name="tempat_lahir"
                 type="text"
-                placeholder="Masukkan tempat lahir"
+                placeholder="Tempat lahir"
                 defaultValue={initialData?.tempat_lahir ?? ""}
-                className={`${inputClass} ${
-                  fieldErrors.tempat_lahir ? "border-red-300" : ""
-                }`}
+                className={`${inputClass} ${fieldErrors.tempat_lahir ? "border-red-300" : ""
+                  }`}
               />
               {fieldErrors.tempat_lahir && (
                 <p className="mt-1 text-[9px] text-red-500">
@@ -351,10 +344,8 @@ export default function MudamudiFormModal({
                 </p>
               )}
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
+            <div className="min-w-0">
               <label htmlFor="tahun_lahir" className={labelClass}>
                 Tahun Lahir{" "}
                 <span className="font-normal text-gray-400">(Opsional)</span>
@@ -366,79 +357,71 @@ export default function MudamudiFormModal({
                 min="1900"
                 max={currentYear}
                 step="1"
-                value={tahunLahirRaw}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setTahunLahirRaw(val);
-
-                  const parsed = val.trim() !== "" ? Number(val.trim()) : null;
-                  const calculatedClass = calculateKelas(parsed);
-
-                  if (parsed !== null && calculatedClass) {
-                    setKelasManual(calculatedClass);
-                  }
-                }}
-                placeholder={`Contoh: ${currentYear - 20}`}
-                className={`${inputClass} ${
-                  fieldErrors.tahun_lahir ? "border-red-300" : ""
-                }`}
+                placeholder={String(currentYear - 20)}
+                defaultValue={
+                  initialData?.tahun_lahir != null
+                    ? String(initialData.tahun_lahir)
+                    : ""
+                }
+                className={`${inputClass} ${fieldErrors.tahun_lahir ? "border-red-300" : ""
+                  }`}
               />
               {fieldErrors.tahun_lahir && (
                 <p className="mt-1 text-[9px] text-red-500">
                   {fieldErrors.tahun_lahir}
                 </p>
               )}
-              <p className={helperClass}>
-                {kelasOtomatisTersedia
-                  ? "Kelas diisi otomatis dari tahun lahir."
-                  : "Kosongkan jika tahun lahir tidak diketahui."}
-              </p>
             </div>
+          </div>
 
-            <div>
-              <label htmlFor="kelas" className={labelClass}>
-                Kelas <span className="text-red-500">*</span>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="min-w-0">
+              <label htmlFor="jenjang" className={labelClass}>
+                Jenjang <span className="text-red-500">*</span>
               </label>
               <select
-                id="kelas"
-                name={kelasOtomatisTersedia ? undefined : "kelas"}
-                value={kelas}
+                id="jenjang"
+                name="jenjang"
+                value={jenjang}
                 required
-                onChange={(e) => setKelasManual(e.target.value)}
-                disabled={kelasOtomatisTersedia}
-                className={`${selectClass} ${
-                  fieldErrors.kelas ? "border-red-300" : ""
-                } ${
-                  kelasOtomatisTersedia
-                    ? "cursor-not-allowed bg-gray-50 text-gray-500"
-                    : ""
-                }`}
+                onChange={(e) => setJenjang(e.target.value)}
+                className={`${selectClass} ${fieldErrors.jenjang ? "border-red-300" : ""
+                  }`}
               >
-                <option value="">Pilih kelas</option>
-                {KELAS_OPTIONS.map((option) => (
+                <option value="">Pilih jenjang</option>
+                {JENJANG_OPTIONS.map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>
                 ))}
               </select>
-
-              {kelasOtomatisTersedia && (
-                <input type="hidden" name="kelas" value={kelas} />
-              )}
-
-              {fieldErrors.kelas && (
+              {fieldErrors.jenjang && (
                 <p className="mt-1 text-[9px] text-red-500">
-                  {fieldErrors.kelas}
+                  {fieldErrors.jenjang}
                 </p>
               )}
-              <p className={helperClass}>
-                {kelasOtomatisTersedia
-                  ? "Kelas diisi otomatis dan tetap dikirim saat disimpan."
-                  : "Wajib dipilih jika kelas tidak terisi otomatis."}
-              </p>
+            </div>
+
+            <div className="min-w-0">
+              <label htmlFor="kelas_preview" className={labelClass}>
+                Kelas
+              </label>
+              <input
+                id="kelas_preview"
+                type="text"
+                value={kelasOtomatis}
+                readOnly
+                placeholder="Otomatis"
+                className={`${inputClass} cursor-not-allowed bg-[#F5F7F5] text-gray-600`}
+              />
             </div>
           </div>
 
+          <p className={helperClass}>
+            Kelas ditentukan otomatis berdasarkan jenjang yang dipilih.
+          </p>
+
+          {/* Pekerjaan */}
           <div>
             <label htmlFor="pekerjaan" className={labelClass}>
               Pekerjaan
@@ -449,9 +432,8 @@ export default function MudamudiFormModal({
               type="text"
               placeholder="Masukkan pekerjaan"
               defaultValue={initialData?.pekerjaan ?? ""}
-              className={`${inputClass} ${
-                fieldErrors.pekerjaan ? "border-red-300" : ""
-              }`}
+              className={`${inputClass} ${fieldErrors.pekerjaan ? "border-red-300" : ""
+                }`}
             />
             {fieldErrors.pekerjaan && (
               <p className="mt-1 text-[9px] text-red-500">
@@ -460,6 +442,7 @@ export default function MudamudiFormModal({
             )}
           </div>
 
+          {/* Nomor HP */}
           <div>
             <label htmlFor="no_hp" className={labelClass}>
               No. HP
@@ -471,9 +454,8 @@ export default function MudamudiFormModal({
               inputMode="numeric"
               placeholder="Masukkan nomor HP"
               defaultValue={initialData?.no_hp ?? ""}
-              className={`${inputClass} ${
-                fieldErrors.no_hp ? "border-red-300" : ""
-              }`}
+              className={`${inputClass} ${fieldErrors.no_hp ? "border-red-300" : ""
+                }`}
             />
             {fieldErrors.no_hp && (
               <p className="mt-1 text-[9px] text-red-500">
@@ -482,6 +464,7 @@ export default function MudamudiFormModal({
             )}
           </div>
 
+          {/* Alamat */}
           <div>
             <label htmlFor="alamat" className={labelClass}>
               Alamat
@@ -492,9 +475,8 @@ export default function MudamudiFormModal({
               rows={2}
               placeholder="Masukkan alamat"
               defaultValue={initialData?.alamat ?? ""}
-              className={`w-full min-w-0 resize-none rounded-xl border border-[#E5EAE6] bg-white px-3 py-2 text-[10px] text-[#202824] outline-none transition placeholder:text-[#9AA39D] focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20 ${
-                fieldErrors.alamat ? "border-red-300" : ""
-              }`}
+              className={`w-full min-w-0 resize-none rounded-xl border border-[#E5EAE6] bg-white px-3 py-2 text-[10px] text-[#202824] outline-none transition placeholder:text-[#9AA39D] focus:border-[#287A50] focus:ring-2 focus:ring-[#65B98A]/20 ${fieldErrors.alamat ? "border-red-300" : ""
+                }`}
             />
             {fieldErrors.alamat && (
               <p className="mt-1 text-[9px] text-red-500">

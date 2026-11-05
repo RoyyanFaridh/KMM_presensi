@@ -1,10 +1,11 @@
 
 import ExcelJS from "exceljs";
+
 import {
   DESA_OPTIONS,
   KELOMPOK_BY_DESA,
   JENIS_KELAMIN_OPTIONS,
-  KELAS_OPTIONS,
+  JENJANG_OPTIONS,
 } from "./constants";
 
 export type ImportField =
@@ -16,7 +17,7 @@ export type ImportField =
   | "tahun_lahir"
   | "no_hp"
   | "pekerjaan"
-  | "kelas"
+  | "jenjang"
   | "alamat";
 
 export type ImportRow = {
@@ -28,7 +29,8 @@ export type ImportRow = {
   tahun_lahir: number | null;
   no_hp: string | null;
   pekerjaan: string | null;
-  kelas: string | null;
+  jenjang: string;
+  kelas: string;
   alamat: string | null;
   presentFields: ImportField[];
 };
@@ -50,71 +52,51 @@ export type ImportParseResult = {
 };
 
 const REQUIRED_HEADERS = [
+  "NO",
   "DESA",
   "KELOMPOK",
   "NAMA LENGKAP",
   "JENIS KELAMIN",
-];
+  "TEMPAT",
+  "TAHUN LAHIR",
+  "NO HP",
+  "PEKERJAAN",
+  "JENJANG",
+  "KELAS",
+  "ALAMAT",
+] as const;
 
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
-const EXCEL_EPOCH_UTC = Date.UTC(1899, 11, 30);
-const MAX_EXCEL_SERIAL_DATE = 2958465;
+type HeaderName = (typeof REQUIRED_HEADERS)[number];
 
-/**
- * Mendukung nama dan singkatan bulan dalam bahasa Indonesia
- * dan bahasa Inggris.
- */
-const MONTH_NAMES: Record<string, number> = {
-  januari: 1,
-  jan: 1,
-  january: 1,
-
-  februari: 2,
-  feb: 2,
-  february: 2,
-
-  maret: 3,
-  mar: 3,
-  march: 3,
-
-  april: 4,
-  apr: 4,
-
-  mei: 5,
-  may: 5,
-
-  juni: 6,
-  jun: 6,
-  june: 6,
-
-  juli: 7,
-  jul: 7,
-  july: 7,
-
-  agustus: 8,
-  agu: 8,
-  agt: 8,
-  ags: 8,
-  aug: 8,
-  august: 8,
-
-  september: 9,
-  sep: 9,
-  sept: 9,
-
-  oktober: 10,
-  okt: 10,
-  october: 10,
-  oct: 10,
-
-  november: 11,
-  nov: 11,
-
-  desember: 12,
-  des: 12,
-  december: 12,
-  dec: 12,
+const HEADER_TO_FIELD: Partial<Record<HeaderName, ImportField>> = {
+  DESA: "desa",
+  KELOMPOK: "kelompok",
+  "NAMA LENGKAP": "nama",
+  "JENIS KELAMIN": "jenis_kelamin",
+  TEMPAT: "tempat_lahir",
+  "TAHUN LAHIR": "tahun_lahir",
+  "NO HP": "no_hp",
+  PEKERJAAN: "pekerjaan",
+  JENJANG: "jenjang",
+  ALAMAT: "alamat",
 };
+
+type HeaderMap = Map<string, number>;
+
+type ValidateValues = {
+  desa: string;
+  kelompok: string;
+  nama: string;
+  jenisKelamin: string;
+  tempatLahir: string;
+  tahunLahir: string;
+  noHp: string;
+  pekerjaan: string;
+  jenjang: string;
+  alamat: string;
+};
+
+const CURRENT_YEAR = new Date().getFullYear();
 
 function normalizeHeader(value: unknown): string {
   return String(value ?? "")
@@ -125,7 +107,15 @@ function normalizeHeader(value: unknown): string {
 }
 
 function normalizeText(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, " ");
+  return value.trim().toLocaleLowerCase("id-ID").replace(/\s+/g, " ");
+}
+
+function normalizePhone(value: string): string {
+  return value.replace(/[\s-]/g, "");
+}
+
+function emptyToNull(value: string): string | null {
+  return value.trim() || null;
 }
 
 function createIdentityKey(
@@ -140,22 +130,6 @@ function createIdentityKey(
   ].join("|");
 }
 
-function formatDateToISO(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-function formatUTCDateToISO(date: Date): string {
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(date.getUTCDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
 function getCellValue(cell: ExcelJS.Cell): string {
   const value = cell.value;
 
@@ -164,22 +138,22 @@ function getCellValue(cell: ExcelJS.Cell): string {
   }
 
   if (value instanceof Date) {
-    return formatDateToISO(value);
+    return String(value.getFullYear());
   }
 
   if (typeof value === "object") {
     if ("result" in value) {
       const result = value.result;
 
-      if (result instanceof Date) {
-        return formatDateToISO(result);
+      if (result === null || result === undefined) {
+        return "";
       }
 
-      return String(result ?? "").trim();
-    }
+      if (result instanceof Date) {
+        return String(result.getFullYear());
+      }
 
-    if ("text" in value) {
-      return String(value.text ?? "").trim();
+      return String(result).trim();
     }
 
     if ("richText" in value && Array.isArray(value.richText)) {
@@ -189,334 +163,170 @@ function getCellValue(cell: ExcelJS.Cell): string {
         .trim();
     }
 
+    if ("text" in value) {
+      return String(value.text ?? "").trim();
+    }
+
+    if ("hyperlink" in value) {
+      const hyperlinkValue = value as {
+        text?: string;
+        hyperlink?: string;
+      };
+
+      return String(
+        hyperlinkValue.text ?? hyperlinkValue.hyperlink ?? "",
+      ).trim();
+    }
+
     return "";
   }
 
   return String(value).trim();
 }
 
-/**
- * Mengubah angka serial Excel menjadi tanggal ISO.
- *
- * Angka serial menggunakan epoch Excel 1899-12-30.
- * Bagian desimal diabaikan karena tidak diperlukan untuk tanggal lahir.
- */
-function parseExcelSerialDate(value: number): string | null {
-  if (
-    !Number.isFinite(value) ||
-    value < 1 ||
-    value > MAX_EXCEL_SERIAL_DATE
-  ) {
-    return null;
-  }
+function buildHeaderMap(headers: string[]): HeaderMap {
+  const headerMap: HeaderMap = new Map();
 
-  const serialDay = Math.floor(value);
-  const date = new Date(
-    EXCEL_EPOCH_UTC + serialDay * MILLISECONDS_PER_DAY,
+  headers.forEach((value, index) => {
+    const header = normalizeHeader(value);
+
+    if (!header) return;
+
+    if (headerMap.has(header)) {
+      throw new Error(`Header "${header}" ditemukan lebih dari satu kali.`);
+    }
+
+    headerMap.set(header, index);
+  });
+
+  return headerMap;
+}
+
+function validateHeaders(headerMap: HeaderMap): void {
+  const missingHeaders = REQUIRED_HEADERS.filter(
+    (header) => !headerMap.has(header),
   );
 
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  const year = date.getUTCFullYear();
-  const month = date.getUTCMonth() + 1;
-  const day = date.getUTCDate();
-
-  return buildValidISODate(year, month, day);
-}
-
-/**
- * Memvalidasi komponen tanggal dan menghasilkan YYYY-MM-DD.
- * Tanggal yang tidak nyata, seperti 31 Februari, ditolak.
- */
-function buildValidISODate(
-  year: number,
-  month: number,
-  day: number,
-): string | null {
-  if (
-    !Number.isInteger(year) ||
-    !Number.isInteger(month) ||
-    !Number.isInteger(day) ||
-    year < 1 ||
-    year > 9999 ||
-    month < 1 ||
-    month > 12 ||
-    day < 1 ||
-    day > 31
-  ) {
-    return null;
-  }
-
-  const date = new Date(0);
-  date.setUTCHours(0, 0, 0, 0);
-  date.setUTCFullYear(year, month - 1, day);
-
-  if (
-    date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== month - 1 ||
-    date.getUTCDate() !== day
-  ) {
-    return null;
-  }
-
-  return `${String(year).padStart(4, "0")}-${String(month).padStart(
-    2,
-    "0",
-  )}-${String(day).padStart(2, "0")}`;
-}
-
-/**
- * Mengubah tanggal berbentuk teks menjadi YYYY-MM-DD.
- *
- * Format yang didukung:
- * - DD/MM/YYYY
- * - DD-MM-YYYY
- * - DD.MM.YYYY
- * - YYYY-MM-DD
- * - DD NamaBulan YYYY
- * - DD SingkatanBulan YYYY
- *
- * Nama bulan mendukung bahasa Indonesia dan bahasa Inggris.
- */
-function parseDateString(rawValue: string): string | null {
-  const raw = rawValue
-    .replace(/^\uFEFF/, "")
-    .trim()
-    .replace(/\s+/g, " ");
-
-  if (!raw) {
-    return null;
-  }
-
-  // ISO: YYYY-MM-DD
-  const yearFirst = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(raw);
-
-  if (yearFirst) {
-    return buildValidISODate(
-      Number(yearFirst[1]),
-      Number(yearFirst[2]),
-      Number(yearFirst[3]),
+  if (missingHeaders.length > 0) {
+    throw new Error(
+      [
+        "Format file tidak sesuai dengan format Export Data Generus.",
+        `Kolom yang tidak ditemukan: ${missingHeaders.join(", ")}.`,
+        "Silakan unduh kembali file melalui menu Export Data Generus dan gunakan file tersebut sebagai template.",
+      ].join(" "),
     );
   }
-
-  // Format hari-bulan-tahun: DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY.
-  // Pemisah harus konsisten dalam satu tanggal.
-  const dayFirst = /^(\d{1,2})([./-])(\d{1,2})\2(\d{4})$/.exec(raw);
-
-  if (dayFirst) {
-    return buildValidISODate(
-      Number(dayFirst[4]),
-      Number(dayFirst[3]),
-      Number(dayFirst[1]),
-    );
-  }
-
-  // Format nama bulan: DD Oktober YYYY, DD Okt YYYY,
-  // DD October YYYY, DD Oct YYYY, dan variasi kapitalisasi.
-  const monthNameMatch =
-    /^(\d{1,2})\s+([a-zA-Z]+)\.?\s+(\d{4})$/i.exec(raw);
-
-  if (monthNameMatch) {
-    const day = Number(monthNameMatch[1]);
-    const monthName = monthNameMatch[2].toLowerCase();
-    const year = Number(monthNameMatch[3]);
-    const month = MONTH_NAMES[monthName];
-
-    if (month !== undefined) {
-      return buildValidISODate(year, month, day);
-    }
-  }
-
-  return null;
 }
 
-/**
- * Parser utama tanggal lahir.
- *
- * Nilai Date dan angka serial Excel diproses langsung.
- * Nilai teks diproses melalui parser format tanggal.
- */
-function parseDate(value: unknown): string | null {
-  if (value instanceof Date) {
-    if (Number.isNaN(value.getTime())) {
-      return null;
-    }
-
-    return buildValidISODate(
-      value.getFullYear(),
-      value.getMonth() + 1,
-      value.getDate(),
-    );
-  }
-
-  if (typeof value === "number") {
-    return parseExcelSerialDate(value);
-  }
-
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  return parseDateString(value);
+function getPresentFields(headerMap: HeaderMap): ImportField[] {
+  return Object.entries(HEADER_TO_FIELD)
+    .filter(([header]) => headerMap.has(header))
+    .map(([, field]) => field as ImportField);
 }
 
-function isValidDateNotFuture(tanggalLahir: string): boolean {
-  const [year, month, day] = tanggalLahir.split("-").map(Number);
+function findOption(
+  value: string,
+  options: readonly string[],
+): string {
+  const normalized = normalizeText(value);
 
-  const isoDate = buildValidISODate(year, month, day);
-
-  if (!isoDate) {
-    return false;
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const birthDate = new Date(0);
-  birthDate.setHours(0, 0, 0, 0);
-  birthDate.setFullYear(year, month - 1, day);
-
-  return birthDate.getTime() <= today.getTime();
+  return (
+    options.find((option) => normalizeText(option) === normalized) ?? ""
+  );
 }
 
-function calculateKelas(tahunLahir: number | null): string | null {
-  if (tahunLahir === null) {
-    return null;
-  }
-
-  const currentYear = new Date().getFullYear();
-  const umur = currentYear - tahunLahir;
-
-  if (umur >= 5 && umur <= 6) {
-    return "PAUD";
-  }
-
-  if (umur >= 7 && umur <= 12) {
-    return "Caberawit";
-  }
-
-  if (umur >= 13 && umur <= 15) {
-    return "Pra Remaja";
-  }
-
-  if (umur >= 16 && umur <= 18) {
-    return "Remaja";
-  }
-
-  if (umur >= 19) {
-    return "Usia Nikah";
-  }
-
-  return null;
+function normalizeDesa(value: string): string {
+  return findOption(value, DESA_OPTIONS);
 }
 
-function isValidDesa(desa: string): boolean {
-  return DESA_OPTIONS.includes(desa as (typeof DESA_OPTIONS)[number]);
-}
+function normalizeKelompok(desa: string, kelompok: string): string {
+  const options =
+    KELOMPOK_BY_DESA[desa as keyof typeof KELOMPOK_BY_DESA];
 
-function isValidKelompok(desa: string, kelompok: string): boolean {
-  if (!isValidDesa(desa)) {
-    return false;
-  }
+  if (!options) return "";
 
-  const options = KELOMPOK_BY_DESA[desa as keyof typeof KELOMPOK_BY_DESA];
-
-  return options.includes(kelompok as never);
-}
-
-function isValidKelas(kelas: string): boolean {
-  return (KELAS_OPTIONS as readonly string[]).includes(kelas);
+  return findOption(kelompok, options);
 }
 
 function normalizeJenisKelamin(value: string): string {
-  const normalized = normalizeText(value);
-
-  const matchedOption = JENIS_KELAMIN_OPTIONS.find(
-    (option) => normalizeText(option) === normalized,
-  );
-
-  return matchedOption ?? "";
+  return findOption(value, JENIS_KELAMIN_OPTIONS);
 }
 
-function normalizePhone(value: string): string {
-  return value.replace(/[\s-]/g, "");
+function normalizeJenjang(value: string): string {
+  return findOption(value, JENJANG_OPTIONS);
+}
+
+function calculateKelasFromJenjang(jenjang: string): string {
+  if (jenjang === "Belum Sekolah" || jenjang === "PAUD") {
+    return "PAUD";
+  }
+
+  if (jenjang === "TK") {
+    return "TK";
+  }
+
+  if (["SD-1", "SD-2", "SD-3"].includes(jenjang)) {
+    return "Caberawit A";
+  }
+
+  if (["SD-4", "SD-5", "SD-6"].includes(jenjang)) {
+    return "Caberawit B";
+  }
+
+  if (["SMP-1", "SMP-2", "SMP-3"].includes(jenjang)) {
+    return "Pra Remaja";
+  }
+
+  if (["SMA-1", "SMA-2", "SMA-3"].includes(jenjang)) {
+    return "Remaja";
+  }
+
+  if (jenjang === "Kuliah" || jenjang === "Kerja") {
+    return "Usia Nikah";
+  }
+
+  return "";
 }
 
 function isValidPhone(value: string): boolean {
   return /^(\+62|62|0)\d{8,15}$/.test(normalizePhone(value));
 }
 
-function emptyToNull(value: string): string | null {
-  return value.trim() || null;
-}
+function parseYear(value: string): number | null {
+  const normalized = value.trim();
 
-type ValidateValues = {
-  desa: string;
-  kelompok: string;
-  nama: string;
-  jenisKelamin: string;
-  tempatLahir: string;
-  tahunLahirRaw: string;
-  noHp: string;
-  pekerjaan: string;
-  kelas: string;
-  alamat: string;
-};
+  if (!/^\d{4}$/.test(normalized)) {
+    return null;
+  }
 
-type HeaderPresence = {
-  tempatLahir: boolean;
-  tahunLahir: boolean;
-  noHp: boolean;
-  pekerjaan: boolean;
-  kelas: boolean;
-  alamat: boolean;
-};
+  const year = Number(normalized);
 
-function getPresentFields(headers: HeaderPresence): ImportField[] {
-  const fields: ImportField[] = [
-    "desa",
-    "kelompok",
-    "nama",
-    "jenis_kelamin",
-  ];
+  if (year < 1900 || year > CURRENT_YEAR) {
+    return null;
+  }
 
-  if (headers.tempatLahir) fields.push("tempat_lahir");
-  if (headers.tahunLahir) fields.push("tahun_lahir");
-  if (headers.noHp) fields.push("no_hp");
-  if (headers.pekerjaan) fields.push("pekerjaan");
-  if (headers.kelas) fields.push("kelas");
-  if (headers.alamat) fields.push("alamat");
-
-  return fields;
+  return year;
 }
 
 function validateRow(
   rowNumber: number,
   values: ValidateValues,
-  headers: HeaderPresence,
+  presentFields: ImportField[],
   seenKeys: Set<string>,
 ): {
   data: ImportRow | null;
   error: ImportError | null;
   warnings: ImportWarning[];
 } {
-  const {
-    desa,
-    kelompok,
-    nama,
-    jenisKelamin,
-    tempatLahir,
-    tahunLahirRaw,
-    noHp,
-    pekerjaan,
-    kelas,
-    alamat,
-  } = values;
-
   const rowErrors: string[] = [];
   const rowWarnings: string[] = [];
+
+  const desa = normalizeDesa(values.desa);
+  const kelompok = normalizeKelompok(desa, values.kelompok);
+  const jenisKelamin = normalizeJenisKelamin(values.jenisKelamin);
+  const jenjang = normalizeJenjang(values.jenjang);
+
+  const nama = values.nama.trim();
 
   if (!nama) {
     rowErrors.push("Nama Lengkap wajib diisi");
@@ -524,24 +334,30 @@ function validateRow(
     rowErrors.push("Nama Lengkap tidak boleh mengandung angka");
   }
 
-  if (!desa) {
+  if (!values.desa.trim()) {
     rowErrors.push("Desa wajib diisi");
-  } else if (!isValidDesa(desa)) {
+  } else if (!desa) {
     rowErrors.push("Desa tidak valid");
   }
 
-  if (!kelompok) {
+  if (!values.kelompok.trim()) {
     rowErrors.push("Kelompok wajib diisi");
-  } else if (!isValidKelompok(desa, kelompok)) {
+  } else if (!desa || !kelompok) {
     rowErrors.push("Kelompok tidak sesuai dengan desa");
   }
 
-  const normalizedJenisKelamin = normalizeJenisKelamin(jenisKelamin);
-
-  if (!jenisKelamin) {
+  if (!values.jenisKelamin.trim()) {
     rowErrors.push("Jenis Kelamin wajib diisi");
-  } else if (!normalizedJenisKelamin) {
+  } else if (!jenisKelamin) {
     rowErrors.push("Jenis Kelamin tidak valid");
+  }
+
+  if (!values.jenjang.trim()) {
+    rowErrors.push("Jenjang wajib diisi");
+  } else if (!jenjang) {
+    rowErrors.push(
+      "Jenjang tidak valid. Gunakan pilihan jenjang yang tersedia",
+    );
   }
 
   if (rowErrors.length > 0) {
@@ -555,65 +371,45 @@ function validateRow(
     };
   }
 
-  if (headers.tempatLahir && !tempatLahir) {
-    rowWarnings.push("Tempat Lahir kosong");
+  const tempatLahir = values.tempatLahir.trim();
+
+  if (!tempatLahir) {
+    rowWarnings.push("Tempat kosong");
   }
 
-  // Validasi tahun lahir
-  let tahunLahirFinal: number | null = null;
-  const currentYear = new Date().getFullYear();
+  let tahunLahir: number | null = null;
 
-  if (!tahunLahirRaw) {
+  if (!values.tahunLahir.trim()) {
     rowWarnings.push("Tahun Lahir kosong");
   } else {
-    const tahunLahir = Number(tahunLahirRaw.trim());
+    tahunLahir = parseYear(values.tahunLahir);
 
-    if (
-      !Number.isInteger(tahunLahir) ||
-      tahunLahir < 1900 ||
-      tahunLahir > currentYear
-    ) {
+    if (tahunLahir === null) {
       rowWarnings.push(
-        `Tahun Lahir tidak valid; harus berupa angka antara 1900 dan ${currentYear}`,
+        `Tahun Lahir tidak valid. Isi dengan tahun antara 1900 dan ${CURRENT_YEAR}`,
       );
-    } else {
-      tahunLahirFinal = tahunLahir;
     }
   }
 
-  if (headers.noHp) {
-    if (!noHp) {
-      rowWarnings.push("No HP kosong");
-    } else if (!isValidPhone(noHp)) {
-      rowWarnings.push("Format No HP tidak valid");
-    }
+  const noHpInput = values.noHp.trim();
+  let noHp: string | null = null;
+
+  if (!noHpInput) {
+    rowWarnings.push("No HP kosong");
+  } else if (!isValidPhone(noHpInput)) {
+    rowWarnings.push("Format No HP tidak valid");
+  } else {
+    noHp = normalizePhone(noHpInput);
   }
 
-  const noHpFinal = noHp && isValidPhone(noHp) ? normalizePhone(noHp) : null;
+  const pekerjaan = values.pekerjaan.trim();
+  const alamat = values.alamat.trim();
 
-  if (headers.pekerjaan && !pekerjaan) {
+  if (!pekerjaan) {
     rowWarnings.push("Pekerjaan kosong");
   }
 
-  let kelasFinal: string | null = null;
-
-  if (kelas.trim()) {
-    if (isValidKelas(kelas.trim())) {
-      kelasFinal = kelas.trim();
-    } else {
-      rowWarnings.push("Kelas yang diisi tidak valid; kelas tidak disimpan");
-    }
-  } else {
-    kelasFinal = calculateKelas(tahunLahirFinal);
-
-    if (kelasFinal === null) {
-      rowWarnings.push(
-        "Kelas tidak dapat ditentukan otomatis; isi kelas secara manual jika diperlukan",
-      );
-    }
-  }
-
-  if (headers.alamat && !alamat) {
+  if (!alamat) {
     rowWarnings.push("Alamat kosong");
   }
 
@@ -625,7 +421,7 @@ function validateRow(
       error: {
         rowNumber,
         message:
-          "Data duplikat dengan baris lain dalam file berdasarkan nama lengkap, desa, dan kelompok",
+          "Data duplikat dengan baris lain dalam file berdasarkan Nama Lengkap, Desa, dan Kelompok",
       },
       warnings: rowWarnings.map((message) => ({
         rowNumber,
@@ -638,17 +434,18 @@ function validateRow(
 
   return {
     data: {
-      desa: desa.trim(),
-      kelompok: kelompok.trim(),
-      nama: nama.trim(),
-      jenis_kelamin: normalizedJenisKelamin,
+      desa,
+      kelompok,
+      nama,
+      jenis_kelamin: jenisKelamin,
       tempat_lahir: emptyToNull(tempatLahir),
-      tahun_lahir: tahunLahirFinal,
-      no_hp: noHpFinal,
+      tahun_lahir: tahunLahir,
+      no_hp: noHp,
       pekerjaan: emptyToNull(pekerjaan),
-      kelas: kelasFinal,
+      jenjang,
+      kelas: calculateKelasFromJenjang(jenjang),
       alamat: emptyToNull(alamat),
-      presentFields: getPresentFields(headers),
+      presentFields,
     },
     error: null,
     warnings: rowWarnings.map((message) => ({
@@ -658,45 +455,85 @@ function validateRow(
   };
 }
 
-/**
- * Membaca nilai tanggal dari sel Excel.
- * Nilai bertipe Date dan serial tanggal yang menggunakan format tanggal
- * diproses sebagai tanggal, sedangkan format sel lainnya tetap menggunakan
- * mekanisme pembacaan nilai biasa.
- */
-function getExcelDateValue(cell: ExcelJS.Cell): string {
-  const value = cell.value;
-
-  if (value instanceof Date) {
-    return parseDate(value) ?? "";
+function buildImportResult(
+  rows: string[][],
+  rowOffset: number,
+): ImportParseResult {
+  if (rows.length === 0) {
+    throw new Error("File tidak memiliki data.");
   }
 
-  if (typeof value === "number" && cell.numFmt) {
-    const dateFormat = /[dmy]/i.test(cell.numFmt);
+  const headerMap = buildHeaderMap(rows[0]);
 
-    if (dateFormat) {
-      return parseDate(value) ?? String(value);
+  validateHeaders(headerMap);
+
+  const presentFields = getPresentFields(headerMap);
+
+  const data: ImportRow[] = [];
+  const errors: ImportError[] = [];
+  const warnings: ImportWarning[] = [];
+  const seenKeys = new Set<string>();
+
+  function getValue(row: string[], header: HeaderName): string {
+    const columnIndex = headerMap.get(header);
+
+    if (columnIndex === undefined) {
+      return "";
     }
+
+    return String(row[columnIndex] ?? "").trim();
   }
 
-  return getCellValue(cell);
-}
+  for (let index = 1; index < rows.length; index++) {
+    const row = rows[index];
 
-function getHeaderPresence(
-  headerMap: Map<string, number>,
-): HeaderPresence {
+    const values: ValidateValues = {
+      desa: getValue(row, "DESA"),
+      kelompok: getValue(row, "KELOMPOK"),
+      nama: getValue(row, "NAMA LENGKAP"),
+      jenisKelamin: getValue(row, "JENIS KELAMIN"),
+      tempatLahir: getValue(row, "TEMPAT"),
+      tahunLahir: getValue(row, "TAHUN LAHIR"),
+      noHp: getValue(row, "NO HP"),
+      pekerjaan: getValue(row, "PEKERJAAN"),
+      jenjang: getValue(row, "JENJANG"),
+      alamat: getValue(row, "ALAMAT"),
+    };
+
+    const isEmptyRow = Object.values(values).every(
+      (value) => !value.trim(),
+    );
+
+    if (isEmptyRow) continue;
+
+    const result = validateRow(
+      index + rowOffset,
+      values,
+      presentFields,
+      seenKeys,
+    );
+
+    if (result.data) {
+      data.push(result.data);
+    }
+
+    if (result.error) {
+      errors.push(result.error);
+    }
+
+    warnings.push(...result.warnings);
+  }
+
   return {
-    tempatLahir: headerMap.has("TEMPAT"),
-    tahunLahir: headerMap.has("TAHUN LAHIR"),
-    noHp: headerMap.has("NO HP"),
-    pekerjaan: headerMap.has("PEKERJAAN"),
-    kelas: headerMap.has("KELAS"),
-    alamat: headerMap.has("ALAMAT"),
+    data,
+    errors,
+    warnings,
   };
 }
 
 async function parseXlsx(file: File): Promise<ImportParseResult> {
   const buffer = await file.arrayBuffer();
+
   const workbook = new ExcelJS.Workbook();
 
   await workbook.xlsx.load(buffer);
@@ -707,104 +544,89 @@ async function parseXlsx(file: File): Promise<ImportParseResult> {
     throw new Error("Worksheet Excel tidak ditemukan.");
   }
 
-  const headerMap = new Map<string, number>();
+  const headerRow = worksheet.getRow(1);
+  const headers: string[] = [];
 
-  worksheet.getRow(1).eachCell((cell, columnNumber) => {
-    const header = normalizeHeader(cell.value);
-
-    if (header) {
-      headerMap.set(header, columnNumber);
-    }
-  });
-
-  const missingHeaders = REQUIRED_HEADERS.filter(
-    (header) => !headerMap.has(header),
-  );
-
-  if (missingHeaders.length > 0) {
-    throw new Error(
-      `Kolom Excel tidak lengkap. Kolom yang wajib ada: ${missingHeaders.join(
-        ", ",
-      )}`,
+  for (
+    let column = 1;
+    column <= Math.max(headerRow.cellCount, worksheet.columnCount);
+    column++
+  ) {
+    headers[column - 1] = normalizeHeader(
+      getCellValue(headerRow.getCell(column)),
     );
   }
 
-  const data: ImportRow[] = [];
-  const errors: ImportError[] = [];
-  const warnings: ImportWarning[] = [];
-  const seenKeys = new Set<string>();
-  const headers = getHeaderPresence(headerMap);
+  const rows: string[][] = [headers];
 
   for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
-    const row = worksheet.getRow(rowNumber);
+    const excelRow = worksheet.getRow(rowNumber);
+    const values: string[] = [];
 
-    const getValue = (header: string): string => {
-      const column = headerMap.get(header);
+    for (let column = 1; column <= headers.length; column++) {
+      values[column - 1] = getCellValue(excelRow.getCell(column));
+    }
 
-      if (column === undefined) {
-        return "";
+    rows.push(values);
+  }
+
+  return buildImportResult(rows, 1);
+}
+
+function detectDelimiter(content: string): "," | ";" {
+  const firstLine = content.split(/\r\n|\n|\r/).find((line) => line.trim());
+
+  if (!firstLine) return ",";
+
+  let commaCount = 0;
+  let semicolonCount = 0;
+  let insideQuotes = false;
+
+  for (let index = 0; index < firstLine.length; index++) {
+    const char = firstLine[index];
+
+    if (char === '"') {
+      if (insideQuotes && firstLine[index + 1] === '"') {
+        index++;
+      } else {
+        insideQuotes = !insideQuotes;
       }
 
-      const cell = row.getCell(column);
-
-      if (header === "TAHUN LAHIR") {
-        return getCellValue(cell);
-      }
-
-      return getCellValue(cell);
-    };
-
-    const values: ValidateValues = {
-      desa: getValue("DESA"),
-      kelompok: getValue("KELOMPOK"),
-      nama: getValue("NAMA LENGKAP"),
-      jenisKelamin: getValue("JENIS KELAMIN"),
-      tempatLahir: getValue("TEMPAT"),
-      tahunLahirRaw: getValue("TAHUN LAHIR"),
-      noHp: getValue("NO HP"),
-      pekerjaan: getValue("PEKERJAAN"),
-      kelas: getValue("KELAS"),
-      alamat: getValue("ALAMAT"),
-    };
-
-    if (Object.values(values).every((value) => !value.trim())) {
       continue;
     }
 
-    const result = validateRow(rowNumber, values, headers, seenKeys);
-
-    if (result.error) {
-      errors.push(result.error);
+    if (!insideQuotes) {
+      if (char === ",") commaCount++;
+      if (char === ";") semicolonCount++;
     }
-
-    if (result.data) {
-      data.push(result.data);
-    }
-
-    warnings.push(...result.warnings);
   }
-
-  return { data, errors, warnings };
-}
-
-function detectDelimiter(line: string): "," | ";" {
-  const commaCount = (line.match(/,/g) ?? []).length;
-  const semicolonCount = (line.match(/;/g) ?? []).length;
 
   return semicolonCount > commaCount ? ";" : ",";
 }
 
-function parseCsvLine(line: string, delimiter: "," | ";"): string[] {
-  const result: string[] = [];
-  let current = "";
+function parseCsvContent(content: string): string[][] {
+  const normalized = content
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n");
+
+  if (!normalized.trim()) {
+    return [];
+  }
+
+  const delimiter = detectDelimiter(normalized);
+
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentValue = "";
   let insideQuotes = false;
 
-  for (let index = 0; index < line.length; index++) {
-    const char = line[index];
+  for (let index = 0; index < normalized.length; index++) {
+    const char = normalized[index];
 
     if (char === '"') {
-      if (insideQuotes && line[index + 1] === '"') {
-        current += '"';
+      if (insideQuotes && normalized[index + 1] === '"') {
+        currentValue += '"';
         index++;
       } else {
         insideQuotes = !insideQuotes;
@@ -814,68 +636,36 @@ function parseCsvLine(line: string, delimiter: "," | ";"): string[] {
     }
 
     if (char === delimiter && !insideQuotes) {
-      result.push(current.trim());
-      current = "";
+      currentRow.push(currentValue.trim());
+      currentValue = "";
       continue;
     }
 
-    current += char;
-  }
+    if (char === "\n" && !insideQuotes) {
+      currentRow.push(currentValue.trim());
 
-  result.push(current.trim());
-
-  return result;
-}
-
-function parseCsvContent(content: string): string[][] {
-  const normalized = content
-    .replace(/^\uFEFF/, "")
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n");
-
-  const lines = normalized.split("\n");
-  const firstLine = lines.find((line) => line.trim());
-
-  if (!firstLine) {
-    return [];
-  }
-
-  const delimiter = detectDelimiter(firstLine);
-  const rows: string[][] = [];
-
-  let currentLine = "";
-  let insideQuotes = false;
-
-  for (const line of lines) {
-    currentLine = currentLine ? `${currentLine}\n${line}` : line;
-
-    let quoteCount = 0;
-
-    for (let index = 0; index < line.length; index++) {
-      if (line[index] === '"') {
-        if (line[index + 1] === '"') {
-          index++;
-        } else {
-          quoteCount++;
-        }
-      }
-    }
-
-    if (quoteCount % 2 !== 0) {
-      insideQuotes = !insideQuotes;
-    }
-
-    if (!insideQuotes) {
-      if (currentLine.trim()) {
-        rows.push(parseCsvLine(currentLine, delimiter));
+      if (currentRow.some((value) => value.trim() !== "")) {
+        rows.push(currentRow);
       }
 
-      currentLine = "";
+      currentRow = [];
+      currentValue = "";
+      continue;
     }
+
+    currentValue += char;
   }
 
-  if (currentLine.trim()) {
-    rows.push(parseCsvLine(currentLine, delimiter));
+  currentRow.push(currentValue.trim());
+
+  if (currentRow.some((value) => value.trim() !== "")) {
+    rows.push(currentRow);
+  }
+
+  if (insideQuotes) {
+    throw new Error(
+      "Format CSV tidak valid. Terdapat tanda kutip yang tidak berpasangan.",
+    );
   }
 
   return rows;
@@ -889,78 +679,7 @@ async function parseCsv(file: File): Promise<ImportParseResult> {
     throw new Error("File CSV kosong.");
   }
 
-  const headerMap = new Map<string, number>();
-
-  rows[0].forEach((value, index) => {
-    const header = normalizeHeader(value);
-
-    if (header) {
-      headerMap.set(header, index);
-    }
-  });
-
-  const missingHeaders = REQUIRED_HEADERS.filter(
-    (header) => !headerMap.has(header),
-  );
-
-  if (missingHeaders.length > 0) {
-    throw new Error(
-      `Kolom CSV tidak lengkap. Kolom yang wajib ada: ${missingHeaders.join(
-        ", ",
-      )}`,
-    );
-  }
-
-  const data: ImportRow[] = [];
-  const errors: ImportError[] = [];
-  const warnings: ImportWarning[] = [];
-  const seenKeys = new Set<string>();
-  const headers = getHeaderPresence(headerMap);
-
-  for (let index = 1; index < rows.length; index++) {
-    const row = rows[index];
-
-    const getValue = (header: string): string => {
-      const column = headerMap.get(header);
-
-      if (column === undefined) {
-        return "";
-      }
-
-      return String(row[column] ?? "").trim();
-    };
-
-    const values: ValidateValues = {
-      desa: getValue("DESA"),
-      kelompok: getValue("KELOMPOK"),
-      nama: getValue("NAMA LENGKAP"),
-      jenisKelamin: getValue("JENIS KELAMIN"),
-      tempatLahir: getValue("TEMPAT"),
-      tahunLahirRaw: getValue("TAHUN LAHIR"),
-      noHp: getValue("NO HP"),
-      pekerjaan: getValue("PEKERJAAN"),
-      kelas: getValue("KELAS"),
-      alamat: getValue("ALAMAT"),
-    };
-
-    if (Object.values(values).every((value) => !value.trim())) {
-      continue;
-    }
-
-    const result = validateRow(index + 1, values, headers, seenKeys);
-
-    if (result.error) {
-      errors.push(result.error);
-    }
-
-    if (result.data) {
-      data.push(result.data);
-    }
-
-    warnings.push(...result.warnings);
-  }
-
-  return { data, errors, warnings };
+  return buildImportResult(rows, 1);
 }
 
 export async function parseImportExcel(
@@ -976,5 +695,7 @@ export async function parseImportExcel(
     return parseCsv(file);
   }
 
-  throw new Error("Format file tidak didukung. Gunakan .xlsx atau .csv.");
+  throw new Error(
+    "Format file tidak didukung. Gunakan file .xlsx atau .csv hasil Export Data Generus.",
+  );
 }

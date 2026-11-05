@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Mudamudi } from "../../backend/mudamudi/types";
@@ -53,7 +54,6 @@ export default function DetailModal({ data, onClose }: Props) {
               <h2 className="truncate text-[11px] font-semibold leading-5 text-[#202824]">
                 {toTitleCase(data.nama)}
               </h2>
-
               <p className="mt-0.5 text-[9px] leading-4 text-[#78827C]">
                 Detail Data Generus
               </p>
@@ -84,17 +84,19 @@ export default function DetailModal({ data, onClose }: Props) {
 
         {/* Content */}
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
+          {/* Wilayah & Status */}
           <section className="rounded-xl border border-[#E5EAE6] bg-[#F5F7F5] p-3.5">
-            <div className="mb-2.5 flex items-center justify-between">
+            <div className="mb-2.5 flex items-center justify-between gap-3">
               <h3 className="text-[10px] font-semibold tracking-tight text-[#202824]">
                 Wilayah & Status
               </h3>
+
               <span
-                className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-medium ${getKelasBadgeClass(
+                className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-medium ${getKelasBadgeClass(
                   data.kelas,
                 )}`}
               >
-                {data.kelas}
+                {data.kelas || "-"}
               </span>
             </div>
 
@@ -105,20 +107,30 @@ export default function DetailModal({ data, onClose }: Props) {
             </div>
           </section>
 
+          {/* Informasi Pribadi */}
           <section className="rounded-xl border border-[#E5EAE6] bg-white p-3.5 shadow-xs">
             <h3 className="mb-2.5 text-[10px] font-semibold tracking-tight text-[#202824]">
               Informasi Pribadi
             </h3>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <DetailItem label="Nama Lengkap" value={toTitleCase(data.nama)} />
+              <DetailItem
+                label="Nama Lengkap"
+                value={toTitleCase(data.nama)}
+              />
               <DetailItem label="Tempat Lahir" value={data.tempat_lahir} />
               <DetailItem
                 label="Tahun Lahir"
-                value={data.tahun_lahir !== null ? String(data.tahun_lahir) : null}
+                value={
+                  data.tahun_lahir !== null
+                    ? String(data.tahun_lahir)
+                    : null
+                }
               />
-              <DetailItem label="No. HP" value={data.no_hp} />
+              <DetailItem label="Jenjang" value={data.jenjang} />
               <DetailItem label="Pekerjaan" value={data.pekerjaan} />
+              <DetailItem label="No. HP" value={data.no_hp} />
+
               <div className="col-span-2 sm:col-span-3">
                 <DetailItem label="Alamat" value={data.alamat} />
               </div>
