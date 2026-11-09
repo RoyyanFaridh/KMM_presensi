@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo, useState } from "react";
@@ -16,13 +15,17 @@ import {
 } from "../../backend/mudamudi/constants";
 
 import { exportPresensiExcel } from "../../backend/mudamudi/exportExcel";
+import { exportMudamudiQR } from "../../backend/mudamudi/exportQR";
 
 import ModalWrapper from "./ModalWrapper";
 import { DownloadIcon } from "./icons";
 
+type ExportMode = "excel" | "qr";
+
 type Props = {
   allData: Mudamudi[];
   adminDesa: string | null;
+  initialMode: ExportMode;
   onClose: () => void;
 };
 
@@ -71,8 +74,11 @@ function MultiSelectChips({
 export default function ExportModal({
   allData,
   adminDesa,
+  initialMode,
   onClose,
 }: Props) {
+  const [exportMode] = useState<ExportMode>(initialMode);
+
   const [selectedDesa, setSelectedDesa] = useState<string[]>([]);
   const [selectedJenisKelamin, setSelectedJenisKelamin] = useState<string[]>(
     [],
@@ -86,14 +92,12 @@ export default function ExportModal({
 
   const isSuperAdmin = adminDesa === null;
 
-  // Data yang boleh diakses berdasarkan hak akses admin.
   const scopedData = useMemo(() => {
     return adminDesa
       ? allData.filter((item) => item.desa === adminDesa)
       : allData;
   }, [allData, adminDesa]);
 
-  // Opsi kelompok menyesuaikan desa yang dipilih.
   const kelompokOptions = useMemo(() => {
     if (!isSuperAdmin) {
       const key = adminDesa as keyof typeof KELOMPOK_BY_DESA;
@@ -114,8 +118,20 @@ export default function ExportModal({
     return [...KELOMPOK_OPTIONS];
   }, [isSuperAdmin, adminDesa, selectedDesa]);
 
-  // Data yang sesuai dengan seluruh filter pilihan.
-  const filteredData = useMemo(() => {
+  const filteredQRData = useMemo(() => {
+    return scopedData.filter((item) => {
+      const matchDesa =
+        selectedDesa.length === 0 || selectedDesa.includes(item.desa);
+
+      const matchKelompok =
+        selectedKelompok.length === 0 ||
+        selectedKelompok.includes(item.kelompok);
+
+      return matchDesa && matchKelompok;
+    });
+  }, [scopedData, selectedDesa, selectedKelompok]);
+
+  const filteredExcelData = useMemo(() => {
     return scopedData.filter((item) => {
       const matchDesa =
         selectedDesa.length === 0 || selectedDesa.includes(item.desa);
@@ -154,15 +170,18 @@ export default function ExportModal({
     selectedKelas,
   ]);
 
-  // Menghitung jumlah filter aktif.
+  const filteredData =
+    exportMode === "excel" ? filteredExcelData : filteredQRData;
+
   const activeFilterCount =
     selectedDesa.length +
     selectedKelompok.length +
-    selectedJenisKelamin.length +
-    selectedJenjang.length +
-    selectedKelas.length;
+    (exportMode === "excel"
+      ? selectedJenisKelamin.length +
+      selectedJenjang.length +
+      selectedKelas.length
+      : 0);
 
-  // Fungsi untuk memilih atau membatalkan pilihan chip.
   function toggleArrayValue(
     value: string,
     current: string[],
@@ -177,7 +196,6 @@ export default function ExportModal({
     setExportError(null);
   }
 
-  // Perubahan pilihan desa sekaligus menyesuaikan pilihan kelompok.
   function handleDesaChange(desa: string) {
     const nextDesa = selectedDesa.includes(desa)
       ? selectedDesa.filter((item) => item !== desa)
@@ -200,7 +218,6 @@ export default function ExportModal({
     setExportError(null);
   }
 
-  // Mengembalikan seluruh filter ke kondisi awal.
   function handleReset() {
     setSelectedDesa([]);
     setSelectedKelompok([]);
@@ -210,7 +227,6 @@ export default function ExportModal({
     setExportError(null);
   }
 
-  // Proses ekspor Excel.
   async function handleExport(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -227,25 +243,33 @@ export default function ExportModal({
         return;
       }
 
-      await exportPresensiExcel({
-        data: filteredData,
-        adminDesa,
-      });
+      if (exportMode === "excel") {
+        await exportPresensiExcel({
+          data: filteredExcelData,
+          adminDesa,
+        });
+      } else {
+        await exportMudamudiQR({
+          data: filteredQRData,
+          adminDesa,
+        });
+      }
 
       onClose();
     } catch (error) {
       console.error("Gagal mengekspor data Generus:", error);
 
       setExportError(
-        "Export gagal. Silakan coba kembali. Jika masalah berlanjut, periksa konsol aplikasi.",
+        exportMode === "excel"
+          ? "Export Excel gagal. Silakan coba kembali. Jika masalah berlanjut, periksa konsol aplikasi."
+          : "Export QR gagal. Silakan coba kembali. Jika masalah berlanjut, periksa konsol aplikasi.",
       );
     } finally {
       setIsExporting(false);
     }
   }
 
-  const sectionTitleClass =
-    "mb-2 text-[11px] font-semibold text-gray-700";
+  const sectionTitleClass = "mb-2 text-[11px] font-semibold text-gray-700";
 
   const sectionClass =
     "min-w-0 border-t border-gray-100 pt-3 first:border-t-0 first:pt-0";
@@ -257,7 +281,6 @@ export default function ExportModal({
         aria-busy={isExporting}
         className="flex max-h-[64dvh] min-h-0 w-full flex-col overflow-hidden bg-white"
       >
-        {/* Header */}
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E5EAE6] px-4 py-3.5 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#E6F2EA] text-[#287A50]">
@@ -266,11 +289,15 @@ export default function ExportModal({
 
             <div className="min-w-0">
               <h2 className="text-xs font-semibold leading-5 text-[#202824]">
-                Ekspor Data Generus
+                {exportMode === "excel"
+                  ? "Ekspor Data Generus"
+                  : "Ekspor QR Generus"}
               </h2>
 
               <p className="mt-0.5 text-[10px] leading-4 text-[#78827C]">
-                Pilih kriteria data anggota yang ingin diekspor.
+                {exportMode === "excel"
+                  ? "Pilih kriteria data Generus yang ingin diekspor ke Excel."
+                  : "Pilih desa dan kelompok untuk membuat kartu QR Generus."}
               </p>
             </div>
           </div>
@@ -298,12 +325,9 @@ export default function ExportModal({
           </button>
         </header>
 
-        {/* Filter Content */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
           <div className="grid grid-cols-1 gap-x-6 gap-y-4 lg:grid-cols-2 lg:gap-x-8">
-            {/* Kolom Kiri */}
             <div className="min-w-0 space-y-4">
-              {/* Desa */}
               <section className={sectionClass}>
                 <p className={sectionTitleClass}>Desa</p>
 
@@ -320,9 +344,16 @@ export default function ExportModal({
                     </span>
                   </div>
                 )}
+
+                {isSuperAdmin && (
+                  <p className="mt-2 text-[9px] text-[#9AA39D]">
+                    {selectedDesa.length === 0
+                      ? "Tidak ada pilihan berarti seluruh desa."
+                      : `${selectedDesa.length} desa dipilih.`}
+                  </p>
+                )}
               </section>
 
-              {/* Kelompok */}
               <section className={sectionClass}>
                 <p className={sectionTitleClass}>Kelompok</p>
 
@@ -337,71 +368,76 @@ export default function ExportModal({
                     )
                   }
                 />
+
+                <p className="mt-2 text-[9px] text-[#9AA39D]">
+                  {selectedKelompok.length === 0
+                    ? "Tidak ada pilihan berarti seluruh kelompok."
+                    : `${selectedKelompok.length} kelompok dipilih.`}
+                </p>
               </section>
             </div>
 
-            {/* Kolom Kanan */}
-            <div className="min-w-0 space-y-4 border-t border-gray-100 pt-4 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-              {/* Jenis Kelamin */}
-              <section className={sectionClass}>
-                <p className={sectionTitleClass}>Jenis Kelamin</p>
+            {exportMode === "excel" && (
+              <div className="min-w-0 space-y-4 border-t border-gray-100 pt-4 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+                <section className={sectionClass}>
+                  <p className={sectionTitleClass}>Jenis Kelamin</p>
 
-                <MultiSelectChips
-                  options={JENIS_KELAMIN_OPTIONS}
-                  selected={selectedJenisKelamin}
-                  onToggle={(value) =>
-                    toggleArrayValue(
-                      value,
-                      selectedJenisKelamin,
-                      setSelectedJenisKelamin,
-                    )
-                  }
-                />
-              </section>
+                  <MultiSelectChips
+                    options={JENIS_KELAMIN_OPTIONS}
+                    selected={selectedJenisKelamin}
+                    onToggle={(value) =>
+                      toggleArrayValue(
+                        value,
+                        selectedJenisKelamin,
+                        setSelectedJenisKelamin,
+                      )
+                    }
+                  />
+                </section>
 
-              {/* Jenjang */}
-              <section className={sectionClass}>
-                <p className={sectionTitleClass}>Jenjang</p>
+                <section className={sectionClass}>
+                  <p className={sectionTitleClass}>Jenjang</p>
 
-                <MultiSelectChips
-                  options={JENJANG_OPTIONS}
-                  selected={selectedJenjang}
-                  onToggle={(value) =>
-                    toggleArrayValue(
-                      value,
-                      selectedJenjang,
-                      setSelectedJenjang,
-                    )
-                  }
-                />
-              </section>
+                  <MultiSelectChips
+                    options={JENJANG_OPTIONS}
+                    selected={selectedJenjang}
+                    onToggle={(value) =>
+                      toggleArrayValue(
+                        value,
+                        selectedJenjang,
+                        setSelectedJenjang,
+                      )
+                    }
+                  />
+                </section>
 
-              {/* Kelas */}
-              <section className={sectionClass}>
-                <p className={sectionTitleClass}>Kelas</p>
+                <section className={sectionClass}>
+                  <p className={sectionTitleClass}>Kelas</p>
 
-                <MultiSelectChips
-                  options={KELAS_OPTIONS}
-                  selected={selectedKelas}
-                  onToggle={(value) =>
-                    toggleArrayValue(
-                      value,
-                      selectedKelas,
-                      setSelectedKelas,
-                    )
-                  }
-                />
-              </section>
-            </div>
+                  <MultiSelectChips
+                    options={KELAS_OPTIONS}
+                    selected={selectedKelas}
+                    onToggle={(value) =>
+                      toggleArrayValue(
+                        value,
+                        selectedKelas,
+                        setSelectedKelas,
+                      )
+                    }
+                  />
+                </section>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Preview Jumlah Data */}
         <div className="shrink-0 border-t border-gray-100 px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between gap-3 rounded-xl border border-[#DCE9DF] bg-[#F5F9F6] px-3.5 py-2.5">
             <div className="min-w-0">
               <p className="text-[10px] font-semibold text-[#34483A]">
-                Data yang akan diekspor
+                {exportMode === "excel"
+                  ? "Data yang akan diekspor"
+                  : "Kartu QR yang akan dibuat"}
               </p>
 
               <p className="mt-0.5 text-[9px] text-[#78827C]">
@@ -417,10 +453,17 @@ export default function ExportModal({
               </span>
 
               <span className="text-[10px] text-[#78827C]">
-                Generus
+                {exportMode === "excel" ? "Generus" : "QR"}
               </span>
             </div>
           </div>
+
+          {exportMode === "qr" && filteredData.length > 0 && (
+            <p className="mt-2 text-[9px] leading-4 text-[#78827C]">
+              File akan dikemas dalam ZIP dengan folder berdasarkan Desa dan
+              Kelompok.
+            </p>
+          )}
 
           {exportError && (
             <div
@@ -432,7 +475,6 @@ export default function ExportModal({
           )}
         </div>
 
-        {/* Footer */}
         <footer className="flex shrink-0 items-center justify-between gap-2 border-t border-[#E5EAE6] bg-[#F5F7F5] px-4 py-3 sm:px-6">
           <button
             type="button"
@@ -481,12 +523,20 @@ export default function ExportModal({
                     />
                   </svg>
 
-                  <span>Menyiapkan Excel...</span>
+                  <span>
+                    {exportMode === "excel"
+                      ? "Menyiapkan Excel..."
+                      : "Membuat QR..."}
+                  </span>
                 </>
               ) : (
                 <>
                   <DownloadIcon className="h-3.5 w-3.5" />
-                  <span>Unduh Excel</span>
+                  <span>
+                    {exportMode === "excel"
+                      ? "Unduh Excel"
+                      : "Unduh QR ZIP"}
+                  </span>
                 </>
               )}
             </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -32,6 +32,8 @@ type Props = {
   initialData: Mudamudi[];
   adminDesa: string | null;
 };
+
+type ExportMode = "excel" | "qr";
 
 function UploadIcon() {
   return (
@@ -67,8 +69,75 @@ function DownloadIcon() {
   );
 }
 
+function ChevronDownIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className={`h-3.5 w-3.5 ${className}`}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m7 10 5 5 5-5"
+      />
+    </svg>
+  );
+}
+
+function ExcelIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      className="h-4 w-4"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M13 3v7h7M8 13l5 6m0-6-5 6"
+      />
+    </svg>
+  );
+}
+
+function QRIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      className="h-4 w-4"
+    >
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M14 14h3v3h-3zM20 14v2m-3 3h3v2m-6-3v3"
+      />
+    </svg>
+  );
+}
+
 export default function MudamudiPage({ initialData, adminDesa }: Props) {
   const router = useRouter();
+
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
 
   const [modal, setModal] = useState<ModalState | null>(null);
 
@@ -77,6 +146,10 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
   const [qrData, setQrData] = useState<Mudamudi | null>(null);
 
   const [showExportModal, setShowExportModal] = useState(false);
+
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+
+  const [exportMode, setExportMode] = useState<ExportMode>("excel");
 
   const [showImportModal, setShowImportModal] = useState(false);
 
@@ -95,6 +168,23 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
   useEffect(() => {
     setShowReminder(missingJenjangCount > 0);
   }, [missingJenjangCount]);
+
+  useEffect(() => {
+    function handleOutsideClick(event: MouseEvent) {
+      if (
+        exportDropdownRef.current &&
+        !exportDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowExportDropdown(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
 
   const filter = useMudamudiFilter(initialData, adminDesa);
 
@@ -149,6 +239,12 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
       type: "delete",
       data,
     });
+  }
+
+  function openExportModal(mode: ExportMode) {
+    setExportMode(mode);
+    setShowExportDropdown(false);
+    setShowExportModal(true);
   }
 
   async function handleAddSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -285,17 +381,78 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
                   <span className="hidden md:inline">Import</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setShowExportModal(true)}
-                  aria-label="Export data"
-                  title="Export data"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5EAE6] bg-white text-[#202824] shadow-xs transition-colors hover:bg-[#F0F4F1] active:bg-[#E5EAE6] md:h-9 md:w-auto md:gap-1.5 md:px-3.5 md:text-[11px] md:font-medium"
-                >
-                  <DownloadIcon />
+                <div ref={exportDropdownRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowExportDropdown((current) => !current)}
+                    aria-label="Export data"
+                    aria-expanded={showExportDropdown}
+                    aria-haspopup="menu"
+                    title="Export data"
+                    className="inline-flex h-9 min-w-9 items-center justify-center gap-2 rounded-xl border border-[#E5EAE6] bg-white px-2.5 text-[#202824] shadow-xs transition-colors hover:border-[#D5EBDD] hover:bg-[#F0F4F1] active:bg-[#E5EAE6] md:h-9 md:min-w-[104px] md:gap-2 md:px-3.5"
+                  >
+                    <DownloadIcon />
 
-                  <span className="hidden md:inline">Export</span>
-                </button>
+                    <span className="hidden text-[11px] font-medium md:inline">
+                      Export
+                    </span>
+
+                    <ChevronDownIcon
+                      className={`hidden transition-transform duration-200 md:block ${showExportDropdown ? "rotate-180" : ""
+                        }`}
+                    />
+                  </button>
+
+                  {showExportDropdown && (
+                    <div
+                      role="menu"
+                      aria-label="Pilihan ekspor"
+                      className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-[#E5EAE6] bg-white p-1.5 shadow-lg"
+                    >
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => openExportModal("excel")}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-[#F5F9F6]"
+                      >
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6F2EA] text-[#287A50]">
+                          <ExcelIcon />
+                        </span>
+
+                        <span className="min-w-0">
+                          <span className="block text-[11px] font-semibold text-[#202824]">
+                            Export Data Excel
+                          </span>
+
+                          <span className="mt-0.5 block text-[9px] text-[#78827C]">
+                            Unduh database dalam format XLSX
+                          </span>
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => openExportModal("qr")}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-[#F5F9F6]"
+                      >
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6F2EA] text-[#287A50]">
+                          <QRIcon />
+                        </span>
+
+                        <span className="min-w-0">
+                          <span className="block text-[11px] font-semibold text-[#202824]">
+                            Export/Download QR
+                          </span>
+
+                          <span className="mt-0.5 block text-[9px] text-[#78827C]">
+                            Unduh kartu QR dalam satu file ZIP
+                          </span>
+                        </span>
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 <button
                   type="button"
@@ -404,6 +561,7 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
         <ExportModal
           allData={initialData}
           adminDesa={adminDesa}
+          initialMode={exportMode}
           onClose={() => setShowExportModal(false)}
         />
       )}
