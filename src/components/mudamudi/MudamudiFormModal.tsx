@@ -29,6 +29,7 @@ function calculateKelasFromJenjang(jenjang: string): string {
   if (["SMP-1", "SMP-2", "SMP-3"].includes(jenjang)) return "Pra Remaja";
   if (["SMA-1", "SMA-2", "SMA-3"].includes(jenjang)) return "Remaja";
   if (jenjang === "Kuliah" || jenjang === "Kerja") return "Usia Nikah";
+  if (jenjang === "MT") return "MT";
   return "";
 }
 

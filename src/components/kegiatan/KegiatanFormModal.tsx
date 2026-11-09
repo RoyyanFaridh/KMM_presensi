@@ -81,6 +81,7 @@ const JENJANG_BY_KELAS: Record<string, string[]> = {
   "Pra Remaja": ["SMP-1", "SMP-2", "SMP-3"],
   Remaja: ["SMA-1", "SMA-2", "SMA-3"],
   "Usia Nikah": ["Kuliah", "Kerja"],
+  "MT": ["MT"],
 };
 
 function getInitialGroupMode(initialData: Kegiatan | undefined): GroupMode {

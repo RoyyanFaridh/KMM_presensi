@@ -6,6 +6,7 @@ import {
   KELOMPOK_BY_DESA,
   JENIS_KELAMIN_OPTIONS,
   JENJANG_OPTIONS,
+  calculateKelasFromJenjang,
 } from "./constants";
 
 export type ImportField =
@@ -254,38 +255,6 @@ function normalizeJenisKelamin(value: string): string {
 
 function normalizeJenjang(value: string): string {
   return findOption(value, JENJANG_OPTIONS);
-}
-
-function calculateKelasFromJenjang(jenjang: string): string {
-  if (jenjang === "Belum Sekolah" || jenjang === "PAUD") {
-    return "PAUD";
-  }
-
-  if (jenjang === "TK") {
-    return "TK";
-  }
-
-  if (["SD-1", "SD-2", "SD-3"].includes(jenjang)) {
-    return "Caberawit A";
-  }
-
-  if (["SD-4", "SD-5", "SD-6"].includes(jenjang)) {
-    return "Caberawit B";
-  }
-
-  if (["SMP-1", "SMP-2", "SMP-3"].includes(jenjang)) {
-    return "Pra Remaja";
-  }
-
-  if (["SMA-1", "SMA-2", "SMA-3"].includes(jenjang)) {
-    return "Remaja";
-  }
-
-  if (jenjang === "Kuliah" || jenjang === "Kerja") {
-    return "Usia Nikah";
-  }
-
-  return "";
 }
 
 function isValidPhone(value: string): boolean {
