@@ -9,6 +9,7 @@ import { createAdminClient } from "../supabase/admin";
 import {
   DESA_OPTIONS,
   JENIS_KELAMIN_OPTIONS,
+  JENJANG_BY_KELAS,
   KELAS_OPTIONS,
   KELOMPOK_BY_DESA,
 } from "../mudamudi/constants";
@@ -124,6 +125,7 @@ function validateServer(
   desa: string[],
   kelompok: string[],
   kelas: string[],
+  jenjang: string[],
   jenisKelamin: string,
   desaAdmin: string | null,
   isSuperAdmin: boolean,
@@ -180,8 +182,30 @@ function validateServer(
     return "Pilihan kelompok tidak valid atau tidak sesuai dengan desa";
   }
 
+  if (kelas.length === 0) {
+    return "Pilih minimal satu kelas peserta";
+  }
+
   if (!isValidValues(kelas, KELAS_OPTIONS)) {
     return "Pilihan kelas tidak valid";
+  }
+
+  const allowedJenjang = kelas.flatMap(
+    (k) =>
+      (JENJANG_BY_KELAS[k as keyof typeof JENJANG_BY_KELAS] ??
+        []) as readonly string[],
+  );
+
+  if (!isValidValues(jenjang, allowedJenjang)) {
+    return "Pilihan jenjang tidak valid atau tidak sesuai dengan kelas yang dipilih";
+  }
+
+  for (const k of kelas) {
+    const classJenjang =
+      JENJANG_BY_KELAS[k as keyof typeof JENJANG_BY_KELAS] ?? [];
+    if (!classJenjang.some((j) => jenjang.includes(j))) {
+      return `Pilih minimal satu jenjang untuk kelas ${k}`;
+    }
   }
 
   if (
@@ -282,16 +306,7 @@ async function attachCreatorInfo<T extends { created_by?: string | null }>(
   });
 }
 
-/**
- * Mengambil daftar kegiatan sesuai kewenangan admin.
- *
- * Admin Daerah:
- * - Dapat melihat semua kegiatan.
- *
- * Admin Desa:
- * - Hanya dapat melihat kegiatan dengan created_by
- *   yang sama dengan ID akun yang sedang login.
- */
+
 export async function getKegiatan() {
   const { user, isSuperAdmin } = await requireAdmin();
   const supabase = await createClient();
@@ -299,7 +314,7 @@ export async function getKegiatan() {
   let query = supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenis_kelamin, created_at, created_by",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenjang, jenis_kelamin, created_at, created_by",
     )
     .order("tanggal_mulai", { ascending: false })
     .order("jam_mulai", { ascending: false });
@@ -337,6 +352,7 @@ export async function addKegiatan(formData: FormData) {
 
   const kelompok = getStringArray(formData, "kelompok");
   const kelas = getStringArray(formData, "kelas");
+  const jenjang = getStringArray(formData, "jenjang");
   const jenisKelamin = String(formData.get("jenis_kelamin") ?? "").trim();
 
   const validationError = validateServer(
@@ -349,6 +365,7 @@ export async function addKegiatan(formData: FormData) {
     desa,
     kelompok,
     kelas,
+    jenjang,
     jenisKelamin,
     desaAdmin,
     isSuperAdmin,
@@ -363,7 +380,7 @@ export async function addKegiatan(formData: FormData) {
   const { data: candidates, error: candidatesError } = await supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenis_kelamin",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenjang, jenis_kelamin",
     )
     .eq("tanggal_mulai", tanggalMulai)
     .eq("tanggal_selesai", tanggalSelesai);
@@ -381,6 +398,7 @@ export async function addKegiatan(formData: FormData) {
       sameArray(item.desa, desa) &&
       sameArray(item.kelompok, kelompokTersimpan) &&
       sameArray(item.kelas, kelas) &&
+      sameArray(item.jenjang, jenjang.length > 0 ? jenjang : null) &&
       (item.jenis_kelamin ?? "") === jenisKelamin,
   );
 
@@ -398,6 +416,7 @@ export async function addKegiatan(formData: FormData) {
     desa,
     kelompok: kelompokTersimpan,
     kelas: kelas.length > 0 ? kelas : null,
+    jenjang: jenjang.length > 0 ? [...new Set(jenjang)].sort() : null,
     jenis_kelamin: jenisKelamin || null,
     created_by: user.id,
   });
@@ -436,6 +455,7 @@ export async function updateKegiatan(id: number, formData: FormData) {
 
   const kelompok = getStringArray(formData, "kelompok");
   const kelas = getStringArray(formData, "kelas");
+  const jenjang = getStringArray(formData, "jenjang");
   const jenisKelamin = String(formData.get("jenis_kelamin") ?? "").trim();
 
   const validationError = validateServer(
@@ -448,6 +468,7 @@ export async function updateKegiatan(id: number, formData: FormData) {
     desa,
     kelompok,
     kelas,
+    jenjang,
     jenisKelamin,
     desaAdmin,
     isSuperAdmin,
@@ -482,7 +503,7 @@ export async function updateKegiatan(id: number, formData: FormData) {
   const { data: candidates, error: candidatesError } = await supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenis_kelamin",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenjang, jenis_kelamin",
     )
     .eq("tanggal_mulai", tanggalMulai)
     .eq("tanggal_selesai", tanggalSelesai)
@@ -501,6 +522,7 @@ export async function updateKegiatan(id: number, formData: FormData) {
       sameArray(item.desa, desa) &&
       sameArray(item.kelompok, kelompokTersimpan) &&
       sameArray(item.kelas, kelas) &&
+      sameArray(item.jenjang, jenjang.length > 0 ? jenjang : null) &&
       (item.jenis_kelamin ?? "") === jenisKelamin,
   );
 
@@ -520,6 +542,7 @@ export async function updateKegiatan(id: number, formData: FormData) {
       desa,
       kelompok: kelompokTersimpan,
       kelas: kelas.length > 0 ? kelas : null,
+      jenjang: jenjang.length > 0 ? [...new Set(jenjang)].sort() : null,
       jenis_kelamin: jenisKelamin || null,
     })
     .eq("id", id)

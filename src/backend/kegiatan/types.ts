@@ -9,6 +9,7 @@ export type Kegiatan = {
   desa: string[] | null;
   kelompok: string[] | null;
   kelas: string[] | null;
+  jenjang: string[] | null;
   jenis_kelamin: string | null;
   created_at: string | null;
 
@@ -34,6 +35,7 @@ export type FieldErrors = {
   desa?: string;
   kelompok?: string;
   kelas?: string;
+  jenjang?: string;
   jenis_kelamin?: string;
 };
 

@@ -1,3 +1,27 @@
+export const JENJANG_BY_KELAS = {
+  PAUD: ["Belum Sekolah", "PAUD"],
+  TK: ["TK"],
+  "Caberawit A": ["SD-1", "SD-2", "SD-3"],
+  "Caberawit B": ["SD-4", "SD-5", "SD-6"],
+  "Pra Remaja": ["SMP-1", "SMP-2", "SMP-3"],
+  Remaja: ["SMA-1", "SMA-2", "SMA-3"],
+  "Usia Nikah": ["Kuliah", "Kerja"],
+  "MT": ["MT"],
+} as const;
+
+export type KelasOption = keyof typeof JENJANG_BY_KELAS;
+
+export const KELAS_OPTIONS = [
+  "PAUD",
+  "TK",
+  "Caberawit A",
+  "Caberawit B",
+  "Pra Remaja",
+  "Remaja",
+  "Usia Nikah",
+  "MT",
+] as const;
+
 export const JENJANG_OPTIONS = [
   "Belum Sekolah",
   "PAUD",
@@ -16,18 +40,17 @@ export const JENJANG_OPTIONS = [
   "SMA-3",
   "Kuliah",
   "Kerja",
-] as const;
-
-export const KELAS_OPTIONS = [
-  "PAUD",
-  "TK",
-  "Caberawit A",
-  "Caberawit B",
-  "Pra Remaja",
-  "Remaja",
-  "Usia Nikah",
   "MT",
 ] as const;
+
+export function calculateKelasFromJenjang(jenjang: string): string {
+  for (const [kelas, daftarJenjang] of Object.entries(JENJANG_BY_KELAS)) {
+    if ((daftarJenjang as readonly string[]).includes(jenjang)) {
+      return kelas;
+    }
+  }
+  return "";
+}
 
 export const DESA_OPTIONS = [
   "Kranggan",

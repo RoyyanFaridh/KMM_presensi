@@ -60,6 +60,7 @@ export type MonitoringPeserta = {
   desa: string;
   kelompok: string;
   kelas: string;
+  jenjang?: string | null;
   jenis_kelamin: string | null;
   waktu_checkin: string | null;
   status: PresensiStatus | null;
@@ -98,6 +99,7 @@ export type RekapitulasiMudaMudi = {
   desa: string;
   kelompok: string;
   kelas: string;
+  jenjang?: string | null;
   jenis_kelamin: string | null;
 };
 
@@ -114,6 +116,7 @@ export type RekapitulasiKegiatan = {
   desa: string[] | null;
   kelompok: string[] | null;
   kelas: string[] | null;
+  jenjang?: string[] | null;
   jenis_kelamin: string | null;
 };
 

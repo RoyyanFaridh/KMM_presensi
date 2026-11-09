@@ -26,6 +26,7 @@ type Props = {
 };
 
 type GroupMode = "all" | "specific";
+type KelasOption = (typeof KELAS_OPTIONS)[number];
 
 type ActivityForm = {
   nama: string;
@@ -71,6 +72,16 @@ function getKelompokByDesa(desa: string[]): string[] {
 
   return [...result];
 }
+
+const JENJANG_BY_KELAS: Record<string, string[]> = {
+  PAUD: ["Belum Sekolah", "PAUD"],
+  TK: ["TK"],
+  "Caberawit A": ["SD-1", "SD-2", "SD-3"],
+  "Caberawit B": ["SD-4", "SD-5", "SD-6"],
+  "Pra Remaja": ["SMP-1", "SMP-2", "SMP-3"],
+  Remaja: ["SMA-1", "SMA-2", "SMA-3"],
+  "Usia Nikah": ["Kuliah", "Kerja"],
+};
 
 function getInitialGroupMode(initialData: Kegiatan | undefined): GroupMode {
   return initialData?.kelompok == null ? "all" : "specific";
@@ -200,6 +211,16 @@ export default function KegiatanFormModal({
     initialData?.kelas ?? [],
   );
 
+  const [selectedJenjang, setSelectedJenjang] = useState<string[]>(
+    (initialData as Kegiatan & { jenjang?: string[] })?.jenjang ?? [],
+  );
+
+  const [jenjangMode, setJenjangMode] = useState<GroupMode>(() =>
+    ((initialData as Kegiatan & { jenjang?: string[] })?.jenjang ?? []).length > 0
+      ? "specific"
+      : "all",
+  );
+
   const [jenisKelamin, setJenisKelamin] = useState(
     initialData?.jenis_kelamin ?? "",
   );
@@ -221,10 +242,32 @@ export default function KegiatanFormModal({
     KELAS_OPTIONS.length > 0 &&
     KELAS_OPTIONS.every((kelas) => selectedKelas.includes(kelas));
 
+  const selectedKelasEffective =
+    selectedKelas.length === 0 || allKelasSelected
+      ? [...KELAS_OPTIONS]
+      : KELAS_OPTIONS.filter((kelas) => selectedKelas.includes(kelas));
+
+  const availableJenjang = selectedKelasEffective.flatMap(
+    (kelas) => JENJANG_BY_KELAS[kelas] ?? [],
+  );
+
+  const effectiveJenjang = selectedJenjang.filter((jenjang) =>
+    availableJenjang.includes(jenjang),
+  );
+
+  const allJenjangSelected =
+    availableJenjang.length > 0 &&
+    availableJenjang.every((jenjang) => effectiveJenjang.includes(jenjang));
+
   const kelasLabel =
     selectedKelas.length === 0 || allKelasSelected
       ? "Semua kelas"
-      : `${selectedKelas.length} kelas`;
+      : `${selectedKelasEffective.length} kelas`;
+
+  const jenjangLabel =
+    jenjangMode === "all" || allJenjangSelected
+      ? "Semua jenjang"
+      : `${effectiveJenjang.length} jenjang`;
 
   const jenisKelaminLabel = jenisKelamin || "Semua peserta";
 
@@ -239,10 +282,7 @@ export default function KegiatanFormModal({
     [selectedDesa, effectiveKelompok],
   );
 
-  const selectedKelasForSummary =
-    selectedKelas.length === 0 || allKelasSelected
-      ? [...KELAS_OPTIONS]
-      : KELAS_OPTIONS.filter((kelas) => selectedKelas.includes(kelas));
+  const selectedKelasForSummary = selectedKelasEffective;
 
   function updateActivity(field: keyof ActivityForm, value: string) {
     const nextActivity = {
@@ -336,26 +376,111 @@ export default function KegiatanFormModal({
       allKelompokSelected
         ? current.filter((item) => !availableKelompok.includes(item))
         : [
-            ...new Set([
-              ...current.filter((item) => availableKelompok.includes(item)),
-              ...availableKelompok,
-            ]),
-          ],
+          ...new Set([
+            ...current.filter((item) => availableKelompok.includes(item)),
+            ...availableKelompok,
+          ]),
+        ],
     );
 
     setStepError("");
   }
 
-  function toggleKelas(kelas: string) {
-    setSelectedKelas((current) =>
-      current.includes(kelas)
-        ? current.filter((item) => item !== kelas)
-        : [...current, kelas],
+  function toggleKelas(kelas: KelasOption) {
+    const nextKelas = selectedKelasEffective.includes(kelas)
+      ? selectedKelasEffective.filter((item) => item !== kelas)
+      : [...selectedKelasEffective, kelas];
+
+    const normalizedKelas =
+      nextKelas.length === KELAS_OPTIONS.length ? [] : nextKelas;
+
+    const addedKelas = nextKelas.filter(
+      (item) => !selectedKelasEffective.includes(item),
     );
+    const nextAvailableJenjang = nextKelas.flatMap(
+      (item) => JENJANG_BY_KELAS[item] ?? [],
+    );
+
+    setSelectedKelas(normalizedKelas);
+    setSelectedJenjang((current) => {
+      const retained = current.filter((jenjang) =>
+        nextAvailableJenjang.includes(jenjang),
+      );
+
+      if (jenjangMode === "all") {
+        return [];
+      }
+
+      const addedJenjang = addedKelas.flatMap(
+        (item) => JENJANG_BY_KELAS[item] ?? [],
+      );
+
+      return [...new Set([...retained, ...addedJenjang])].filter((jenjang) =>
+        nextAvailableJenjang.includes(jenjang),
+      );
+    });
+    setStepError("");
   }
 
   function toggleAllKelas() {
-    setSelectedKelas((current) => (allKelasSelected ? [] : [...KELAS_OPTIONS]));
+    if (selectedKelas.length === 0 || allKelasSelected) return;
+
+    setSelectedKelas([]);
+    setSelectedJenjang([]);
+    setJenjangMode("all");
+    setStepError("");
+  }
+
+  function changeJenjangMode(nextMode: GroupMode) {
+    if (loading || nextMode === jenjangMode) return;
+
+    if (nextMode === "specific" && jenjangMode === "all") {
+      setSelectedJenjang(availableJenjang);
+    } else if (nextMode === "all") {
+      setSelectedJenjang([]);
+    }
+
+    setJenjangMode(nextMode);
+    setStepError("");
+  }
+
+  function toggleJenjang(jenjang: string) {
+    setSelectedJenjang((current) => {
+      const currentEffective =
+        jenjangMode === "all" ? availableJenjang : current;
+      const next = currentEffective.includes(jenjang)
+        ? currentEffective.filter((item) => item !== jenjang)
+        : [...currentEffective, jenjang];
+
+      return next;
+    });
+    setJenjangMode("specific");
+    setStepError("");
+  }
+
+  function toggleAllJenjang() {
+    setSelectedJenjang(
+      allJenjangSelected ? [] : [...availableJenjang],
+    );
+    setJenjangMode("specific");
+    setStepError("");
+  }
+
+  function toggleAllJenjangForKelas(kelas: string) {
+    const jenjangKelas = JENJANG_BY_KELAS[kelas] ?? [];
+    const currentEffective =
+      jenjangMode === "all" ? availableJenjang : effectiveJenjang;
+    const allSelected = jenjangKelas.every((item) =>
+      currentEffective.includes(item),
+    );
+
+    const next = allSelected
+      ? currentEffective.filter((item) => !jenjangKelas.includes(item))
+      : [...new Set([...currentEffective, ...jenjangKelas])];
+
+    setSelectedJenjang(next);
+    setJenjangMode("specific");
+    setStepError("");
   }
 
   function renderError(message?: string) {
@@ -373,19 +498,17 @@ export default function KegiatanFormModal({
   }
 
   function optionClass(checked: boolean) {
-    return `${styles.option} ${
-      checked
-        ? "border-[#287A50] bg-[#E6F2EA]"
-        : "border-[#E5EAE6] bg-white hover:border-[#65B98A]/40 hover:bg-[#F5F7F5]"
-    } ${loading ? "cursor-not-allowed opacity-60" : ""}`;
+    return `${styles.option} ${checked
+      ? "border-[#287A50] bg-[#E6F2EA]"
+      : "border-[#E5EAE6] bg-white hover:border-[#65B98A]/40 hover:bg-[#F5F7F5]"
+      } ${loading ? "cursor-not-allowed opacity-60" : ""}`;
   }
 
   function modeCardClass(checked: boolean) {
-    return `flex min-h-[52px] min-w-0 cursor-pointer items-start gap-2 rounded-xl border p-2.5 text-left transition ${
-      checked
-        ? "border-[#287A50] bg-[#E6F2EA]"
-        : "border-[#E5EAE6] bg-white hover:border-[#65B98A]/40 hover:bg-[#F5F7F5]"
-    } ${loading ? "cursor-not-allowed opacity-60" : ""}`;
+    return `flex min-h-[52px] min-w-0 cursor-pointer items-start gap-2 rounded-xl border p-2.5 text-left transition ${checked
+      ? "border-[#287A50] bg-[#E6F2EA]"
+      : "border-[#E5EAE6] bg-white hover:border-[#65B98A]/40 hover:bg-[#F5F7F5]"
+      } ${loading ? "cursor-not-allowed opacity-60" : ""}`;
   }
 
   function validateCurrentStep(): boolean {
@@ -519,11 +642,10 @@ export default function KegiatanFormModal({
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E5EAE6] px-4 py-3 sm:px-5">
           <div className="flex min-w-0 items-center gap-2.5">
             <div
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
-                mode === "add"
-                  ? "bg-[#E6F2EA] text-[#287A50]"
-                  : "bg-blue-50 text-blue-700"
-              }`}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${mode === "add"
+                ? "bg-[#E6F2EA] text-[#287A50]"
+                : "bg-blue-50 text-blue-700"
+                }`}
             >
               {mode === "add" ? (
                 <svg
@@ -617,18 +739,16 @@ export default function KegiatanFormModal({
                   className="min-w-0 text-left disabled:cursor-default"
                 >
                   <div
-                    className={`mb-2 h-1 rounded-full transition ${
-                      completed || active ? "bg-[#287A50]" : "bg-[#E5EAE6]"
-                    }`}
+                    className={`mb-2 h-1 rounded-full transition ${completed || active ? "bg-[#287A50]" : "bg-[#E5EAE6]"
+                      }`}
                   />
 
                   <div className="flex min-w-0 items-start gap-1.5">
                     <span
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[8px] font-semibold ${
-                        active || completed
-                          ? "bg-[#287A50] text-white"
-                          : "bg-[#F5F7F5] text-[#78827C]"
-                      }`}
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[8px] font-semibold ${active || completed
+                        ? "bg-[#287A50] text-white"
+                        : "bg-[#F5F7F5] text-[#78827C]"
+                        }`}
                     >
                       {completed ? (
                         <svg
@@ -652,9 +772,8 @@ export default function KegiatanFormModal({
 
                     <span className="min-w-0">
                       <span
-                        className={`block wrap-break-word text-[9px] font-semibold leading-4 ${
-                          active ? "text-[#287A50]" : "text-[#78827C]"
-                        }`}
+                        className={`block wrap-break-word text-[9px] font-semibold leading-4 ${active ? "text-[#287A50]" : "text-[#78827C]"
+                          }`}
                       >
                         {step.title}
                       </span>
@@ -1031,11 +1150,10 @@ export default function KegiatanFormModal({
                               className={modeCardClass(checked)}
                             >
                               <span
-                                className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border ${
-                                  checked
-                                    ? "border-[#287A50]"
-                                    : "border-[#E5EAE6]"
-                                }`}
+                                className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border ${checked
+                                  ? "border-[#287A50]"
+                                  : "border-[#E5EAE6]"
+                                  }`}
                               >
                                 {checked && (
                                   <span className="h-1.5 w-1.5 rounded-full bg-[#287A50]" />
@@ -1084,7 +1202,7 @@ export default function KegiatanFormModal({
                             {selectedDesa.map((desa) => {
                               const kelompokDesa =
                                 KELOMPOK_BY_DESA[
-                                  desa as keyof typeof KELOMPOK_BY_DESA
+                                desa as keyof typeof KELOMPOK_BY_DESA
                                 ] ?? [];
 
                               const jumlahTerpilih = kelompokDesa.filter(
@@ -1154,39 +1272,41 @@ export default function KegiatanFormModal({
                   {renderError(fieldErrors.kelompok)}
                 </div>
 
-                {/* Kelas */}
+                {/* Kelas peserta */}
                 <div className="rounded-xl border border-[#E5EAE6] bg-white p-3">
-                  <div className="mb-2.5 flex flex-wrap items-start justify-between gap-2">
+                  <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
                     <div className="min-w-0">
                       <h4 className={styles.subheading}>Kelas peserta</h4>
                       <p className={`mt-1 ${styles.description}`}>
-                        Kosongkan pilihan untuk menyertakan semua kelas.
+                        Pilih satu atau beberapa kelas sebagai sasaran kegiatan.
                       </p>
                     </div>
-
-                    <span className="shrink-0 rounded-md bg-[#F5F7F5] px-2 py-1 text-[8px] font-medium text-[#78827C]">
+                    <span className="text-[9px] tabular-nums text-[#78827C]">
                       {kelasLabel}
                     </span>
                   </div>
 
-                  <div className="rounded-xl border border-[#E5EAE6] bg-white p-3 shadow-xs sm:p-3.5">
+                  <div className="rounded-xl border border-[#E5EAE6] p-3">
                     <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-[9px] font-medium text-[#202824]">
+                      <p className="text-[9px] font-semibold text-[#202824]">
                         Pilih kelas
                       </p>
                       <button
                         type="button"
                         onClick={toggleAllKelas}
-                        disabled={loading}
+                        disabled={loading || selectedKelas.length === 0 || allKelasSelected}
                         className={styles.action}
                       >
-                        {allKelasSelected ? "Hapus semua" : "Pilih semua"}
+                        {selectedKelas.length === 0 || allKelasSelected
+                          ? "Semua kelas dipilih"
+                          : "Pilih semua kelas"}
                       </button>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
                       {KELAS_OPTIONS.map((kelas) => {
-                        const checked = selectedKelas.includes(kelas);
+                        const checked = selectedKelasEffective.includes(kelas);
+                        const jumlahJenjang = JENJANG_BY_KELAS[kelas]?.length ?? 0;
 
                         return (
                           <label key={kelas} className={optionClass(checked)}>
@@ -1199,14 +1319,202 @@ export default function KegiatanFormModal({
                               disabled={loading}
                               className="h-3.5 w-3.5 shrink-0 accent-[#287A50]"
                             />
-                            <span className={styles.optionText}>{kelas}</span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block text-[9px] font-medium text-[#202824]">
+                                {kelas}
+                              </span>
+                              <span className="mt-0.5 block text-[8px] leading-4 text-[#78827C]">
+                                {jumlahJenjang > 0
+                                  ? `${jumlahJenjang} jenjang`
+                                  : "Tidak memiliki jenjang"}
+                              </span>
+                            </span>
                           </label>
                         );
                       })}
                     </div>
                   </div>
-
                   {renderError(fieldErrors.kelas)}
+                </div>
+
+                {/* Jenjang */}
+                <div className="rounded-xl border border-[#E5EAE6] bg-white p-3">
+                  <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <h4 className={styles.subheading}>Jenjang peserta</h4>
+                      <p className={`mt-1 ${styles.description}`}>
+                        Pilih semua jenjang dari kelas terpilih atau tentukan jenjang tertentu.
+                      </p>
+                    </div>
+                    <span className="text-[9px] tabular-nums text-[#78827C]">
+                      {jenjangLabel}
+                    </span>
+                  </div>
+
+                  {selectedKelasEffective.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-[#E5EAE6] px-3 py-5 text-center">
+                      <p className="text-[9px] font-medium text-[#78827C]">
+                        Pilih kelas terlebih dahulu
+                      </p>
+                      <p className="mt-1 text-[9px] leading-4 text-[#9AA39D]">
+                        Daftar jenjang akan muncul setelah kelas dipilih.
+                      </p>
+                    </div>
+                  ) : availableJenjang.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-[#E5EAE6] px-3 py-5 text-center">
+                      <p className="text-[9px] font-medium text-[#78827C]">
+                        Kelas yang dipilih tidak memiliki pilihan jenjang.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-2">
+                        {([
+                          {
+                            value: "all",
+                            title: "Semua jenjang",
+                            description: "Seluruh jenjang dari kelas terpilih.",
+                          },
+                          {
+                            value: "specific",
+                            title: "Jenjang tertentu",
+                            description: "Pilih beberapa jenjang sesuai sasaran.",
+                          },
+                        ] as const).map((item) => {
+                          const checked = jenjangMode === item.value;
+
+                          return (
+                            <button
+                              key={item.value}
+                              type="button"
+                              onClick={() => changeJenjangMode(item.value)}
+                              disabled={loading}
+                              aria-pressed={checked}
+                              className={modeCardClass(checked)}
+                            >
+                              <span
+                                className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border ${checked
+                                  ? "border-[#287A50]"
+                                  : "border-[#E5EAE6]"
+                                  }`}
+                              >
+                                {checked && (
+                                  <span className="h-1.5 w-1.5 rounded-full bg-[#287A50]" />
+                                )}
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block wrap-break-word text-[9px] font-semibold text-[#202824]">
+                                  {item.title}
+                                </span>
+                                <span className="mt-1 block text-[9px] leading-4 text-[#78827C]">
+                                  {item.description}
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {jenjangMode === "specific" && (
+                        <div className="mt-3 rounded-xl border border-[#E5EAE6] p-3">
+                          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-[9px] font-semibold text-[#202824]">
+                                Pilih jenjang
+                              </p>
+                              <p className="mt-0.5 text-[9px] text-[#78827C]">
+                                {effectiveJenjang.length} dari {availableJenjang.length} dipilih
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={toggleAllJenjang}
+                              disabled={loading}
+                              className={styles.action}
+                            >
+                              {allJenjangSelected ? "Hapus semua" : "Pilih semua"}
+                            </button>
+                          </div>
+
+                          <div className="space-y-2.5">
+                            {selectedKelasEffective.map((kelas) => {
+                              const jenjangKelas = JENJANG_BY_KELAS[kelas] ?? [];
+                              if (jenjangKelas.length === 0) return null;
+
+                              const jumlahTerpilih = jenjangKelas.filter((jenjang) =>
+                                effectiveJenjang.includes(jenjang),
+                              ).length;
+
+                              const semuaJenjangKelasDipilih = jenjangKelas.every(
+                                (jenjang) => effectiveJenjang.includes(jenjang),
+                              );
+
+                              return (
+                                <div
+                                  key={kelas}
+                                  className="border-t border-[#E5EAE6] pt-3 first:border-0 first:pt-0"
+                                >
+                                  <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+                                    <h5 className="text-[9px] font-semibold text-[#202824]">
+                                      {kelas}
+                                    </h5>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[9px] tabular-nums text-[#78827C]">
+                                        {jumlahTerpilih}/{jenjangKelas.length}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleAllJenjangForKelas(kelas)}
+                                        disabled={loading}
+                                        className={styles.action}
+                                      >
+                                        {semuaJenjangKelasDipilih
+                                          ? "Hapus semua"
+                                          : "Pilih semua"}
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {jenjangKelas.map((jenjang) => {
+                                      const checked = effectiveJenjang.includes(jenjang);
+
+                                      return (
+                                        <label
+                                          key={`${kelas}-${jenjang}`}
+                                          className={optionClass(checked)}
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            name="jenjang"
+                                            value={jenjang}
+                                            checked={checked}
+                                            onChange={() => toggleJenjang(jenjang)}
+                                            disabled={loading}
+                                            className="h-3.5 w-3.5 shrink-0 accent-[#287A50]"
+                                          />
+                                          <span className={styles.optionText}>
+                                            {jenjang}
+                                          </span>
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {jenjangMode === "all" && (
+                        <p className="mt-2.5 rounded-xl bg-[#F5F7F5] px-3 py-2 text-[9px] leading-4 text-[#78827C]">
+                          Berlaku untuk seluruh jenjang dari kelas yang dipilih.
+                        </p>
+                      )}
+                    </>
+                  )}
+                  {renderError((fieldErrors as FieldErrors & { jenjang?: string }).jenjang)}
                 </div>
 
                 {/* Jenis kelamin */}
@@ -1232,11 +1540,10 @@ export default function KegiatanFormModal({
                         return (
                           <label
                             key={option || "semua"}
-                            className={`flex min-h-9 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2 transition ${
-                              checked
-                                ? "border-[#287A50] bg-[#E6F2EA] text-[#206440]"
-                                : "border-[#E5EAE6] text-[#202824] hover:border-[#65B98A]/40 hover:bg-[#F5F7F5]"
-                            } ${loading ? "cursor-not-allowed opacity-60" : ""}`}
+                            className={`flex min-h-9 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2 transition ${checked
+                              ? "border-[#287A50] bg-[#E6F2EA] text-[#206440]"
+                              : "border-[#E5EAE6] text-[#202824] hover:border-[#65B98A]/40 hover:bg-[#F5F7F5]"
+                              } ${loading ? "cursor-not-allowed opacity-60" : ""}`}
                           >
                             <input
                               type="radio"
@@ -1405,47 +1712,47 @@ export default function KegiatanFormModal({
                   <div className="border-t border-[#E5EAE6] pt-3">
                     <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                       <p className="text-[9px] font-medium text-[#202824]">
-                        Kelompok
+                        Kelas dan jenjang peserta
                       </p>
-                      {groupMode === "specific" && (
-                        <span className="text-[9px] text-[#78827C]">
-                          {effectiveKelompok.length} dipilih
-                        </span>
-                      )}
+                      <span className="text-[9px] text-[#78827C]">
+                        {kelasLabel} · {jenjangLabel}
+                      </span>
                     </div>
 
-                    {groupMode === "all" ? (
-                      <p className="text-[9px] leading-4 text-[#202824]">
-                        Semua kelompok di desa terpilih
-                      </p>
-                    ) : (
-                      <div className="space-y-2.5">
-                        {groupNamesByDesa.map(({ desa, kelompok }) => (
-                          <div key={desa}>
-                            <p className="mb-1 text-[9px] font-medium text-[#78827C]">
-                              {desa}
-                            </p>
+                    <div className="space-y-2">
+                      {selectedKelasForSummary.map((kelas) => {
+                        const jenjangKelas = JENJANG_BY_KELAS[kelas] ?? [];
+                        const jenjangSummary = jenjangKelas.filter((jenjang) =>
+                          jenjangMode === "all" || effectiveJenjang.includes(jenjang),
+                        );
 
-                            {kelompok.length > 0 ? (
-                              <div className="flex flex-wrap gap-1.5">
-                                {kelompok.map((namaKelompok) => (
-                                  <span
-                                    key={`${desa}-${namaKelompok}`}
-                                    className="max-w-full wrap-break-word rounded-md bg-[#F5F7F5] px-2 py-1 text-[9px] font-medium text-[#202824]"
-                                  >
-                                    {namaKelompok}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-[9px] text-[#78827C]">
-                                Tidak ada kelompok yang dipilih.
-                              </p>
-                            )}
+                        return (
+                          <div
+                            key={kelas}
+                            className="rounded-lg border border-[#E5EAE6] bg-[#F8FBF9] p-2.5"
+                          >
+                            <p className="text-[9px] font-semibold text-[#202824]">
+                              {kelas}
+                            </p>
+                            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                              {jenjangSummary.map((jenjang) => (
+                                <span
+                                  key={`${kelas}-${jenjang}`}
+                                  className="max-w-full wrap-break-word rounded-md bg-white px-2 py-1 text-[8px] font-medium text-[#206440]"
+                                >
+                                  {jenjang}
+                                </span>
+                              ))}
+                              {jenjangSummary.length === 0 && (
+                                <p className="text-[8px] text-[#78827C]">
+                                  Tidak ada jenjang yang dipilih.
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div className="border-t border-[#E5EAE6] pt-3">

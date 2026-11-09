@@ -20,6 +20,7 @@ type Kegiatan = {
   desa: string[] | null;
   kelompok: string[] | null;
   kelas: string[] | null;
+  jenjang: string[] | null;
   jenis_kelamin: string | null;
 };
 
@@ -29,6 +30,7 @@ type Mudamudi = {
   desa: string;
   kelompok: string;
   kelas: string;
+  jenjang: string | null;
   jenis_kelamin: string | null;
   tahun_lahir: number | null;
 };
@@ -146,6 +148,7 @@ async function getKegiatanByIdInternal(
         desa,
         kelompok,
         kelas,
+        jenjang,
         jenis_kelamin
       `,
     )
@@ -226,6 +229,7 @@ export async function scanMudamudiQR(
         desa,
         kelompok,
         kelas,
+        jenjang,
         jenis_kelamin
       `,
     )
@@ -269,6 +273,7 @@ export async function scanMudamudiQR(
         desa,
         kelompok,
         kelas,
+        jenjang,
         jenis_kelamin,
         tahun_lahir
       `,

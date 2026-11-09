@@ -20,6 +20,7 @@ type KegiatanMonitoring = {
   desa: string[] | null;
   kelompok: string[] | null;
   kelas: string[] | null;
+  jenjang: string[] | null;
   jenis_kelamin: string | null;
 };
 
@@ -29,6 +30,7 @@ type MudamudiMonitoring = {
   desa: string;
   kelompok: string;
   kelas: string;
+  jenjang: string | null;
   jenis_kelamin: string | null;
 };
 
@@ -67,7 +69,7 @@ export async function getMonitoringPresensi(kegiatanId: number) {
   const { data: kegiatan, error: kegiatanError } = await supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenis_kelamin",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenjang, jenis_kelamin",
     )
     .eq("id", kegiatanId)
     .maybeSingle();
@@ -89,7 +91,7 @@ export async function getMonitoringPresensi(kegiatanId: number) {
 
   let mudamudiQuery = supabase
     .from("mudamudi")
-    .select("id, nama, desa, kelompok, kelas, jenis_kelamin")
+    .select("id, nama, desa, kelompok, kelas, jenjang, jenis_kelamin")
     .order("nama", { ascending: true });
 
   if (!admin.isSuperAdmin && admin.desa !== null) {
@@ -110,7 +112,16 @@ export async function getMonitoringPresensi(kegiatanId: number) {
 
   // Filter kelas sasaran kegiatan.
   if (kegiatanMonitoring.kelas?.length) {
-    mudamudiQuery = mudamudiQuery.in("kelas", kegiatanMonitoring.kelas);
+    const kelasList = [...kegiatanMonitoring.kelas];
+    if (kelasList.includes("Caberawit")) {
+      kelasList.push("Caberawit A", "Caberawit B");
+    }
+    mudamudiQuery = mudamudiQuery.in("kelas", kelasList);
+  }
+
+  // Filter jenjang sasaran kegiatan jika ditentukan.
+  if (kegiatanMonitoring.jenjang?.length) {
+    mudamudiQuery = mudamudiQuery.in("jenjang", kegiatanMonitoring.jenjang);
   }
 
   // Filter jenis kelamin jika dibatasi.
@@ -176,6 +187,7 @@ export async function getMonitoringPresensi(kegiatanId: number) {
       desa: item.desa,
       kelompok: item.kelompok,
       kelas: item.kelas,
+      jenjang: item.jenjang ?? null,
       jenis_kelamin: item.jenis_kelamin,
       waktu_checkin: presensi?.waktu_checkin ?? null,
       status: presensi?.status ?? null,

@@ -1,3 +1,4 @@
+import { JENJANG_BY_KELAS } from "../mudamudi/constants";
 import { FieldErrors } from "./types";
 
 export function validateClient(
@@ -9,6 +10,7 @@ export function validateClient(
   lokasi: string,
   desa: string[],
   kelas: string[],
+  jenjang: string[],
   jenisKelamin: string,
 ): FieldErrors {
   const errors: FieldErrors = {};
@@ -72,6 +74,21 @@ export function validateClient(
   // Validasi kelas sasaran
   if (!Array.isArray(kelas)) {
     errors.kelas = "Data kelas tidak valid.";
+  } else if (kelas.length === 0) {
+    errors.kelas = "Pilih minimal satu kelas peserta.";
+  }
+
+  // Validasi jenjang sasaran
+  if (!Array.isArray(jenjang)) {
+    errors.jenjang = "Data jenjang tidak valid.";
+  } else if (kelas.length > 0) {
+    for (const k of kelas) {
+      const list = JENJANG_BY_KELAS[k as keyof typeof JENJANG_BY_KELAS] ?? [];
+      if (!list.some((j) => jenjang.includes(j))) {
+        errors.jenjang = `Pilih minimal satu jenjang untuk kelas ${k}.`;
+        break;
+      }
+    }
   }
 
   // Validasi jenis kelamin
