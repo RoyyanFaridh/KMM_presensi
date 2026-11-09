@@ -5,7 +5,6 @@ import {
   DESA_OPTIONS,
   KELOMPOK_BY_DESA,
   JENJANG_OPTIONS,
-  KELAS_OPTIONS,
 } from "./constants";
 
 type ExportOptions = {
@@ -33,6 +32,26 @@ const FONT_SIZE = 10;
 const VALIDATION_LAST_ROW = 1000;
 
 const JENIS_KELAMIN_OPTIONS = ["Laki-laki", "Perempuan"] as const;
+
+const JENJANG_KELAS_MAP: Record<string, string> = {
+  "Belum Sekolah": "PAUD",
+  PAUD: "PAUD",
+  TK: "TK",
+  "SD-1": "Caberawit A",
+  "SD-2": "Caberawit A",
+  "SD-3": "Caberawit A",
+  "SD-4": "Caberawit B",
+  "SD-5": "Caberawit B",
+  "SD-6": "Caberawit B",
+  "SMP-1": "Pra Remaja",
+  "SMP-2": "Pra Remaja",
+  "SMP-3": "Pra Remaja",
+  "SMA-1": "Remaja",
+  "SMA-2": "Remaja",
+  "SMA-3": "Remaja",
+  Kuliah: "Usia Nikah",
+  Kerja: "Usia Nikah",
+};
 
 const BORDER_STYLE: Partial<ExcelJS.Borders> = {
   top: { style: "thin", color: { argb: "FFD9D9D9" } },
@@ -115,7 +134,7 @@ function setCellAlignment(
 
 function applyDataValidation(
   sheet: ExcelJS.Worksheet,
-  column: "E" | "J" | "K",
+  column: "E" | "J",
   values: readonly string[],
   promptTitle: string,
   prompt: string,
@@ -134,6 +153,71 @@ function applyDataValidation(
       errorStyle: "stop",
       errorTitle: "Pilihan tidak valid",
       error: "Silakan pilih salah satu opsi dari daftar.",
+    };
+  }
+}
+
+function getKelasFormula(rowNumber: number): string {
+  const jenjangCell = `J${rowNumber}`;
+  const kelasAwalCell = `M${rowNumber}`;
+
+  const mappings = Object.entries(JENJANG_KELAS_MAP);
+
+  let formula = kelasAwalCell;
+
+  for (let index = mappings.length - 1; index >= 0; index--) {
+    const [jenjang, kelas] = mappings[index];
+
+    formula = `IF(${jenjangCell}="${jenjang}","${kelas}",${formula})`;
+  }
+
+  return `IF(${jenjangCell}="";${kelasAwalCell};${formula})`.replace(
+    /;/g,
+    ",",
+  );
+}
+
+function getKelasFormulaResult(
+  jenjang: string | null | undefined,
+  kelasAwal: string | null | undefined,
+): string {
+  if (!jenjang) return kelasAwal ?? "";
+
+  return JENJANG_KELAS_MAP[jenjang] ?? kelasAwal ?? "";
+}
+
+function unlockEditableCells(sheet: ExcelJS.Worksheet): void {
+  const editableColumns = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "L",
+  ];
+
+  for (
+    let rowNumber = 2;
+    rowNumber <= VALIDATION_LAST_ROW;
+    rowNumber++
+  ) {
+    editableColumns.forEach((column) => {
+      sheet.getCell(`${column}${rowNumber}`).protection = {
+        locked: false,
+      };
+    });
+
+    sheet.getCell(`K${rowNumber}`).protection = {
+      locked: true,
+    };
+
+    sheet.getCell(`M${rowNumber}`).protection = {
+      locked: true,
     };
   }
 }
@@ -183,10 +267,10 @@ export async function exportPresensiExcel({
     { key: "jenjang", width: 16 },
     { key: "kelas", width: 18 },
     { key: "alamat", width: 38 },
+    { key: "kelas_awal", width: 18, hidden: true },
   ];
 
-  // Header
-  const headerRow = sheet.addRow([...HEADER]);
+  const headerRow = sheet.addRow([...HEADER, "Kelas Awal"]);
 
   headerRow.height = 30;
 
@@ -201,8 +285,10 @@ export async function exportPresensiExcel({
     cell.border = BORDER_STYLE;
   });
 
-  // Data
   sorted.forEach((item, index) => {
+    const rowNumber = index + 2;
+    const kelasAwal = item.kelas ?? "";
+
     const row = sheet.addRow([
       index + 1,
       item.desa ?? "",
@@ -214,8 +300,12 @@ export async function exportPresensiExcel({
       item.no_hp == null ? "" : String(item.no_hp),
       item.pekerjaan ?? "",
       item.jenjang ?? "",
-      item.kelas ?? "",
+      {
+        formula: getKelasFormula(rowNumber),
+        result: getKelasFormulaResult(item.jenjang, kelasAwal),
+      },
       item.alamat ?? "",
+      kelasAwal,
     ]);
 
     row.height = 20;
@@ -239,9 +329,15 @@ export async function exportPresensiExcel({
 
     row.getCell(7).numFmt = "0";
     row.getCell(8).numFmt = "@";
+
+    row.getCell(11).font = {
+      name: FONT_NAME,
+      size: FONT_SIZE,
+      bold: false,
+      color: { argb: "FF287A50" },
+    };
   });
 
-  // Dropdown Jenis Kelamin
   applyDataValidation(
     sheet,
     "E",
@@ -250,7 +346,6 @@ export async function exportPresensiExcel({
     "Pilih Laki-laki atau Perempuan.",
   );
 
-  // Dropdown Jenjang
   applyDataValidation(
     sheet,
     "J",
@@ -259,19 +354,19 @@ export async function exportPresensiExcel({
     "Pilih jenjang pendidikan dari daftar yang tersedia.",
   );
 
-  // Dropdown Kelas
-  applyDataValidation(
-    sheet,
-    "K",
-    KELAS_OPTIONS,
-    "Kelas",
-    "Pilih kelas dari daftar yang tersedia.",
-  );
-
   sheet.autoFilter = {
     from: "A1",
     to: `L${Math.max(sorted.length + 1, 1)}`,
   };
+
+  unlockEditableCells(sheet);
+
+  await sheet.protect("", {
+    selectLockedCells: false,
+    selectUnlockedCells: true,
+    autoFilter: true,
+    sort: true,
+  });
 
   const buffer = await workbook.xlsx.writeBuffer();
 
