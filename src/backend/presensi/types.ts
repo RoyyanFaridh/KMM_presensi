@@ -73,7 +73,7 @@ export type MonitoringPresensi = {
     id: number;
     nama: string;
     tanggal_mulai: string;
-    tanggal_selesai: string;
+    tanggal_selesai: string | null;
     jam_mulai: string;
     jam_selesai: string;
     lokasi: string;
@@ -137,26 +137,26 @@ export type RekapitulasiPresensi = {
 
 export type DeviceCheckResult =
   | {
-      status: "known";
-      mudamudi: {
-        id: number;
-        nama: string;
-      };
-    }
-  | {
-      status: "unknown";
+    status: "known";
+    mudamudi: {
+      id: number;
+      nama: string;
     };
+  }
+  | {
+    status: "unknown";
+  };
 
 export type IdentityVerificationResult =
   | {
-      success: true;
-      mudamudi: {
-        id: number;
-        nama: string;
-      };
-      deviceToken: string;
-    }
-  | {
-      success: false;
-      error: string;
+    success: true;
+    mudamudi: {
+      id: number;
+      nama: string;
     };
+    deviceToken: string;
+  }
+  | {
+    success: false;
+    error: string;
+  };

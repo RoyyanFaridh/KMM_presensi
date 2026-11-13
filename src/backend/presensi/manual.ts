@@ -1,3 +1,4 @@
+
 "use server";
 
 import { requireAdmin } from "../auth/admin";
@@ -14,6 +15,15 @@ type ManualPresensiInput = {
 
 type KegiatanAccess = {
   desa: string[] | null;
+};
+
+type MudamudiPresensi = {
+  id: number;
+  nama: string;
+  desa: string;
+  kelompok: string;
+  kelas: string;
+  jenis_kelamin: string | null;
 };
 
 const VALID_STATUSES: PresensiStatus[] = [
@@ -69,7 +79,7 @@ export async function createManualPresensi(input: ManualPresensiInput) {
   const { data: kegiatan, error: kegiatanError } = await supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenis_kelamin",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenjang, jenis_kelamin, target_frozen_at",
     )
     .eq("id", input.kegiatanId)
     .maybeSingle();
@@ -97,48 +107,100 @@ export async function createManualPresensi(input: ManualPresensiInput) {
     };
   }
 
-  const { data: mudamudi, error: mudamudiError } = await supabase
-    .from("mudamudi")
-    .select("id, nama, desa, kelompok, kelas, jenis_kelamin")
-    .eq("id", input.mudamudiId)
-    .maybeSingle();
+  let mudamudi: MudamudiPresensi;
 
-  if (mudamudiError) {
-    console.error("Gagal mengambil data Muda-Mudi:", mudamudiError);
+  if (kegiatan.target_frozen_at) {
+    const { data: snapshot, error: snapshotError } = await supabase
+      .from("kegiatan_mudamudi")
+      .select(
+        "mudamudi_id, nama_snapshot, desa_snapshot, kelompok_snapshot, kelas_snapshot, jenis_kelamin_snapshot",
+      )
+      .eq("kegiatan_id", input.kegiatanId)
+      .eq("mudamudi_id", input.mudamudiId)
+      .maybeSingle();
 
-    return {
-      success: false,
-      error: "Gagal mengambil data Muda-Mudi.",
+    if (snapshotError) {
+      console.error("Gagal mengambil snapshot sasaran:", snapshotError);
+
+      return {
+        success: false,
+        error: "Gagal memeriksa sasaran kegiatan.",
+      };
+    }
+
+    if (!snapshot) {
+      return {
+        success: false,
+        error: "Muda-Mudi tidak termasuk sasaran kegiatan.",
+      };
+    }
+
+    if (!admin.isSuperAdmin && snapshot.desa_snapshot !== admin.desa) {
+      return {
+        success: false,
+        error: "Kamu tidak memiliki akses ke data Muda-Mudi ini.",
+      };
+    }
+
+    mudamudi = {
+      id: snapshot.mudamudi_id,
+      nama: snapshot.nama_snapshot ?? "",
+      desa: snapshot.desa_snapshot ?? "",
+      kelompok: snapshot.kelompok_snapshot ?? "",
+      kelas: snapshot.kelas_snapshot ?? "",
+      jenis_kelamin: snapshot.jenis_kelamin_snapshot,
     };
+  } else {
+    const { data: currentMudamudi, error: mudamudiError } = await supabase
+      .from("mudamudi")
+      .select("id, nama, desa, kelompok, kelas, jenis_kelamin")
+      .eq("id", input.mudamudiId)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (mudamudiError) {
+      console.error("Gagal mengambil data Muda-Mudi:", mudamudiError);
+
+      return {
+        success: false,
+        error: "Gagal mengambil data Muda-Mudi.",
+      };
+    }
+
+    if (!currentMudamudi) {
+      return {
+        success: false,
+        error: "Muda-Mudi tidak ditemukan atau tidak memiliki akses.",
+      };
+    }
+
+    if (
+      !admin.isSuperAdmin &&
+      currentMudamudi.desa !== admin.desa
+    ) {
+      return {
+        success: false,
+        error: "Kamu tidak memiliki akses ke data Muda-Mudi ini.",
+      };
+    }
+
+    if (!isMudamudiTargeted(kegiatan, currentMudamudi)) {
+      return {
+        success: false,
+        error: "Muda-Mudi tidak termasuk sasaran kegiatan.",
+      };
+    }
+
+    mudamudi = currentMudamudi;
   }
 
-  if (!mudamudi) {
-    return {
-      success: false,
-      error: "Muda-Mudi tidak ditemukan atau tidak memiliki akses.",
-    };
-  }
-
-  if (!admin.isSuperAdmin && mudamudi.desa !== admin.desa) {
-    return {
-      success: false,
-      error: "Kamu tidak memiliki akses ke data Muda-Mudi ini.",
-    };
-  }
-
-  if (!isMudamudiTargeted(kegiatan, mudamudi)) {
-    return {
-      success: false,
-      error: "Muda-Mudi tidak termasuk sasaran kegiatan.",
-    };
-  }
-
-  const { data: existingPresensi, error: presensiCheckError } = await supabase
-    .from("presensi")
-    .select("id")
-    .eq("kegiatan_id", input.kegiatanId)
-    .eq("mudamudi_id", input.mudamudiId)
-    .maybeSingle();
+  const { data: existingPresensi, error: presensiCheckError } =
+    await supabase
+      .from("presensi")
+      .select("id")
+      .eq("kegiatan_id", input.kegiatanId)
+      .eq("mudamudi_id", input.mudamudiId)
+      .maybeSingle();
 
   if (presensiCheckError) {
     console.error("Gagal memeriksa presensi:", presensiCheckError);

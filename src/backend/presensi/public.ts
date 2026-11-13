@@ -37,31 +37,31 @@ type Mudamudi = {
 
 export type ScanMudamudiQRResult =
   | {
-      success: true;
-      type: "success";
-      message: string;
-      presensiId: number;
-      waktuCheckin: string;
-      status: PresensiStatus;
-      metode: PresensiMetode;
-      kegiatan: Kegiatan;
-      mudamudi: Mudamudi;
-    }
+    success: true;
+    type: "success";
+    message: string;
+    presensiId: number;
+    waktuCheckin: string;
+    status: PresensiStatus;
+    metode: PresensiMetode;
+    kegiatan: Kegiatan;
+    mudamudi: Mudamudi;
+  }
   | {
-      success: false;
-      type:
-        | "invalid_qr"
-        | "mudamudi_not_found"
-        | "kegiatan_not_found"
-        | "kegiatan_inactive"
-        | "not_target"
-        | "already_present"
-        | "not_authorized"
-        | "database_error";
-      message: string;
-      mudamudi?: Mudamudi;
-      kegiatan?: Kegiatan;
-    };
+    success: false;
+    type:
+    | "invalid_qr"
+    | "mudamudi_not_found"
+    | "kegiatan_not_found"
+    | "kegiatan_inactive"
+    | "not_target"
+    | "already_present"
+    | "not_authorized"
+    | "database_error";
+    message: string;
+    mudamudi?: Mudamudi;
+    kegiatan?: Kegiatan;
+  };
 
 function parseMudamudiQR(qrText: string): string | null {
   const value = qrText.trim();
@@ -268,17 +268,18 @@ export async function scanMudamudiQR(
     .from("mudamudi")
     .select(
       `
-        id,
-        nama,
-        desa,
-        kelompok,
-        kelas,
-        jenjang,
-        jenis_kelamin,
-        tahun_lahir
-      `,
+      id,
+      nama,
+      desa,
+      kelompok,
+      kelas,
+      jenjang,
+      jenis_kelamin,
+      tahun_lahir
+    `,
     )
     .eq("qr_id", qrId)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (mudamudiError) {

@@ -1,3 +1,4 @@
+
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -47,6 +48,7 @@ type ExistingImportRecord = {
   nama: string;
   desa: string;
   kelompok: string;
+  deleted_at: string | null;
 };
 
 type ImportIdentity = {
@@ -209,7 +211,6 @@ function mapImportUpdate(row: ImportRow): Record<string, unknown> {
     }
   }
 
-  // Kelas selalu mengikuti jenjang, sehingga keduanya diperbarui bersama.
   if (row.presentFields?.includes("jenjang")) {
     payload.jenjang = mapped.jenjang;
     payload.kelas = mapped.kelas;
@@ -240,7 +241,9 @@ async function getExistingImportRecords(
 }> {
   const supabase = await createClient();
 
-  let query = supabase.from("mudamudi").select("id, nama, desa, kelompok");
+  let query = supabase
+    .from("mudamudi")
+    .select("id, nama, desa, kelompok, deleted_at");
 
   if (!isSuperAdmin) {
     if (!adminDesa) {
@@ -308,7 +311,8 @@ export async function addMudamudi(formData: FormData): Promise<ActionResult> {
     .from("mudamudi")
     .select("id, nama, kelas")
     .eq("kelompok", data.kelompok)
-    .eq("desa", data.desa);
+    .eq("desa", data.desa)
+    .is("deleted_at", null);
 
   if (candidateError) {
     console.error("addMudamudi candidate query error:", candidateError);
@@ -390,7 +394,11 @@ export async function updateMudamudi(
 
   if (validationError) return { error: validationError };
 
-  let existingQuery = supabase.from("mudamudi").select("id, desa").eq("id", id);
+  let existingQuery = supabase
+    .from("mudamudi")
+    .select("id, desa")
+    .eq("id", id)
+    .is("deleted_at", null);
 
   if (!isSuperAdmin) {
     existingQuery = existingQuery.eq("desa", adminDesa);
@@ -423,7 +431,8 @@ export async function updateMudamudi(
     .select("id, nama, kelas")
     .eq("kelompok", data.kelompok)
     .eq("desa", data.desa)
-    .neq("id", id);
+    .neq("id", id)
+    .is("deleted_at", null);
 
   if (candidateError) {
     console.error("updateMudamudi candidate query error:", candidateError);
@@ -461,7 +470,8 @@ export async function updateMudamudi(
       pekerjaan: data.pekerjaan,
       alamat: data.alamat,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .is("deleted_at", null);
 
   if (error) {
     console.error("updateMudamudi update error:", error);
@@ -486,7 +496,7 @@ export async function updateMudamudi(
 }
 
 export async function deleteMudamudi(id: number): Promise<ActionResult> {
-  const { desa: adminDesa, isSuperAdmin } = await requireAdmin();
+  const { desa: adminDesa, isSuperAdmin, user } = await requireAdmin();
   const supabase = await createClient();
 
   if (!Number.isInteger(id) || id <= 0) {
@@ -497,7 +507,14 @@ export async function deleteMudamudi(id: number): Promise<ActionResult> {
     return { error: "Desa admin tidak valid" };
   }
 
-  let query = supabase.from("mudamudi").delete().eq("id", id);
+  let query = supabase
+    .from("mudamudi")
+    .update({
+      deleted_at: new Date().toISOString(),
+      deleted_by: user.id,
+    })
+    .eq("id", id)
+    .is("deleted_at", null);
 
   if (!isSuperAdmin) {
     query = query.eq("desa", adminDesa);
@@ -517,6 +534,7 @@ export async function deleteMudamudi(id: number): Promise<ActionResult> {
   }
 
   revalidatePath("/admin/mudamudi");
+  revalidatePath("/admin/riwayat");
 
   return { success: true };
 }
@@ -529,7 +547,10 @@ export async function getMudamudi() {
     return { data: [], error: "Desa admin tidak valid" };
   }
 
-  let query = supabase.from("mudamudi").select("*");
+  let query = supabase
+    .from("mudamudi")
+    .select("*")
+    .is("deleted_at", null);
 
   if (!isSuperAdmin) {
     query = query.eq("desa", adminDesa);
@@ -561,7 +582,8 @@ export async function searchMudamudiNames(query: string) {
   let searchQuery = supabase
     .from("mudamudi")
     .select("id, nama, desa, kelompok")
-    .ilike("nama", `%${keyword}%`);
+    .ilike("nama", `%${keyword}%`)
+    .is("deleted_at", null);
 
   if (!isSuperAdmin) {
     searchQuery = searchQuery.eq("desa", adminDesa);
@@ -646,7 +668,7 @@ export async function previewImportMudamudi(
     const importableRows: ImportRow[] = [];
     let newCount = 0;
     let updateCount = 0;
-    let ambiguousCount = 0;
+    let reviewCount = 0;
 
     for (const row of scopedRows) {
       const key = createIdentityKey({
@@ -658,10 +680,19 @@ export async function previewImportMudamudi(
       const matches = existingByIdentity.get(key) ?? [];
 
       if (matches.length > 1) {
-        ambiguousCount++;
+        reviewCount++;
         errors.push({
           rowNumber: 0,
           message: `Data "${row.nama}" di desa ${row.desa}, kelompok ${row.kelompok} cocok dengan lebih dari satu data yang sudah terdaftar. Periksa data tersebut secara manual.`,
+        });
+        continue;
+      }
+
+      if (matches.length === 1 && matches[0].deleted_at) {
+        reviewCount++;
+        errors.push({
+          rowNumber: 0,
+          message: `Data "${row.nama}" pernah dihapus. Pulihkan melalui Riwayat Aktivitas sebelum melakukan import.`,
         });
         continue;
       }
@@ -682,7 +713,7 @@ export async function previewImportMudamudi(
       warnings: result.warnings,
       newCount,
       updateCount,
-      reviewCount: errors.length + ambiguousCount,
+      reviewCount: errors.length + reviewCount,
     };
   } catch (error) {
     console.error("previewImportMudamudi error:", error);
@@ -822,6 +853,11 @@ export async function importMudamudi(
         continue;
       }
 
+      if (matches.length === 1 && matches[0].deleted_at) {
+        ambiguousCount++;
+        continue;
+      }
+
       if (matches.length === 1) {
         const payload = mapImportUpdate(row);
 
@@ -850,7 +886,7 @@ export async function importMudamudi(
     if (rowsToInsert.length === 0 && rowsToUpdate.length === 0) {
       return {
         error:
-          "Tidak ada data yang dapat diproses. Data mungkin sudah bermasalah, ambigu, duplikat dalam file, atau berasal dari desa lain.",
+          "Tidak ada data yang dapat diproses. Sebagian data mungkin pernah dihapus, ambigu, duplikat dalam file, atau berasal dari desa lain.",
         imported: 0,
         updated: 0,
         skipped,
@@ -865,7 +901,8 @@ export async function importMudamudi(
       let updateQuery = supabase
         .from("mudamudi")
         .update(item.payload)
-        .eq("id", item.id);
+        .eq("id", item.id)
+        .is("deleted_at", null);
 
       if (!isSuperAdmin) {
         updateQuery = updateQuery.eq("desa", adminDesa);
@@ -920,6 +957,7 @@ export async function importMudamudi(
     }
 
     revalidatePath("/admin/mudamudi");
+    revalidatePath("/admin/riwayat");
 
     return {
       success: true,

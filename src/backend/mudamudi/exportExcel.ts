@@ -226,9 +226,11 @@ export async function exportPresensiExcel({
   data,
   adminDesa,
 }: ExportOptions): Promise<void> {
+  const activeData = data.filter((item) => !item.deleted_at);
+
   const scopedData = adminDesa
-    ? data.filter((item) => item.desa === adminDesa)
-    : data;
+    ? activeData.filter((item) => item.desa === adminDesa)
+    : activeData;
 
   const sorted = sortByDesaThenKelompokThenNama(scopedData);
 

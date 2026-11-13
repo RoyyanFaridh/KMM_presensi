@@ -1,3 +1,4 @@
+
 "use server";
 
 import { requireAdmin } from "../auth/admin";
@@ -13,7 +14,7 @@ type KegiatanMonitoring = {
   id: number;
   nama: string;
   tanggal_mulai: string;
-  tanggal_selesai: string;
+  tanggal_selesai: string | null;
   jam_mulai: string;
   jam_selesai: string;
   lokasi: string;
@@ -22,6 +23,7 @@ type KegiatanMonitoring = {
   kelas: string[] | null;
   jenjang: string[] | null;
   jenis_kelamin: string | null;
+  target_frozen_at: string | null;
 };
 
 type MudamudiMonitoring = {
@@ -32,6 +34,25 @@ type MudamudiMonitoring = {
   kelas: string;
   jenjang: string | null;
   jenis_kelamin: string | null;
+};
+
+type MudamudiSnapshot = {
+  mudamudi_id: number;
+  nama_snapshot: string | null;
+  desa_snapshot: string | null;
+  kelompok_snapshot: string | null;
+  kelas_snapshot: string | null;
+  jenjang_snapshot: string | null;
+  jenis_kelamin_snapshot: string | null;
+};
+
+type PresensiMonitoringRow = {
+  id: number;
+  mudamudi_id: number;
+  waktu_checkin: string | null;
+  status: string;
+  metode: string;
+  keterangan: string | null;
 };
 
 function emptyResult(error: string) {
@@ -69,7 +90,7 @@ export async function getMonitoringPresensi(kegiatanId: number) {
   const { data: kegiatan, error: kegiatanError } = await supabase
     .from("kegiatan")
     .select(
-      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenjang, jenis_kelamin",
+      "id, nama, tanggal_mulai, tanggal_selesai, jam_mulai, jam_selesai, lokasi, desa, kelompok, kelas, jenjang, jenis_kelamin, target_frozen_at",
     )
     .eq("id", kegiatanId)
     .maybeSingle();
@@ -89,72 +110,106 @@ export async function getMonitoringPresensi(kegiatanId: number) {
     return emptyResult("Kamu tidak memiliki akses ke kegiatan ini.");
   }
 
-  let mudamudiQuery = supabase
-    .from("mudamudi")
-    .select("id, nama, desa, kelompok, kelas, jenjang, jenis_kelamin")
-    .order("nama", { ascending: true });
+  let mudamudiSasaran: MudamudiMonitoring[] = [];
 
-  if (!admin.isSuperAdmin && admin.desa !== null) {
-    mudamudiQuery = mudamudiQuery.eq("desa", admin.desa);
-  }
-
-  // Filter desa sasaran kegiatan.
-  if (kegiatanMonitoring.desa?.length) {
-    mudamudiQuery = mudamudiQuery.in("desa", kegiatanMonitoring.desa);
-  }
-
-  // Filter kelompok sasaran kegiatan.
-  // NULL atau array kosong berarti tidak ada pembatasan kelompok,
-  // sesuai konvensi penyimpanan sasaran yang digunakan saat ini.
-  if (kegiatanMonitoring.kelompok?.length) {
-    mudamudiQuery = mudamudiQuery.in("kelompok", kegiatanMonitoring.kelompok);
-  }
-
-  // Filter kelas sasaran kegiatan.
-  if (kegiatanMonitoring.kelas?.length) {
-    const kelasList = [...kegiatanMonitoring.kelas];
-    if (kelasList.includes("Caberawit")) {
-      kelasList.push("Caberawit A", "Caberawit B");
-    }
-    mudamudiQuery = mudamudiQuery.in("kelas", kelasList);
-  }
-
-  // Filter jenjang sasaran kegiatan jika ditentukan.
-  if (kegiatanMonitoring.jenjang?.length) {
-    mudamudiQuery = mudamudiQuery.in("jenjang", kegiatanMonitoring.jenjang);
-  }
-
-  // Filter jenis kelamin jika dibatasi.
-  if (kegiatanMonitoring.jenis_kelamin) {
-    mudamudiQuery = mudamudiQuery.eq(
-      "jenis_kelamin",
-      kegiatanMonitoring.jenis_kelamin,
-    );
-  }
-
-  const [mudamudiResult, presensiResult] = await Promise.all([
-    mudamudiQuery,
-    supabase
-      .from("presensi")
-      .select("id, mudamudi_id, waktu_checkin, status, metode, keterangan")
+  if (kegiatanMonitoring.target_frozen_at !== null) {
+    const { data: snapshotData, error: snapshotError } = await supabase
+      .from("kegiatan_mudamudi")
+      .select(
+        "mudamudi_id, nama_snapshot, desa_snapshot, kelompok_snapshot, kelas_snapshot, jenjang_snapshot, jenis_kelamin_snapshot",
+      )
       .eq("kegiatan_id", kegiatanId)
-      .order("waktu_checkin", {
-        ascending: true,
-        nullsFirst: false,
-      }),
-  ]);
+      .order("nama_snapshot", { ascending: true });
 
-  if (mudamudiResult.error) {
-    console.error("Gagal mengambil Muda-Mudi:", mudamudiResult.error);
-    return emptyResult("Gagal mengambil data Muda-Mudi.");
+    if (snapshotError) {
+      console.error("Gagal mengambil snapshot peserta:", snapshotError);
+      return emptyResult("Gagal mengambil data snapshot peserta kegiatan.");
+    }
+
+    mudamudiSasaran = ((snapshotData ?? []) as MudamudiSnapshot[]).map(
+      (item) => ({
+        id: item.mudamudi_id,
+        nama: item.nama_snapshot ?? "Nama tidak tersedia",
+        desa: item.desa_snapshot ?? "",
+        kelompok: item.kelompok_snapshot ?? "",
+        kelas: item.kelas_snapshot ?? "",
+        jenjang: item.jenjang_snapshot ?? null,
+        jenis_kelamin: item.jenis_kelamin_snapshot ?? null,
+      }),
+    );
+  } else {
+    let mudamudiQuery = supabase
+      .from("mudamudi")
+      .select("id, nama, desa, kelompok, kelas, jenjang, jenis_kelamin")
+      .is("deleted_at", null)
+      .order("nama", { ascending: true });
+
+    if (!admin.isSuperAdmin && admin.desa !== null) {
+      mudamudiQuery = mudamudiQuery.eq("desa", admin.desa);
+    }
+
+    if (kegiatanMonitoring.desa?.length) {
+      mudamudiQuery = mudamudiQuery.in(
+        "desa",
+        kegiatanMonitoring.desa,
+      );
+    }
+
+    if (kegiatanMonitoring.kelompok?.length) {
+      mudamudiQuery = mudamudiQuery.in(
+        "kelompok",
+        kegiatanMonitoring.kelompok,
+      );
+    }
+
+    if (kegiatanMonitoring.kelas?.length) {
+      const kelasList = [...kegiatanMonitoring.kelas];
+
+      if (kelasList.includes("Caberawit")) {
+        kelasList.push("Caberawit A", "Caberawit B");
+      }
+
+      mudamudiQuery = mudamudiQuery.in("kelas", kelasList);
+    }
+
+    if (kegiatanMonitoring.jenjang?.length) {
+      mudamudiQuery = mudamudiQuery.in(
+        "jenjang",
+        kegiatanMonitoring.jenjang,
+      );
+    }
+
+    if (kegiatanMonitoring.jenis_kelamin) {
+      mudamudiQuery = mudamudiQuery.eq(
+        "jenis_kelamin",
+        kegiatanMonitoring.jenis_kelamin,
+      );
+    }
+
+    const { data: mudamudiData, error: mudamudiError } =
+      await mudamudiQuery;
+
+    if (mudamudiError) {
+      console.error("Gagal mengambil Muda-Mudi:", mudamudiError);
+      return emptyResult("Gagal mengambil data Muda-Mudi.");
+    }
+
+    mudamudiSasaran = (mudamudiData ?? []) as MudamudiMonitoring[];
   }
 
-  if (presensiResult.error) {
-    console.error("Gagal mengambil presensi:", presensiResult.error);
+  const { data: presensiData, error: presensiError } = await supabase
+    .from("presensi")
+    .select("id, mudamudi_id, waktu_checkin, status, metode, keterangan")
+    .eq("kegiatan_id", kegiatanId)
+    .order("waktu_checkin", {
+      ascending: true,
+      nullsFirst: false,
+    });
+
+  if (presensiError) {
+    console.error("Gagal mengambil presensi:", presensiError);
     return emptyResult("Gagal mengambil data presensi.");
   }
-
-  const mudamudiSasaran = (mudamudiResult.data ?? []) as MudamudiMonitoring[];
 
   const presensiMap = new Map<
     number,
@@ -167,7 +222,7 @@ export async function getMonitoringPresensi(kegiatanId: number) {
     }
   >();
 
-  for (const item of presensiResult.data ?? []) {
+  for (const item of (presensiData ?? []) as PresensiMonitoringRow[]) {
     presensiMap.set(item.mudamudi_id, {
       presensi_id: item.id,
       waktu_checkin: item.waktu_checkin,
@@ -187,7 +242,7 @@ export async function getMonitoringPresensi(kegiatanId: number) {
       desa: item.desa,
       kelompok: item.kelompok,
       kelas: item.kelas,
-      jenjang: item.jenjang ?? null,
+      jenjang: item.jenjang,
       jenis_kelamin: item.jenis_kelamin,
       waktu_checkin: presensi?.waktu_checkin ?? null,
       status: presensi?.status ?? null,

@@ -1,3 +1,4 @@
+
 "use server";
 
 import { requireAdmin } from "../auth/admin";
@@ -19,7 +20,9 @@ type KegiatanAccess = {
   desa: string[] | null;
   kelompok: string[] | null;
   kelas: string[] | null;
+  jenjang: string[] | null;
   jenis_kelamin: string | null;
+  target_frozen_at: string | null;
 };
 
 type MudamudiAccess = {
@@ -27,6 +30,7 @@ type MudamudiAccess = {
   desa: string;
   kelompok: string;
   kelas: string;
+  jenjang: string | null;
   jenis_kelamin: string | null;
 };
 
@@ -86,7 +90,9 @@ async function validateTarget(
 ) {
   const { data: kegiatan, error: kegiatanError } = await supabase
     .from("kegiatan")
-    .select("id, desa, kelompok, kelas, jenis_kelamin")
+    .select(
+      "id, desa, kelompok, kelas, jenjang, jenis_kelamin, target_frozen_at",
+    )
     .eq("id", kegiatanId)
     .maybeSingle();
 
@@ -113,10 +119,47 @@ async function validateTarget(
     };
   }
 
+  if (kegiatan.target_frozen_at) {
+    const { data: snapshot, error: snapshotError } = await supabase
+      .from("kegiatan_mudamudi")
+      .select("mudamudi_id, desa_snapshot")
+      .eq("kegiatan_id", kegiatanId)
+      .eq("mudamudi_id", mudamudiId)
+      .maybeSingle();
+
+    if (snapshotError) {
+      console.error("Gagal mengambil snapshot sasaran:", snapshotError);
+
+      return {
+        valid: false as const,
+        error: "Gagal memeriksa sasaran kegiatan.",
+      };
+    }
+
+    if (!snapshot) {
+      return {
+        valid: false as const,
+        error: "Muda-Mudi tidak termasuk sasaran kegiatan.",
+      };
+    }
+
+    if (!admin.isSuperAdmin && snapshot.desa_snapshot !== admin.desa) {
+      return {
+        valid: false as const,
+        error: "Kamu tidak memiliki akses ke data Muda-Mudi ini.",
+      };
+    }
+
+    return {
+      valid: true as const,
+    };
+  }
+
   const { data: mudamudi, error: mudamudiError } = await supabase
     .from("mudamudi")
-    .select("id, desa, kelompok, kelas, jenis_kelamin")
+    .select("id, desa, kelompok, kelas, jenjang, jenis_kelamin")
     .eq("id", mudamudiId)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (mudamudiError) {

@@ -1,3 +1,4 @@
+
 import ExcelJS from "exceljs";
 
 import type {
@@ -38,27 +39,6 @@ const STATUS_COLORS: Record<PresensiStatus, { fill: string; font: string }> = {
   sakit: { fill: "FFDBEAFE", font: "FF1D4ED8" },
   alpa: { fill: "FFFEE2E2", font: "FF991B1B" },
 };
-
-function isMudamudiTargeted(
-  kegiatan: RekapitulasiKegiatan,
-  mudamudi: RekapitulasiMudaMudi,
-): boolean {
-  const desaSesuai =
-    !kegiatan.desa ||
-    kegiatan.desa.length === 0 ||
-    kegiatan.desa.includes(mudamudi.desa);
-
-  const kelasSesuai =
-    !kegiatan.kelas ||
-    kegiatan.kelas.length === 0 ||
-    kegiatan.kelas.includes(mudamudi.kelas);
-
-  const genderSesuai =
-    !kegiatan.jenis_kelamin ||
-    kegiatan.jenis_kelamin === mudamudi.jenis_kelamin;
-
-  return desaSesuai && kelasSesuai && genderSesuai;
-}
 
 function formatTanggal(tanggal: string): string {
   if (!tanggal) return "-";
@@ -186,18 +166,19 @@ export async function exportRekapitulasiExcel({
       continue;
     }
 
-    attendanceMap.set(`${item.mudamudi_id}-${item.kegiatan_id}`, item.status);
+    attendanceMap.set(
+      `${item.mudamudi_id}-${item.kegiatan_id}`,
+      item.status as PresensiStatus,
+    );
   }
 
   function getStatus(
     mudamudi: RekapitulasiMudaMudi,
     itemKegiatan: RekapitulasiKegiatan,
   ): PresensiStatus | null {
-    if (!isMudamudiTargeted(itemKegiatan, mudamudi)) {
-      return null;
-    }
-
-    return attendanceMap.get(`${mudamudi.id}-${itemKegiatan.id}`) ?? "alpa";
+    return (
+      attendanceMap.get(`${mudamudi.id}-${itemKegiatan.id}`) ?? null
+    );
   }
 
   const totals: Record<PresensiStatus, number> = {
@@ -218,7 +199,6 @@ export async function exportRekapitulasiExcel({
     }
   }
 
-  // SHEET 1: RINGKASAN
   const ringkasan = workbook.addWorksheet("Ringkasan");
 
   ringkasan.columns = [
@@ -296,7 +276,6 @@ export async function exportRekapitulasiExcel({
 
   ringkasan.views = [{ state: "frozen", ySplit: 3 }];
 
-  // SHEET 2: REKAPITULASI
   const rekap = workbook.addWorksheet("Rekapitulasi");
 
   const columns: Partial<ExcelJS.Column>[] = [

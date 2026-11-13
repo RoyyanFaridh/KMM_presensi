@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -40,7 +41,6 @@ const menuItems = [
         aria-hidden="true"
       >
         <circle cx="10" cy="6" r="3" />
-
         <path
           d="M4.5 17c.5-3 2.4-4.5 5.5-4.5s5 1.5 5.5 4.5"
           strokeLinecap="round"
@@ -61,7 +61,6 @@ const menuItems = [
         aria-hidden="true"
       >
         <rect x="3" y="4.5" width="14" height="12" rx="1.5" />
-
         <path d="M6.5 3v3M13.5 3v3M3 8h14" strokeLinecap="round" />
       </svg>
     ),
@@ -119,7 +118,6 @@ function PresensiIcon() {
       aria-hidden="true"
     >
       <path d="M5 3.5h7l3 3v10H5z" strokeLinejoin="round" />
-
       <path d="M12 3.5V7h3M7.5 10h5M7.5 13h5" strokeLinecap="round" />
     </svg>
   );
@@ -136,10 +134,33 @@ function ProfileIcon() {
       aria-hidden="true"
     >
       <circle cx="10" cy="6.5" r="2.75" />
-
       <path
         d="M4.5 17c.55-3.05 2.4-4.75 5.5-4.75s4.95 1.7 5.5 4.75"
         strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function HistoryIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path
+        d="M3.5 10a6.5 6.5 0 1 0 1.9-4.6L3.5 7.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3.5 3.5v4h4M10 6.5v3.8l2.5 1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
@@ -159,7 +180,6 @@ function LogoutIcon() {
         d="M8 3.5H4.5A1.5 1.5 0 0 0 3 5v10a1.5 1.5 0 0 0 1.5 1.5H8"
         strokeLinecap="round"
       />
-
       <path
         d="M11 6.5 14.5 10 11 13.5M7.5 10h7"
         strokeLinecap="round"
@@ -223,7 +243,6 @@ function MenuLinks({ onNavigate }: { onNavigate?: () => void }) {
         );
       })}
 
-      {/* PRESENSI */}
       <div>
         <button
           type="button"
@@ -321,6 +340,7 @@ function AccountSection({
   const accountRef = useRef<HTMLDivElement>(null);
 
   const profileActive = pathname.startsWith("/admin/profil");
+  const historyActive = pathname.startsWith("/admin/riwayat");
 
   const accountLabel =
     account.nama.trim() ||
@@ -367,7 +387,6 @@ function AccountSection({
         Akun
       </p>
 
-      {/* ACCOUNT POPOVER */}
       {accountOpen && (
         <div
           className={[
@@ -405,6 +424,32 @@ function AccountSection({
               <span>Profil</span>
             </Link>
 
+            <Link
+              href="/admin/riwayat"
+              onClick={handleNavigate}
+              className={[
+                "group flex w-full items-center gap-2.5 rounded-lg",
+                "px-2.5 py-2",
+                "text-[11px] font-medium transition-colors",
+                historyActive
+                  ? "bg-[#287A50] text-white"
+                  : "text-[#CAD3CE] hover:bg-[#181C1B] hover:text-white",
+              ].join(" ")}
+            >
+              <span
+                className={[
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-md",
+                  historyActive
+                    ? "bg-white/20 text-white"
+                    : "bg-[#181C1B] text-[#78827C] group-hover:text-white",
+                ].join(" ")}
+              >
+                <HistoryIcon />
+              </span>
+
+              <span>Riwayat Aktivitas</span>
+            </Link>
+
             <LogoutButton
               onCloseMenu={() => {
                 setAccountOpen(false);
@@ -415,7 +460,6 @@ function AccountSection({
         </div>
       )}
 
-      {/* ACCOUNT BUTTON */}
       <button
         type="button"
         onClick={() => setAccountOpen((current) => !current)}
@@ -526,7 +570,6 @@ export default function AdminSidebar() {
 
   return (
     <>
-      {/* MOBILE TOP BAR */}
       <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center border-b border-[#262D29] bg-[#181C1B] px-4 md:hidden">
         <button
           type="button"
@@ -557,12 +600,10 @@ export default function AdminSidebar() {
         </div>
       </header>
 
-      {/* DESKTOP SIDEBAR */}
       <aside className="hidden h-screen w-60 shrink-0 flex-col border-r border-[#262D29] bg-[#181C1B] md:flex">
         <SidebarContent account={account} />
       </aside>
 
-      {/* MOBILE DRAWER */}
       {isOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <button

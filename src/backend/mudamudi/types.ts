@@ -1,3 +1,4 @@
+
 export type Mudamudi = {
   id: number;
   desa: string;
@@ -13,6 +14,8 @@ export type Mudamudi = {
   alamat: string | null;
   qr_id: string;
   created_at: string;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
 };
 
 export type ModalState =

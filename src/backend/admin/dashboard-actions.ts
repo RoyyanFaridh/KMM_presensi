@@ -42,15 +42,15 @@ export async function getDashboardData() {
 
   const now = new Date();
 
-  // Ambil anggota sesuai cakupan desa Admin.
-  let anggotaQuery = supabase.from("mudamudi").select("id, desa, kelompok");
+  let anggotaQuery = supabase
+    .from("mudamudi")
+    .select("id, desa, kelompok")
+    .is("deleted_at", null);
 
   if (!isSuperAdmin) {
     anggotaQuery = anggotaQuery.eq("desa", desa!);
   }
 
-  // Admin Daerah melihat seluruh kegiatan.
-  // Admin Desa hanya melihat kegiatan yang dibuat oleh akunnya sendiri.
   let kegiatanQuery = supabase
     .from("kegiatan")
     .select(

@@ -1,3 +1,4 @@
+
 import { requireAdmin } from "../../../src/backend/auth/admin";
 import { createClient } from "../../../src/backend/supabase/server";
 
@@ -13,6 +14,7 @@ export default async function Page() {
   const { data: initialData, error } = await supabase
     .from("mudamudi")
     .select("*")
+    .is("deleted_at", null)
     .order("created_at", {
       ascending: false,
     });
