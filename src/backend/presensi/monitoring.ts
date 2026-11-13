@@ -169,7 +169,7 @@ export async function getMonitoringPresensi(kegiatanId: number) {
         kelasList.push("Caberawit A", "Caberawit B");
       }
 
-      mudamudiQuery = mudamudiQuery.in("kelas", kelasList);
+      mudamudiQuery = mudamudiQuery.in("kelas", [...new Set(kelasList)]);
     }
 
     if (kegiatanMonitoring.jenjang?.length) {
@@ -242,8 +242,8 @@ export async function getMonitoringPresensi(kegiatanId: number) {
       desa: item.desa,
       kelompok: item.kelompok,
       kelas: item.kelas,
-      jenjang: item.jenjang,
-      jenis_kelamin: item.jenis_kelamin,
+      jenjang: item.jenjang ?? null,
+      jenis_kelamin: item.jenis_kelamin ?? null,
       waktu_checkin: presensi?.waktu_checkin ?? null,
       status: presensi?.status ?? null,
       metode: presensi?.metode ?? null,

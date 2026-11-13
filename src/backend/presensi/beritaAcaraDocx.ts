@@ -30,13 +30,11 @@ export type PemateriRow = {
   keterangan: string;
 };
 
-export type JabatanKyaiOption = "KYAI DAERAH" | "KYAI DESA" | "KYAI KELOMPOK";
-
 export type BeritaAcaraFormData = {
   pembawaAcara: string;
   petugas: string;
   kyaiDesa: string;
-  jabatanKyai: JabatanKyaiOption;
+  jabatanKyai: string;
   pemateriList: PemateriRow[];
   infaqAmplop: number;
   infaqPpg: number;

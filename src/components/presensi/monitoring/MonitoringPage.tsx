@@ -89,11 +89,7 @@ function calculateTotals(peserta: MonitoringPeserta[]) {
   };
 
   for (const item of peserta) {
-    switch (
-    String(item.status ?? "")
-      .trim()
-      .toLowerCase()
-    ) {
+    switch (String(item.status ?? "").trim().toLowerCase()) {
       case "hadir":
         totals.totalHadir++;
         break;
@@ -131,6 +127,7 @@ export default function MonitoringPage({ kegiatan }: Props) {
   const [selectedDesa, setSelectedDesa] = useState<string[]>([]);
   const [selectedKelompok, setSelectedKelompok] = useState<string[]>([]);
   const [selectedKelas, setSelectedKelas] = useState<string[]>([]);
+  const [selectedJenjang, setSelectedJenjang] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
 
   const [showBeritaAcara, setShowBeritaAcara] = useState(false);
@@ -153,6 +150,7 @@ export default function MonitoringPage({ kegiatan }: Props) {
     setSelectedDesa([]);
     setSelectedKelompok([]);
     setSelectedKelas([]);
+    setSelectedJenjang([]);
     setSelectedStatus([]);
   }
 
@@ -344,6 +342,14 @@ export default function MonitoringPage({ kegiatan }: Props) {
     return getUniqueSortedValues(data.peserta.map((peserta) => peserta.kelas));
   }, [data]);
 
+  const jenjangOptions = useMemo(() => {
+    if (!data) return [];
+
+    return getUniqueSortedValues(
+      data.peserta.map((peserta) => peserta.jenjang),
+    );
+  }, [data]);
+
   const filteredPeserta = useMemo(() => {
     if (!data) return [];
 
@@ -366,6 +372,11 @@ export default function MonitoringPage({ kegiatan }: Props) {
         selectedKelas.length === 0 ||
         (peserta.kelas !== null && selectedKelas.includes(peserta.kelas));
 
+      const cocokJenjang =
+        selectedJenjang.length === 0 ||
+        (peserta.jenjang != null &&
+          selectedJenjang.includes(peserta.jenjang));
+
       const cocokStatus =
         selectedStatus.length === 0 ||
         selectedStatus.includes(getPesertaStatus(peserta));
@@ -375,6 +386,7 @@ export default function MonitoringPage({ kegiatan }: Props) {
         cocokDesa &&
         cocokKelompok &&
         cocokKelas &&
+        cocokJenjang &&
         cocokStatus
       );
     });
@@ -384,6 +396,7 @@ export default function MonitoringPage({ kegiatan }: Props) {
     selectedDesa,
     selectedKelompok,
     selectedKelas,
+    selectedJenjang,
     selectedStatus,
   ]);
 
@@ -397,13 +410,13 @@ export default function MonitoringPage({ kegiatan }: Props) {
   return (
     <div className="space-y-4 p-4 md:p-6">
       <div className="mb-5">
-        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#287A50]">
-          Presensi
-        </p>
-
-        <div className="mt-1 flex items-start justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold tracking-tight text-[#202824]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#287A50]">
+              Presensi
+            </p>
+
+            <h1 className="mt-1 text-xl font-bold tracking-tight text-[#202824]">
               Monitoring Presensi
             </h1>
 
@@ -411,10 +424,38 @@ export default function MonitoringPage({ kegiatan }: Props) {
               Pantau dan kelola kehadiran peserta berdasarkan kegiatan.
             </p>
           </div>
+
+          {canDownloadBeritaAcara && (
+            <button
+              type="button"
+              onClick={() => setShowBeritaAcara(true)}
+              aria-label="Unduh Berita Acara"
+              title="Unduh Berita Acara (.docx)"
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#287A50] px-3 py-2.5 text-white shadow-xs transition hover:bg-[#206440] focus:outline-none focus:ring-2 focus:ring-[#65B98A]/30 sm:px-4"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"
+                />
+              </svg>
+
+              <span className="whitespace-nowrap text-[11px] font-semibold sm:text-xs">
+                Berita Acara
+              </span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Pemilih kegiatan tetap terpisah dari filter dan tombol unduh */}
       <MonitoringKegiatanSelector
         kegiatan={kegiatan}
         selectedKegiatanId={selectedKegiatanId}
@@ -479,6 +520,8 @@ export default function MonitoringPage({ kegiatan }: Props) {
             totalSakit={data.totalSakit}
             totalAlpa={data.totalAlpa}
             totalBelumHadir={data.totalBelumHadir}
+            peserta={data.peserta}
+            jenjangSasaran={data.kegiatan.jenjang}
           />
 
           {data.totalAlpa > 0 && (
@@ -495,8 +538,7 @@ export default function MonitoringPage({ kegiatan }: Props) {
           )}
 
           <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-[#E5EAE6] bg-white shadow-xs">
-            {/* Filter dan tombol unduh berada dalam satu baris */}
-            <div className="flex min-w-0 items-start gap-2 border-b border-[#E5EAE6] p-3 sm:items-center sm:gap-3 sm:p-4">
+            <div className="flex min-w-0 items-center gap-3 border-b border-[#E5EAE6] p-3 sm:p-4">
               <div className="min-w-0 flex-1">
                 <MonitoringFilters
                   search={search}
@@ -510,41 +552,15 @@ export default function MonitoringPage({ kegiatan }: Props) {
                   selectedKelas={selectedKelas}
                   onKelasChange={setSelectedKelas}
                   kelasOptions={kelasOptions}
+                  selectedJenjang={selectedJenjang}
+                  onJenjangChange={setSelectedJenjang}
+                  jenjangOptions={jenjangOptions}
                   selectedStatus={selectedStatus}
                   onStatusChange={setSelectedStatus}
                   statusOptions={STATUS_OPTIONS}
                   onReset={resetFilters}
                 />
               </div>
-
-              {canDownloadBeritaAcara && (
-                <button
-                  type="button"
-                  onClick={() => setShowBeritaAcara(true)}
-                  aria-label="Unduh Berita Acara"
-                  title="Unduh Berita Acara (.docx)"
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#287A50] text-white shadow-xs transition hover:bg-[#206440] focus:outline-none focus:ring-2 focus:ring-[#65B98A]/20 sm:h-10 sm:w-auto sm:gap-2 sm:rounded-xl sm:px-4"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={1.8}
-                    className="h-5 w-5 sm:h-4 sm:w-4"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"
-                    />
-                  </svg>
-
-                  <span className="hidden whitespace-nowrap text-xs font-semibold sm:inline">
-                    Unduh
-                  </span>
-                </button>
-              )}
             </div>
 
             {filteredPeserta.length > 0 ? (
@@ -588,7 +604,7 @@ export default function MonitoringPage({ kegiatan }: Props) {
         onSave={handleSaveStatus}
       />
 
-      {showBeritaAcara && selectedKegiatan && (
+      {showBeritaAcara && selectedKegiatan && data && (
         <BeritaAcaraModal
           kegiatan={selectedKegiatan}
           monitoringData={data}

@@ -1,6 +1,14 @@
 
 "use client";
 
+import { useState } from "react";
+
+type PesertaSummary = {
+  status: string | null;
+  jenis_kelamin: string | null;
+  jenjang?: string | null;
+};
+
 type Props = {
   totalPeserta: number;
   totalHadir: number;
@@ -9,69 +17,273 @@ type Props = {
   totalSakit: number;
   totalAlpa: number;
   totalBelumHadir: number;
+  peserta: PesertaSummary[];
+  jenjangSasaran: string[] | null;
 };
 
-type SummaryCardProps = {
+type StatusKey =
+  | "hadir"
+  | "terlambat"
+  | "izin"
+  | "sakit"
+  | "alpa"
+  | "belum_hadir";
+
+type StatusCardConfig = {
+  key: StatusKey;
   label: string;
-  value: number;
-  percentage: number;
-  valueClass: string;
-  dotClass: string;
+  color: string;
+  dot: string;
 };
 
-function SummaryCard({
+function formatNumber(value: number) {
+  return value.toLocaleString("id-ID");
+}
+
+function formatPercentage(value: number) {
+  return `${value.toLocaleString("id-ID", {
+    maximumFractionDigits: 1,
+  })}%`;
+}
+
+function getPercentage(value: number, total: number) {
+  return total > 0 ? (value / total) * 100 : 0;
+}
+
+function getStatusKey(status: string | null): StatusKey {
+  switch (status) {
+    case "hadir":
+      return "hadir";
+    case "terlambat":
+      return "terlambat";
+    case "izin":
+      return "izin";
+    case "sakit":
+      return "sakit";
+    case "alpa":
+      return "alpa";
+    default:
+      return "belum_hadir";
+  }
+}
+
+const STATUS_CONFIG: StatusCardConfig[] = [
+  {
+    key: "hadir",
+    label: "Hadir",
+    color: "text-[#287A50]",
+    dot: "bg-[#287A50]",
+  },
+  {
+    key: "terlambat",
+    label: "Terlambat",
+    color: "text-amber-700",
+    dot: "bg-amber-500",
+  },
+  {
+    key: "izin",
+    label: "Izin",
+    color: "text-blue-700",
+    dot: "bg-blue-500",
+  },
+  {
+    key: "sakit",
+    label: "Sakit",
+    color: "text-purple-700",
+    dot: "bg-purple-500",
+  },
+  {
+    key: "alpa",
+    label: "Alpa",
+    color: "text-red-700",
+    dot: "bg-red-500",
+  },
+  {
+    key: "belum_hadir",
+    label: "Belum Hadir",
+    color: "text-[#68736C]",
+    dot: "bg-[#9AA39D]",
+  },
+];
+
+function getJenjangList(
+  peserta: PesertaSummary[],
+  jenjangSasaran: string[] | null,
+) {
+  if (jenjangSasaran && jenjangSasaran.length > 0) {
+    return [...new Set(jenjangSasaran)];
+  }
+
+  const jenjangSet = new Set<string>();
+
+  for (const item of peserta) {
+    jenjangSet.add(item.jenjang?.trim() || "Belum Diisi");
+  }
+
+  return Array.from(jenjangSet).sort((a, b) =>
+    a.localeCompare(b, "id"),
+  );
+}
+
+function BreakdownRow({
   label,
   value,
-  percentage,
-  valueClass,
-  dotClass,
-}: SummaryCardProps) {
-  const safePercentage = Math.min(100, Math.max(0, percentage));
+  total,
+  color,
+}: {
+  label: string;
+  value: number;
+  total: number;
+  color: string;
+}) {
+  const percentage = getPercentage(value, total);
 
   return (
-    <article className="min-w-0 rounded-2xl border border-[#E5EAE6] bg-white px-2.5 py-2.5 shadow-xs transition-colors hover:border-[#65B98A]/40 sm:px-3.5 sm:py-3.5">
-      <div className="flex min-w-0 items-center gap-1.5">
-        <span
-          className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}`}
-          aria-hidden="true"
-        />
+    <div className="flex min-w-0 items-center justify-between gap-3">
+      <span className="min-w-0 truncate text-xs text-[#68736C]">
+        {label}
+      </span>
 
-        <p
-          className="truncate text-[10px] font-medium leading-4 text-[#78827C] sm:text-[11px]"
-          title={label}
-        >
-          {label}
-        </p>
-      </div>
+      <span className={`shrink-0 text-xs font-semibold tabular-nums ${color}`}>
+        {formatNumber(value)}
+        <span className="ml-1 font-normal text-[#929B94]">
+          ({formatPercentage(percentage)})
+        </span>
+      </span>
+    </div>
+  );
+}
 
-      <p
-        className={`mt-2 text-lg font-bold leading-tight tracking-tight text-[#202824] ${valueClass}`}
+function StatusCard({
+  config,
+  peserta,
+  totalPeserta,
+  jenjangList,
+  isOpen,
+  onToggle,
+}: {
+  config: StatusCardConfig;
+  peserta: PesertaSummary[];
+  totalPeserta: number;
+  jenjangList: string[];
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  const pesertaStatus = peserta.filter(
+    (item) => getStatusKey(item.status) === config.key,
+  );
+
+  const totalStatus = pesertaStatus.length;
+
+  const totalLakiLaki = pesertaStatus.filter(
+    (item) => item.jenis_kelamin === "Laki-laki",
+  ).length;
+
+  const totalPerempuan = pesertaStatus.filter(
+    (item) => item.jenis_kelamin === "Perempuan",
+  ).length;
+
+  const jenjangCounts = jenjangList.map((jenjang) => ({
+    jenjang,
+    jumlah: pesertaStatus.filter((item) => {
+      const nilaiJenjang = item.jenjang?.trim() || "Belum Diisi";
+      return nilaiJenjang === jenjang;
+    }).length,
+  }));
+
+  const percentageTotal = getPercentage(totalStatus, totalPeserta);
+
+  return (
+    <article className="min-w-0 overflow-hidden rounded-xl border border-[#E8EDE9] bg-white">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition-colors hover:bg-[#FAFCFA]"
       >
-        {value.toLocaleString("id-ID")}
-      </p>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${config.dot}`} />
 
-      <div className="mt-2 flex items-center gap-2">
-        <div
-          className="h-1 flex-1 overflow-hidden rounded-full bg-[#F5F7F5]"
-          role="progressbar"
-          aria-label={`${label}: ${safePercentage.toFixed(1)} persen`}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={safePercentage}
-        >
-          <div
-            className={`h-full rounded-full transition-all duration-300 ${dotClass}`}
-            style={{ width: `${safePercentage}%` }}
-          />
+          <div className="min-w-0">
+            <p className={`truncate text-xs font-semibold ${config.color}`}>
+              {config.label}
+            </p>
+            <p className="mt-0.5 text-[10px] text-[#929B94]">
+              {formatPercentage(percentageTotal)} dari sasaran
+            </p>
+          </div>
         </div>
 
-        <span className="shrink-0 text-[10px] font-semibold tabular-nums text-[#78827C]">
-          {safePercentage.toLocaleString("id-ID", {
-            maximumFractionDigits: 1,
-          })}
-          %
-        </span>
-      </div>
+        <div className="flex shrink-0 items-center gap-2.5">
+          <span className={`text-lg font-bold tabular-nums ${config.color}`}>
+            {formatNumber(totalStatus)}
+          </span>
+
+          <svg
+            viewBox="0 0 20 20"
+            fill="none"
+            className={`h-4 w-4 text-[#929B94] transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+              }`}
+            aria-hidden="true"
+          >
+            <path
+              d="m5 7.5 5 5 5-5"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="border-t border-[#E8EDE9] px-3 pb-3 pt-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[#929B94]">
+                Jenis kelamin
+              </p>
+
+              <BreakdownRow
+                label="Laki-laki"
+                value={totalLakiLaki}
+                total={totalPeserta}
+                color="text-blue-700"
+              />
+
+              <BreakdownRow
+                label="Perempuan"
+                value={totalPerempuan}
+                total={totalPeserta}
+                color="text-pink-600"
+              />
+            </div>
+
+            <div className="space-y-2 border-l border-[#E8EDE9] pl-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[#929B94]">
+                Jenjang sasaran
+              </p>
+
+              {jenjangCounts.length > 0 ? (
+                jenjangCounts.map((item) => (
+                  <BreakdownRow
+                    key={item.jenjang}
+                    label={item.jenjang}
+                    value={item.jumlah}
+                    total={totalPeserta}
+                    color="text-[#287A50]"
+                  />
+                ))
+              ) : (
+                <p className="text-[11px] text-[#929B94]">
+                  Tidak ada jenjang sasaran.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   );
 }
@@ -84,90 +296,76 @@ export default function MonitoringSummary({
   totalSakit,
   totalAlpa,
   totalBelumHadir,
+  peserta,
+  jenjangSasaran,
 }: Props) {
+  const [expandedStatus, setExpandedStatus] = useState<StatusKey | null>(null);
+
   const safeTotal = Math.max(0, totalPeserta);
 
-  function getPercentage(value: number) {
-    if (safeTotal === 0) return 0;
-    return (value / safeTotal) * 100;
-  }
+  const jenjangList = getJenjangList(peserta, jenjangSasaran);
 
-  const statusCards: SummaryCardProps[] = [
-    {
-      label: "Hadir",
-      value: totalHadir,
-      percentage: getPercentage(totalHadir),
-      valueClass: "text-[#287A50]",
-      dotClass: "bg-[#287A50]",
-    },
-    {
-      label: "Terlambat",
-      value: totalTerlambat,
-      percentage: getPercentage(totalTerlambat),
-      valueClass: "text-amber-600",
-      dotClass: "bg-amber-500",
-    },
-    {
-      label: "Izin",
-      value: totalIzin,
-      percentage: getPercentage(totalIzin),
-      valueClass: "text-blue-600",
-      dotClass: "bg-blue-500",
-    },
-    {
-      label: "Sakit",
-      value: totalSakit,
-      percentage: getPercentage(totalSakit),
-      valueClass: "text-purple-600",
-      dotClass: "bg-purple-500",
-    },
-    {
-      label: "Alpa",
-      value: totalAlpa,
-      percentage: getPercentage(totalAlpa),
-      valueClass: "text-red-600",
-      dotClass: "bg-red-500",
-    },
-  ];
+  const totalLakiLaki = peserta.filter(
+    (item) => item.jenis_kelamin === "Laki-laki",
+  ).length;
 
-  const belumHadirCard: SummaryCardProps = {
-    label: "Belum Hadir",
-    value: totalBelumHadir,
-    percentage: getPercentage(totalBelumHadir),
-    valueClass: "text-[#78827C]",
-    dotClass: "bg-[#9AA39D]",
-  };
+  const totalPerempuan = peserta.filter(
+    (item) => item.jenis_kelamin === "Perempuan",
+  ).length;
 
   return (
-    <section
-      aria-label="Ringkasan presensi"
-      className="min-w-0 space-y-2.5"
-    >
-      {/* Baris pertama: Total Generus dan Belum Hadir */}
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-        <SummaryCard
-          label="Total Generus"
-          value={totalPeserta}
-          percentage={safeTotal > 0 ? 100 : 0}
-          valueClass="text-[#202824]"
-          dotClass="bg-[#287A50]"
-        />
+    <section aria-label="Ringkasan presensi" className="min-w-0 space-y-2.5">
+      <div className="grid grid-cols-3 gap-2">
+        <article className="rounded-xl border border-[#DCEBE1] bg-[#F5FAF6] px-3 py-2.5">
+          <p className="text-[10px] font-medium text-[#64756A]">
+            Total Generus
+          </p>
+          <p className="mt-1 text-xl font-bold leading-none text-[#246B46]">
+            {formatNumber(safeTotal)}
+          </p>
+        </article>
 
-        <div className="hidden sm:block">
-          <SummaryCard {...belumHadirCard} />
-        </div>
+        <article className="rounded-xl border border-[#E8EDE9] bg-white px-3 py-2.5">
+          <p className="text-[10px] font-medium text-[#78827C]">
+            Laki-laki
+          </p>
+          <p className="mt-1 text-xl font-bold leading-none text-blue-700">
+            {formatNumber(totalLakiLaki)}
+          </p>
+          <p className="mt-1 text-[10px] text-[#929B94]">
+            {formatPercentage(getPercentage(totalLakiLaki, safeTotal))}
+          </p>
+        </article>
+
+        <article className="rounded-xl border border-[#E8EDE9] bg-white px-3 py-2.5">
+          <p className="text-[10px] font-medium text-[#78827C]">
+            Perempuan
+          </p>
+          <p className="mt-1 text-xl font-bold leading-none text-pink-600">
+            {formatNumber(totalPerempuan)}
+          </p>
+          <p className="mt-1 text-[10px] text-[#929B94]">
+            {formatPercentage(getPercentage(totalPerempuan, safeTotal))}
+          </p>
+        </article>
       </div>
 
-      {/* Baris kedua: lima statistik dengan lebar sama */}
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
-        {statusCards.map((card) => (
-          <SummaryCard key={card.label} {...card} />
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        {STATUS_CONFIG.map((config) => (
+          <StatusCard
+            key={config.key}
+            config={config}
+            peserta={peserta}
+            totalPeserta={safeTotal}
+            jenjangList={jenjangList}
+            isOpen={expandedStatus === config.key}
+            onToggle={() =>
+              setExpandedStatus((current) =>
+                current === config.key ? null : config.key,
+              )
+            }
+          />
         ))}
-
-        {/* Belum Hadir tetap tampil di mobile */}
-        <div className="sm:hidden">
-          <SummaryCard {...belumHadirCard} />
-        </div>
       </div>
     </section>
   );

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -14,6 +15,9 @@ type Props = {
   selectedKelas: string[];
   onKelasChange: (value: string[]) => void;
   kelasOptions: string[];
+  selectedJenjang: string[];
+  onJenjangChange: (value: string[]) => void;
+  jenjangOptions: string[];
   selectedStatus: string[];
   onStatusChange: (value: string[]) => void;
   statusOptions: string[];
@@ -42,7 +46,8 @@ function FilterSelect({
 }: FilterSelectProps) {
   const [value, setValue] = useState("");
 
-  const allSelected = options.length > 0 && selected.length === options.length;
+  const allSelected =
+    options.length > 0 && selected.length === options.length;
 
   function toggleOption(option: string) {
     const next = selected.includes(option)
@@ -101,7 +106,10 @@ function FilterSelect({
               className="inline-flex max-w-full items-center gap-1 rounded-lg border border-[#65B98A]/30 bg-[#E6F2EA] px-2 py-0.5 text-xs font-medium text-[#206440] transition hover:bg-[#E6F2EA]/80"
             >
               <span className="max-w-37.5 truncate">{option}</span>
-              <span aria-hidden="true" className="shrink-0 text-[#287A50] font-bold">
+              <span
+                aria-hidden="true"
+                className="shrink-0 font-bold text-[#287A50]"
+              >
                 ×
               </span>
             </button>
@@ -117,12 +125,6 @@ function FilterSelect({
             </button>
           )}
         </div>
-      )}
-
-      {options.length > 0 && selected.length === options.length && (
-        <p className="mt-1 text-xs text-[#9AA39D]">
-          Semua pilihan telah dipilih
-        </p>
       )}
 
       {allSelected && (
@@ -150,6 +152,9 @@ export default function MonitoringFilters({
   selectedKelas,
   onKelasChange,
   kelasOptions,
+  selectedJenjang,
+  onJenjangChange,
+  jenjangOptions,
   selectedStatus,
   onStatusChange,
   statusOptions,
@@ -161,6 +166,7 @@ export default function MonitoringFilters({
     selectedDesa,
     selectedKelompok,
     selectedKelas,
+    selectedJenjang,
     selectedStatus,
   ].filter((selected) => selected.length > 0).length;
 
@@ -170,7 +176,7 @@ export default function MonitoringFilters({
 
   return (
     <section className="mb-4 space-y-3">
-      <div className="rounded-2xl border border-[#E5EAE6] bg-white p-3.5 sm:p-4 shadow-sm">
+      <div className="rounded-2xl border border-[#E5EAE6] bg-white p-3.5 shadow-sm sm:p-4">
         <div className="grid grid-cols-[minmax(0,1fr)_36px] items-end gap-x-3 gap-y-3 lg:grid-cols-[minmax(180px,1fr)_auto]">
           <div className="min-w-0">
             <label htmlFor="monitoring-search" className={LABEL_CLASS}>
@@ -207,7 +213,6 @@ export default function MonitoringFilters({
                   className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-[#9AA39D] transition hover:bg-[#F5F7F5] hover:text-[#202824]"
                 >
                   <svg
-                    xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -230,11 +235,10 @@ export default function MonitoringFilters({
             aria-expanded={showFilter}
             aria-controls="monitoring-filter-panel"
             title="Filter lanjutan"
-            className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors lg:h-9 lg:w-auto lg:min-w-28 lg:gap-2 lg:px-3 ${
-              showFilter || hasActiveFilter
-                ? "border-[#287A50] bg-[#E6F2EA] text-[#287A50] font-medium"
+            className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors lg:h-9 lg:w-auto lg:min-w-28 lg:gap-2 lg:px-3 ${showFilter || hasActiveFilter
+                ? "border-[#287A50] bg-[#E6F2EA] font-medium text-[#287A50]"
                 : "border-[#E5EAE6] bg-white text-[#78827C] hover:bg-[#F5F7F5] hover:text-[#202824]"
-            }`}
+              }`}
           >
             <svg
               viewBox="0 0 24 24"
@@ -262,9 +266,8 @@ export default function MonitoringFilters({
               fill="none"
               stroke="currentColor"
               strokeWidth="1.8"
-              className={`hidden h-3.5 w-3.5 shrink-0 transition-transform lg:inline ${
-                showFilter ? "rotate-180" : ""
-              }`}
+              className={`hidden h-3.5 w-3.5 shrink-0 transition-transform lg:inline ${showFilter ? "rotate-180" : ""
+                }`}
               aria-hidden="true"
             >
               <path d="m6 9 6 6 6-6" />
@@ -313,6 +316,7 @@ export default function MonitoringFilters({
                   onDesaChange([]);
                   onKelompokChange([]);
                   onKelasChange([]);
+                  onJenjangChange([]);
                   onStatusChange([]);
                 }}
                 className="shrink-0 text-xs font-medium text-rose-600 transition hover:text-rose-700"
@@ -322,7 +326,7 @@ export default function MonitoringFilters({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5 lg:gap-4">
             <FilterSelect
               id="monitoring-desa"
               label="Desa"
@@ -345,6 +349,14 @@ export default function MonitoringFilters({
               options={kelasOptions}
               selected={selectedKelas}
               onChange={onKelasChange}
+            />
+
+            <FilterSelect
+              id="monitoring-jenjang"
+              label="Jenjang"
+              options={jenjangOptions}
+              selected={selectedJenjang}
+              onChange={onJenjangChange}
             />
 
             <FilterSelect

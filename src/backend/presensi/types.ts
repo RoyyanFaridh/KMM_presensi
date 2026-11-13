@@ -77,6 +77,7 @@ export type MonitoringPresensi = {
     jam_mulai: string;
     jam_selesai: string;
     lokasi: string;
+    jenjang: string[] | null;
   };
   totalPeserta: number;
   totalHadir: number;
