@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -138,24 +139,20 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
   const router = useRouter();
 
   const exportDropdownRef = useRef<HTMLDivElement>(null);
+  const submittingRef = useRef(false);
 
   const [modal, setModal] = useState<ModalState | null>(null);
-
   const [detailData, setDetailData] = useState<Mudamudi | null>(null);
-
   const [qrData, setQrData] = useState<Mudamudi | null>(null);
 
   const [showExportModal, setShowExportModal] = useState(false);
-
   const [showExportDropdown, setShowExportDropdown] = useState(false);
-
   const [exportMode, setExportMode] = useState<ExportMode>("excel");
-
   const [showImportModal, setShowImportModal] = useState(false);
 
   const [error, setError] = useState("");
-
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const missingJenjangCount = initialData.filter(
     (item) => !item.jenjang?.trim(),
@@ -189,18 +186,19 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
   const filter = useMudamudiFilter(initialData, adminDesa);
 
   function closeModal() {
+    if (submittingRef.current) return;
+
     setModal(null);
     setFieldErrors({});
     setError("");
   }
 
   function openAddModal() {
+    if (submittingRef.current) return;
+
     setError("");
     setFieldErrors({});
-
-    setModal({
-      type: "add",
-    });
+    setModal({ type: "add" });
   }
 
   function openDetailModal(data: Mudamudi) {
@@ -222,23 +220,19 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
   }
 
   function openEditModal(data: Mudamudi) {
+    if (submittingRef.current) return;
+
     setError("");
     setFieldErrors({});
-
-    setModal({
-      type: "edit",
-      data,
-    });
+    setModal({ type: "edit", data });
   }
 
   function openDeleteModal(data: Mudamudi) {
+    if (submittingRef.current) return;
+
     setError("");
     setFieldErrors({});
-
-    setModal({
-      type: "delete",
-      data,
-    });
+    setModal({ type: "delete", data });
   }
 
   function openExportModal(mode: ExportMode) {
@@ -250,6 +244,8 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
   async function handleAddSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
+    if (submittingRef.current) return;
+
     const formData = new FormData(e.currentTarget);
 
     const nama = String(formData.get("nama") ?? "");
@@ -270,21 +266,30 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
 
     setFieldErrors(errors);
 
-    if (Object.keys(errors).length > 0) {
-      return;
-    }
+    if (Object.keys(errors).length > 0) return;
 
+    submittingRef.current = true;
+    setIsSubmitting(true);
     setError("");
 
-    const result = await addMudamudi(formData);
+    try {
+      const result = await addMudamudi(formData);
 
-    if (result?.error) {
-      setError(result.error);
-      return;
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+
+      setModal(null);
+      setFieldErrors({});
+      router.refresh();
+    } catch (submitError) {
+      console.error("handleAddSubmit error:", submitError);
+      setError("Terjadi kesalahan saat menambahkan data Muda-Mudi.");
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
-
-    closeModal();
-    router.refresh();
   }
 
   async function handleEditSubmit(
@@ -293,6 +298,8 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
   ) {
     e.preventDefault();
 
+    if (submittingRef.current) return;
+
     const formData = new FormData(e.currentTarget);
 
     const nama = String(formData.get("nama") ?? "");
@@ -313,35 +320,57 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
 
     setFieldErrors(errors);
 
-    if (Object.keys(errors).length > 0) {
-      return;
-    }
+    if (Object.keys(errors).length > 0) return;
 
+    submittingRef.current = true;
+    setIsSubmitting(true);
     setError("");
 
-    const result = await updateMudamudi(id, formData);
+    try {
+      const result = await updateMudamudi(id, formData);
 
-    if (result?.error) {
-      setError(result.error);
-      return;
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+
+      setModal(null);
+      setFieldErrors({});
+      router.refresh();
+    } catch (submitError) {
+      console.error("handleEditSubmit error:", submitError);
+      setError("Terjadi kesalahan saat memperbarui data Muda-Mudi.");
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
-
-    closeModal();
-    router.refresh();
   }
 
   async function handleDelete(id: number) {
+    if (submittingRef.current) return;
+
+    submittingRef.current = true;
+    setIsSubmitting(true);
     setError("");
 
-    const result = await deleteMudamudi(id);
+    try {
+      const result = await deleteMudamudi(id);
 
-    if (result?.error) {
-      setError(result.error);
-      return;
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+
+      setModal(null);
+      setFieldErrors({});
+      router.refresh();
+    } catch (submitError) {
+      console.error("handleDelete error:", submitError);
+      setError("Terjadi kesalahan saat menghapus data Muda-Mudi.");
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
-
-    closeModal();
-    router.refresh();
   }
 
   function handleImportSuccess() {
@@ -377,7 +406,6 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
                   className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5EAE6] bg-white text-[#202824] shadow-xs transition-colors hover:bg-[#F0F4F1] active:bg-[#E5EAE6] md:h-9 md:w-auto md:gap-1.5 md:px-3.5 md:text-[11px] md:font-medium"
                 >
                   <UploadIcon />
-
                   <span className="hidden md:inline">Import</span>
                 </button>
 
@@ -462,7 +490,6 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
                   className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#287A50] text-lg font-medium leading-none text-white shadow-xs transition-colors hover:bg-[#206440] active:bg-[#181C1B] md:h-9 md:w-auto md:px-4 md:text-[11px] md:font-semibold"
                 >
                   <span className="md:hidden">+</span>
-
                   <span className="hidden md:inline">+ Tambah Generus</span>
                 </button>
               </div>
@@ -529,6 +556,7 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
           adminDesa={adminDesa}
           fieldErrors={fieldErrors}
           error={error}
+          isSubmitting={isSubmitting}
           onSubmit={handleAddSubmit}
           onClose={closeModal}
         />
@@ -541,6 +569,7 @@ export default function MudamudiPage({ initialData, adminDesa }: Props) {
           adminDesa={adminDesa}
           fieldErrors={fieldErrors}
           error={error}
+          isSubmitting={isSubmitting}
           onSubmit={(e: React.FormEvent<HTMLFormElement>) =>
             handleEditSubmit(e, modal.data.id)
           }

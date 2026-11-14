@@ -3,6 +3,7 @@
 
 import { requireAdmin } from "../auth/admin";
 import { createAdminClient } from "../supabase/admin";
+import { createClient } from "../supabase/server";
 
 export type HistoryRecord = {
     id: number;
@@ -13,6 +14,8 @@ export type HistoryRecord = {
     actor_email: string | null;
     old_data: Record<string, unknown> | null;
     new_data: Record<string, unknown> | null;
+    restored_at: string | null;
+    restored_by: string | null;
 };
 
 export type HistoryFilters = {
@@ -63,7 +66,7 @@ export async function getMudamudiHistory(
     let query = supabase
         .from("mudamudi_audit")
         .select(
-            "id, operation, record_id, changed_at, changed_by, actor_email, old_data, new_data",
+            "id, operation, record_id, changed_at, changed_by, actor_email, old_data, new_data, restored_at, restored_by",
             { count: "exact" },
         );
 
@@ -71,7 +74,12 @@ export async function getMudamudiHistory(
         const safeDesa = adminDesa.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 
         query = query.or(
-            `old_data->>desa.eq."${safeDesa}",new_data->>desa.eq."${safeDesa}"`,
+            [
+                `old_data->>desa.eq."${safeDesa}"`,
+                `new_data->>desa.eq."${safeDesa}"`,
+                `old_data->data_before_restore->>desa.eq."${safeDesa}"`,
+                `new_data->data_after_restore->>desa.eq."${safeDesa}"`,
+            ].join(","),
         );
     }
 
@@ -119,5 +127,40 @@ export async function getMudamudiHistory(
         page,
         pageSize,
         error: null,
+    };
+}
+
+export async function restoreMudamudiHistory(historyId: number) {
+    await requireAdmin();
+
+    if (!Number.isInteger(historyId) || historyId <= 0) {
+        return {
+            success: false,
+            error: "ID riwayat tidak valid",
+        };
+    }
+
+    const supabase = await createClient();
+
+    const { data, error } = await supabase.rpc(
+        "restore_mudamudi_history",
+        {
+            p_history_id: historyId,
+        },
+    );
+
+    if (error) {
+        console.error("restoreMudamudiHistory error:", error);
+
+        return {
+            success: false,
+            error: error.message || "Gagal memulihkan data",
+        };
+    }
+
+    return {
+        success: true,
+        data,
+        message: "Data berhasil dipulihkan",
     };
 }

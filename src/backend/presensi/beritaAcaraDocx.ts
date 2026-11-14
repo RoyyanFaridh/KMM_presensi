@@ -53,12 +53,12 @@ const NAMA_HARI = [
 ];
 
 const FONT_FAMILY = "Times New Roman";
-const FONT_SIZE_TITLE = 28; // 14 pt bold
-const FONT_SIZE_HEADING = 22; // 11 pt bold
-const FONT_SIZE_BODY = 22; // 11 pt regular
-const FONT_SIZE_TABLE_HEADER = 19; // 9.5 pt bold
-const FONT_SIZE_TABLE_DATA = 19; // 9.5 pt regular
-const FONT_SIZE_PEMATERI = 20; // 10 pt regular
+const FONT_SIZE_TITLE = 28;
+const FONT_SIZE_HEADING = 22;
+const FONT_SIZE_BODY = 22;
+const FONT_SIZE_TABLE_HEADER = 19;
+const FONT_SIZE_TABLE_DATA = 19;
+const FONT_SIZE_PEMATERI = 20;
 
 export function formatTanggalBeritaAcara(tanggalRaw: string): string {
   if (!tanggalRaw) return "-";
@@ -1109,7 +1109,6 @@ export async function generateBeritaAcaraDocx(
     rows: [rekapHeaderRow1, rekapHeaderRow2, ...rekapDataRows, rekapTotalRow],
   });
 
-  // 4. Tabel Pemateri (Semua Header Rata Tengah Horizontal & Vertikal)
   const validPemateri = formData.pemateriList.filter(
     (row) =>
       row.waktu.trim() ||
@@ -1122,9 +1121,9 @@ export async function generateBeritaAcaraDocx(
     validPemateri.length > 0
       ? validPemateri
       : [
-          { waktu: "", materi: "", petugas: "", keterangan: "" },
-          { waktu: "", materi: "", petugas: "", keterangan: "" },
-        ];
+        { waktu: "", materi: "", petugas: "", keterangan: "" },
+        { waktu: "", materi: "", petugas: "", keterangan: "" },
+      ];
 
   const pemateriHeaderRow = new TableRow({
     cantSplit: true,

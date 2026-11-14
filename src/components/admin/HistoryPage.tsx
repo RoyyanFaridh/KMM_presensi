@@ -4,6 +4,7 @@
 import { useState, useTransition } from "react";
 import {
     getMudamudiHistory,
+    restoreMudamudiHistory,
     type HistoryRecord,
 } from "../../backend/admin/history-actions";
 
@@ -27,6 +28,7 @@ const OPERATION_LABELS: Record<string, string> = {
     DELETE: "Hapus",
     TRUNCATE: "Hapus Seluruh",
     TRUNCATE_EVENT: "TRUNCATE",
+    RESTORE: "Dipulihkan",
 };
 
 const HEADER_CELL =
@@ -40,8 +42,38 @@ function formatDate(value: string) {
     }).format(new Date(value));
 }
 
+function getHistoryData(
+    record: HistoryRecord,
+    type: "old" | "new",
+) {
+    const data = type === "old" ? record.old_data : record.new_data;
+
+    if (record.operation === "RESTORE" && data) {
+        const key =
+            type === "old"
+                ? "data_before_restore"
+                : "data_after_restore";
+
+        const nested = data[key];
+
+        if (
+            nested &&
+            typeof nested === "object" &&
+            !Array.isArray(nested)
+        ) {
+            return nested as Record<string, unknown>;
+        }
+    }
+
+    return data ?? {};
+}
+
 function getRecordName(record: HistoryRecord) {
-    const data = record.new_data ?? record.old_data;
+    const data =
+        record.operation === "RESTORE"
+            ? getHistoryData(record, "new")
+            : record.new_data ?? record.old_data;
+
     const name = data?.nama;
 
     if (typeof name === "string" && name.trim()) return name;
@@ -56,7 +88,12 @@ function getRecordName(record: HistoryRecord) {
 }
 
 function getRecordDesa(record: HistoryRecord) {
-    const desa = record.new_data?.desa ?? record.old_data?.desa;
+    const data =
+        record.operation === "RESTORE"
+            ? getHistoryData(record, "new")
+            : record.new_data ?? record.old_data;
+
+    const desa = data?.desa;
 
     return typeof desa === "string" ? desa : "-";
 }
@@ -69,6 +106,8 @@ function getOperationStyle(operation: string) {
             return "border-blue-100 bg-blue-50 text-blue-700";
         case "DELETE":
             return "border-red-100 bg-red-50 text-red-700";
+        case "RESTORE":
+            return "border-purple-100 bg-purple-50 text-purple-700";
         case "TRUNCATE":
         case "TRUNCATE_EVENT":
             return "border-orange-100 bg-orange-50 text-orange-700";
@@ -149,8 +188,8 @@ function DetailModal({
     record: HistoryRecord;
     onClose: () => void;
 }) {
-    const oldData = record.old_data ?? {};
-    const newData = record.new_data ?? {};
+    const oldData = getHistoryData(record, "old");
+    const newData = getHistoryData(record, "new");
 
     const fields = Array.from(
         new Set([...Object.keys(oldData), ...Object.keys(newData)]),
@@ -199,28 +238,36 @@ function DetailModal({
                 <div className="min-h-0 space-y-4 overflow-y-auto p-4 sm:p-5">
                     <div className="grid grid-cols-2 gap-3 rounded-xl border border-[#E5EAE6] bg-[#F5F7F5] p-3 sm:grid-cols-4">
                         <div>
-                            <p className="text-[9px] text-[#78827C]">Aktivitas</p>
+                            <p className="text-[9px] text-[#78827C]">
+                                Aktivitas
+                            </p>
                             <div className="mt-1">
                                 <OperationBadge operation={record.operation} />
                             </div>
                         </div>
 
                         <div>
-                            <p className="text-[9px] text-[#78827C]">Waktu</p>
+                            <p className="text-[9px] text-[#78827C]">
+                                Waktu
+                            </p>
                             <p className="mt-1 text-[10px] font-medium text-[#202824]">
                                 {formatDate(record.changed_at)}
                             </p>
                         </div>
 
                         <div>
-                            <p className="text-[9px] text-[#78827C]">Admin</p>
+                            <p className="text-[9px] text-[#78827C]">
+                                Admin
+                            </p>
                             <p className="mt-1 break-all text-[10px] font-medium text-[#202824]">
                                 {record.actor_email ?? "Tidak diketahui"}
                             </p>
                         </div>
 
                         <div>
-                            <p className="text-[9px] text-[#78827C]">Desa</p>
+                            <p className="text-[9px] text-[#78827C]">
+                                Desa
+                            </p>
                             <p className="mt-1 text-[10px] font-medium text-[#202824]">
                                 {getRecordDesa(record)}
                             </p>
@@ -249,7 +296,10 @@ function DetailModal({
                                 </thead>
                                 <tbody className="divide-y divide-[#E5EAE6]">
                                     {fields.map((field) => (
-                                        <tr key={field} className="hover:bg-[#F5F7F5]">
+                                        <tr
+                                            key={field}
+                                            className="hover:bg-[#F5F7F5]"
+                                        >
                                             <td className="px-3.5 py-2.5 text-[10px] font-semibold capitalize text-[#526159]">
                                                 {field.replaceAll("_", " ")}
                                             </td>
@@ -276,6 +326,17 @@ function DetailModal({
                             </table>
                         </div>
                     )}
+
+                    {record.restored_at && (
+                        <div className="rounded-xl border border-[#CDE8D6] bg-[#E6F2EA] p-3">
+                            <p className="text-[10px] font-semibold text-[#287A50]">
+                                Data sudah dipulihkan
+                            </p>
+                            <p className="mt-1 text-[9px] text-[#526159]">
+                                Waktu pemulihan: {formatDate(record.restored_at)}
+                            </p>
+                        </div>
+                    )}
                 </div>
             </section>
         </div>
@@ -292,6 +353,7 @@ export default function HistoryPage({
     const [selectedRecord, setSelectedRecord] =
         useState<HistoryRecord | null>(null);
     const [isPending, startTransition] = useTransition();
+    const [restoringId, setRestoringId] = useState<number | null>(null);
 
     const [filters, setFilters] = useState<Filters>({
         operation: "",
@@ -358,6 +420,88 @@ export default function HistoryPage({
         loadHistory(1, emptyFilters);
     }
 
+    async function handleRestore(record: HistoryRecord) {
+        if (
+            !["INSERT", "UPDATE", "DELETE"].includes(record.operation) ||
+            record.restored_at ||
+            restoringId !== null
+        ) {
+            return;
+        }
+
+        const action =
+            record.operation === "INSERT"
+                ? "membatalkan penambahan"
+                : record.operation === "UPDATE"
+                    ? "mengembalikan perubahan"
+                    : "memulihkan data yang dihapus";
+
+        const confirmed = window.confirm(
+            `Apakah kamu yakin ingin ${action} untuk "${getRecordName(record)}"?\n\nProses ini akan tercatat dalam riwayat aktivitas.`,
+        );
+
+        if (!confirmed) return;
+
+        setRestoringId(record.id);
+
+        try {
+            const result = await restoreMudamudiHistory(record.id);
+
+            if (!result.success) {
+                alert(result.error || "Gagal memulihkan data.");
+                return;
+            }
+
+            alert("Data berhasil dipulihkan.");
+
+            setSelectedRecord(null);
+            loadHistory(page, appliedFilters);
+        } catch (error) {
+            console.error("Restore error:", error);
+            alert("Terjadi kesalahan saat memulihkan data.");
+        } finally {
+            setRestoringId(null);
+        }
+    }
+
+    function renderRestoreAction(record: HistoryRecord) {
+        if (record.operation === "RESTORE") {
+            return (
+                <span className="text-[9px] font-semibold text-purple-700">
+                    Dipulihkan
+                </span>
+            );
+        }
+
+        if (!["INSERT", "UPDATE", "DELETE"].includes(record.operation)) {
+            return (
+                <span className="text-[9px] text-[#78827C]">-</span>
+            );
+        }
+
+        if (record.restored_at) {
+            return (
+                <span
+                    title={`Dipulihkan ${formatDate(record.restored_at)}`}
+                    className="text-[9px] font-semibold text-[#287A50]"
+                >
+                    Sudah Dipulihkan
+                </span>
+            );
+        }
+
+        return (
+            <button
+                type="button"
+                onClick={() => handleRestore(record)}
+                disabled={restoringId !== null || isPending}
+                className="inline-flex h-7 items-center justify-center rounded-lg border border-[#CDE8D6] bg-[#E6F2EA] px-2 text-[9px] font-semibold text-[#287A50] transition hover:bg-[#D5EBDD] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+                {restoringId === record.id ? "Memulihkan..." : "Restore"}
+            </button>
+        );
+    }
+
     return (
         <main className="min-h-screen bg-[#F5F7F5] p-3.5 sm:p-5 lg:p-6">
             <div className="mx-auto max-w-[1600px] space-y-4">
@@ -410,7 +554,10 @@ export default function HistoryPage({
                             <select
                                 value={filters.operation}
                                 onChange={(event) =>
-                                    setFilters({ ...filters, operation: event.target.value })
+                                    setFilters({
+                                        ...filters,
+                                        operation: event.target.value,
+                                    })
                                 }
                                 className="h-9 w-full rounded-lg border border-[#E5EAE6] bg-white px-2.5 text-[10px] text-[#202824] outline-none transition focus:border-[#287A50]"
                             >
@@ -418,6 +565,7 @@ export default function HistoryPage({
                                 <option value="INSERT">Tambah Data</option>
                                 <option value="UPDATE">Ubah Data</option>
                                 <option value="DELETE">Hapus Data</option>
+                                <option value="RESTORE">Pemulihan Data</option>
                                 <option value="TRUNCATE">Hapus Seluruh Data</option>
                                 <option value="TRUNCATE_EVENT">Aktivitas TRUNCATE</option>
                             </select>
@@ -431,7 +579,10 @@ export default function HistoryPage({
                                 type="date"
                                 value={filters.dateFrom}
                                 onChange={(event) =>
-                                    setFilters({ ...filters, dateFrom: event.target.value })
+                                    setFilters({
+                                        ...filters,
+                                        dateFrom: event.target.value,
+                                    })
                                 }
                                 className="h-9 w-full rounded-lg border border-[#E5EAE6] bg-white px-2.5 text-[10px] text-[#202824] outline-none focus:border-[#287A50]"
                             />
@@ -446,7 +597,10 @@ export default function HistoryPage({
                                 min={filters.dateFrom || undefined}
                                 value={filters.dateTo}
                                 onChange={(event) =>
-                                    setFilters({ ...filters, dateTo: event.target.value })
+                                    setFilters({
+                                        ...filters,
+                                        dateTo: event.target.value,
+                                    })
                                 }
                                 className="h-9 w-full rounded-lg border border-[#E5EAE6] bg-white px-2.5 text-[10px] text-[#202824] outline-none focus:border-[#287A50]"
                             />
@@ -460,7 +614,10 @@ export default function HistoryPage({
                                 type="text"
                                 value={filters.actorEmail}
                                 onChange={(event) =>
-                                    setFilters({ ...filters, actorEmail: event.target.value })
+                                    setFilters({
+                                        ...filters,
+                                        actorEmail: event.target.value,
+                                    })
                                 }
                                 placeholder="Cari email admin..."
                                 className="h-9 w-full rounded-lg border border-[#E5EAE6] bg-white px-2.5 text-[10px] text-[#202824] outline-none placeholder:text-gray-400 focus:border-[#287A50]"
@@ -472,7 +629,7 @@ export default function HistoryPage({
                         <button
                             type="button"
                             onClick={applyFilters}
-                            disabled={isPending}
+                            disabled={isPending || restoringId !== null}
                             className="inline-flex h-8 items-center justify-center rounded-lg bg-[#287A50] px-4 text-[10px] font-semibold text-white transition hover:bg-[#206541] disabled:opacity-50"
                         >
                             {isPending ? "Memuat..." : "Terapkan Filter"}
@@ -481,7 +638,7 @@ export default function HistoryPage({
                         <button
                             type="button"
                             onClick={resetFilters}
-                            disabled={isPending}
+                            disabled={isPending || restoringId !== null}
                             className="inline-flex h-8 items-center justify-center rounded-lg border border-[#E5EAE6] bg-white px-4 text-[10px] font-semibold text-[#526159] transition hover:bg-[#F5F7F5] disabled:opacity-50"
                         >
                             Reset
@@ -520,15 +677,16 @@ export default function HistoryPage({
                     </div>
 
                     <div className="hidden overflow-x-auto md:block">
-                        <table className="w-full min-w-[850px] table-fixed border-collapse text-center">
+                        <table className="w-full min-w-[1000px] table-fixed border-collapse text-center">
                             <colgroup>
                                 <col className="w-[5%]" />
-                                <col className="w-[19%]" />
-                                <col className="w-[18%]" />
-                                <col className="w-[13%]" />
-                                <col className="w-[27%]" />
-                                <col className="w-[10%]" />
+                                <col className="w-[16%]" />
+                                <col className="w-[16%]" />
+                                <col className="w-[11%]" />
+                                <col className="w-[22%]" />
+                                <col className="w-[9%]" />
                                 <col className="w-[8%]" />
+                                <col className="w-[13%]" />
                             </colgroup>
 
                             <thead>
@@ -540,13 +698,14 @@ export default function HistoryPage({
                                     <th className={HEADER_CELL}>Nama Muda-Mudi</th>
                                     <th className={HEADER_CELL}>Desa</th>
                                     <th className={HEADER_CELL}>Detail</th>
+                                    <th className={HEADER_CELL}>Restore</th>
                                 </tr>
                             </thead>
 
                             <tbody className="divide-y divide-[#E5EAE6]">
                                 {records.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7}>
+                                        <td colSpan={8}>
                                             <HistoryEmpty />
                                         </td>
                                     </tr>
@@ -563,7 +722,9 @@ export default function HistoryPage({
                                             </td>
 
                                             <td className="px-3 py-3 text-[10px] text-[#526159]">
-                                                <span className="block">{formatDate(record.changed_at)}</span>
+                                                <span className="block">
+                                                    {formatDate(record.changed_at)}
+                                                </span>
                                             </td>
 
                                             <td className="px-3 py-3">
@@ -600,6 +761,10 @@ export default function HistoryPage({
                                                     <DetailIcon />
                                                 </button>
                                             </td>
+
+                                            <td className="px-3 py-3">
+                                                {renderRestoreAction(record)}
+                                            </td>
                                         </tr>
                                     ))
                                 )}
@@ -634,14 +799,18 @@ export default function HistoryPage({
                                             </p>
                                         </div>
 
-                                        <button
-                                            type="button"
-                                            onClick={() => setSelectedRecord(record)}
-                                            className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg border border-[#E5EAE6] bg-white px-2.5 text-[9px] font-semibold text-[#287A50] transition hover:bg-[#E6F2EA]"
-                                        >
-                                            <DetailIcon />
-                                            Detail
-                                        </button>
+                                        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedRecord(record)}
+                                                className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-[#E5EAE6] bg-white px-2.5 text-[9px] font-semibold text-[#287A50] transition hover:bg-[#E6F2EA]"
+                                            >
+                                                <DetailIcon />
+                                                Detail
+                                            </button>
+
+                                            {renderRestoreAction(record)}
+                                        </div>
                                     </div>
 
                                     <div className="mt-3 grid grid-cols-1 gap-1.5 border-t border-[#E5EAE6] pt-2.5">
@@ -676,7 +845,7 @@ export default function HistoryPage({
                         <div className="flex items-center gap-2">
                             <button
                                 type="button"
-                                disabled={page <= 1 || isPending}
+                                disabled={page <= 1 || isPending || restoringId !== null}
                                 onClick={() => loadHistory(page - 1, appliedFilters)}
                                 className="inline-flex h-7 items-center rounded-lg border border-[#E5EAE6] bg-white px-3 text-[9px] font-semibold text-[#526159] transition hover:bg-[#E6F2EA] hover:text-[#287A50] disabled:cursor-not-allowed disabled:opacity-40"
                             >
@@ -689,7 +858,7 @@ export default function HistoryPage({
 
                             <button
                                 type="button"
-                                disabled={page >= totalPages || isPending}
+                                disabled={page >= totalPages || isPending || restoringId !== null}
                                 onClick={() => loadHistory(page + 1, appliedFilters)}
                                 className="inline-flex h-7 items-center rounded-lg border border-[#E5EAE6] bg-white px-3 text-[9px] font-semibold text-[#526159] transition hover:bg-[#E6F2EA] hover:text-[#287A50] disabled:cursor-not-allowed disabled:opacity-40"
                             >
